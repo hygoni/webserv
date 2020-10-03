@@ -1,6 +1,6 @@
 NAME = webserv
 CFLAGS = -Wall -Wextra -Werror
-SRCS = ${addprefix srcs/, ${shell ls srcs | grep '\.cpp'}}}
+SRCS = ${addprefix srcs/, ${shell ls srcs | grep '\.cpp'}}
 OBJS = ${SRCS:.c=.o}
 CC = clang++
 RM = rm -f
