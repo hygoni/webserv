@@ -89,7 +89,8 @@ namespace ABNF {
 	}
 
 	bool	Hexdig(Context& c) {
-		if (((c.current()>='0') && (c.current() <='9')) || ((c.current()>='A') && (c.current() <='F')) || ((c.current()>='a') && (c.current() <='f'))) {
+		if (ft_isdigit(c.current()) || ((c.current()>='A') && (c.current() <='F'))
+				|| ((c.current()>='a') && (c.current() <='f'))) {
 			c.next();
             return true;
         }
@@ -145,7 +146,7 @@ namespace ABNF {
 	}
 
 	bool	Icar(Context& c, char __c) {
-		if (c.current() == __c || ((c.current() >= 'a' && c.current() <= 'z') && ((c.current() + 'A' - 'a') == __c))) {
+		if (ft_tolower(c.current()) == ft_tolower(__c)) {
 			c.next();
 			return true;
         }
