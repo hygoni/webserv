@@ -8,7 +8,7 @@ Context::Context(std::string const & str) {
 	this->state = true;
 }
 
-char Context::current() const {
+const char& Context::current() const {
 	return str.at(idx);
 }
 
