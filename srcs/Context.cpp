@@ -9,7 +9,7 @@ Context::Context(std::string const & str) {
 }
 
 char Context::current() const {
-	return str[idx];
+	return str.at(idx);
 }
 
 void Context::next() {
