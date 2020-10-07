@@ -5,12 +5,13 @@ OBJS = ${SRCS:.cpp=.o}
 CC = clang++
 RM = rm -f
 INC = -I./includes
+LIB = -L./libft -lft
 
 ${NAME}: ${OBJS}
-	${CC} ${CFLAGS} ${INC} ${OBJS} -o ${NAME}
+	${CC} ${CFLAGS} ${INC} ${LIB} ${OBJS} -o ${NAME}
 
 %.o : %.cpp
-	${CC} ${CFLAGS} ${INC} -c $< -o $@ -g
+	${CC} ${CFLAGS} ${INC} -c $< -o $@
 
 all: ${NAME}
 
