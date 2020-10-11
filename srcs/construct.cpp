@@ -1,5 +1,6 @@
 /* Copyright 2020 hyeyoo, hyekim */
 
+#include <climits>
 #include "Context.hpp"
 
 void begin(Context& ctx) {
@@ -9,6 +10,8 @@ void begin(Context& ctx) {
 
 void end(Context& ctx) {
     ctx.level--;
+	if ((unsigned long)(ctx.idx) != ctx.str.size())
+		ctx.state = false;
 }
 
 void group(Context& ctx) {
@@ -20,15 +23,16 @@ void group(Context& ctx) {
 
 void ungroup(Context& ctx) {
     if (ctx.skip == ctx.level) {
-        ctx.skip = -1;
+        ctx.skip = INT_MAX;
     }
-    if (ctx.state == false) {
-        ctx.idx = ctx.save.top(); ctx.save.pop();
+	if (ctx.state == false) {
+        ctx.idx = ctx.save.top(); 
     }
+	ctx.save.pop();
     ctx.level--;
 }
 
-void repeat(Context& ctx, int min, int max, void (*f)(Context&)) {
+void repeat(Context& ctx, int min, int max, bool (*f)(Context&)) {
     if (ctx.skip <= ctx.level) {
         return;
     }
@@ -37,17 +41,58 @@ void repeat(Context& ctx, int min, int max, void (*f)(Context&)) {
         /* max == 0이면 실패할 때까지 */
         for (i = 0; max == 0 ? true : i < max; i++) {
             ctx.save.push(ctx.idx);
-            f(ctx);
+			ctx.state = f(ctx);
             if (ctx.state == false) {
                 ctx.idx = ctx.save.top(); ctx.save.pop();
                 break;
             }
+			ctx.save.pop();
         }
         ctx.state = ((i >= min) && (max == 0 ? true :  i <= max));
     }
 }
 
-void option(Context& ctx, void (*f)(Context&)) {
+void repeat(Context& ctx, char ch, int min, int max, bool (*f)(Context&, char)) {
+    if (ctx.skip <= ctx.level) {
+        return;
+    }
+    if (ctx.state) {
+        int i;
+        /* max == 0이면 실패할 때까지 */
+        for (i = 0; max == 0 ? true : i < max; i++) {
+            ctx.save.push(ctx.idx);
+			ctx.state = f(ctx, ch);
+            if (ctx.state == false) {
+                ctx.idx = ctx.save.top(); ctx.save.pop();
+                break;
+            }
+			ctx.save.pop();
+        }
+        ctx.state = ((i >= min) && (max == 0 ? true :  i <= max));
+    }
+}
+
+void repeat(Context& ctx, bool b, int min, int max, bool (*f)(Context&, bool)) {
+    if (ctx.skip <= ctx.level) {
+        return;
+    }
+    if (ctx.state) {
+        int i;
+        /* max == 0이면 실패할 때까지 */
+        for (i = 0; max == 0 ? true : i < max; i++) {
+            ctx.save.push(ctx.idx);
+            ctx.state = f(ctx, b);
+            if (ctx.state == false) {
+                ctx.idx = ctx.save.top(); ctx.save.pop();
+                break;
+            }
+			ctx.save.pop();
+        }
+        ctx.state = ((i >= min) && (max == 0 ? true :  i <= max));
+    }
+}
+
+void option(Context& ctx, bool (*f)(Context&)) {
     group(ctx);
     repeat(ctx, 0, 1, f);
     ungroup(ctx);
@@ -58,6 +103,20 @@ void accept(Context& ctx, bool (*f)(Context&)) {
         return;
     }
     ctx.state = f(ctx);
+}
+
+void accept(Context& ctx, char ch, bool (*f)(Context&, char)) {
+    if (ctx.skip <= ctx.level) {
+        return;
+    }
+    ctx.state = f(ctx, ch);
+}
+
+void accept(Context& ctx, bool b, bool (*f)(Context&, bool)) {
+    if (ctx.skip <= ctx.level) {
+        return;
+    }
+    ctx.state = f(ctx, b);
 }
 
 void alternate(Context& ctx) {
