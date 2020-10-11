@@ -1,6 +1,7 @@
 /* Copyright 2020 hyeyoo, hyekim */
 
 #include <climits>
+#include "construct.hpp"
 #include "Context.hpp"
 
 void begin(Context& ctx) {
@@ -40,7 +41,7 @@ void repeat(Context& ctx, int min, int max, bool (*f)(Context&)) {
 	/* max == 0이면 실패할 때까지 */
 	for (i = 0; max == 0 ? true : i < max; i++) {
 		ctx.save.push(ctx.idx);
-		ctx.state = f(ctx);
+		accept(ctx, f);
 		if (ctx.state == false) {
 			ctx.idx = ctx.save.top(); ctx.save.pop();
 			break;
@@ -58,7 +59,7 @@ void repeat(Context& ctx, char ch, int min, int max, bool (*f)(Context&, char)) 
 	/* max == 0이면 실패할 때까지 */
 	for (i = 0; max == 0 ? true : i < max; i++) {
 		ctx.save.push(ctx.idx);
-		ctx.state = f(ctx, ch);
+		accept(ctx, ch, f);
 		if (ctx.state == false) {
 			ctx.idx = ctx.save.top(); ctx.save.pop();
 			break;
@@ -76,7 +77,7 @@ void repeat(Context& ctx, bool b, int min, int max, bool (*f)(Context&, bool)) {
 	/* max == 0이면 실패할 때까지 */
 	for (i = 0; max == 0 ? true : i < max; i++) {
 		ctx.save.push(ctx.idx);
-		ctx.state = f(ctx, b);
+		accept(ctx, b, f);
 		if (ctx.state == false) {
 			ctx.idx = ctx.save.top(); ctx.save.pop();
 			break;
