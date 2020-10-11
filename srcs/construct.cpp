@@ -95,21 +95,30 @@ void option(Context& ctx, bool (*f)(Context&)) {
 void accept(Context& ctx, bool (*f)(Context&)) {
     if (ctx.skip <= ctx.level || !ctx.state) {
         return;
-    }
+    } else if (ctx.str.size() == 0) {
+		ctx.state = false;
+		return;
+	}
     ctx.state = f(ctx);
 }
 
 void accept(Context& ctx, char ch, bool (*f)(Context&, char)) {
     if (ctx.skip <= ctx.level || !ctx.state) {
         return;
-    }
+    } else if (ctx.str.size() == 0) {
+		ctx.state = false;
+		return;
+	}
     ctx.state = f(ctx, ch);
 }
 
 void accept(Context& ctx, bool b, bool (*f)(Context&, bool)) {
     if (ctx.skip <= ctx.level || !ctx.state) {
         return;
-    }
+    } else if (ctx.str.size() == 0) {
+		ctx.state = false;
+		return;
+	}
     ctx.state = f(ctx, b);
 }
 
