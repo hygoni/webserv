@@ -1,12 +1,13 @@
 /* Copyright 2020 hyeyoo, hyekim */
 
+#include <climits>
 #include "Context.hpp"
 
 Context::Context(std::string const & str) {
     this->str = str;
     this->idx = 0;
     this->level = 0;
-    this->skip = -1;
+    this->skip = INT_MAX;
     this->state = true;
 }
 
