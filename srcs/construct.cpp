@@ -87,7 +87,7 @@ void repeat(Context& ctx, bool b, int min, int max, bool (*f)(Context&, bool)) {
 	ctx.state = ((i >= min) && (max == 0 ? true :  i <= max));
 }
 
-void repeat(Context& ctx, std::string str, int min, int max, bool (*f)(Context&, std::string)) {
+void repeat(Context& ctx, std::string const& str, int min, int max, bool (*f)(Context&, std::string const&)) {
     if (ctx.skip <= ctx.level || !ctx.state) {
         return;
     }
@@ -123,7 +123,7 @@ void option(Context& ctx, bool b, bool (*f)(Context&, bool)) {
     ungroup(ctx);
 }
 
-void option(Context& ctx, std::string str, bool (*f)(Context&, std::string)) {
+void option(Context& ctx, std::string const& str, bool (*f)(Context&, std::string const&)) {
     group(ctx);
     repeat(ctx, str, 0, 1, f);
     ungroup(ctx);
@@ -159,7 +159,7 @@ void accept(Context& ctx, bool b, bool (*f)(Context&, bool)) {
     ctx.state = f(ctx, b);
 }
 
-void accept(Context& ctx, std::string str, bool (*f)(Context&, std::string)) {
+void accept(Context& ctx, std::string const& str, bool (*f)(Context&, std::string const&)) {
     if (ctx.skip <= ctx.level || !ctx.state) {
         return;
     } else if (ctx.str.size() == 0) {

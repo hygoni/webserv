@@ -6,7 +6,7 @@
 /* Copyright 2020 hyeyoo, hyekim */
 
 namespace CBNF {
-	bool String(Context &c, std::string *str);
+	bool String(Context &c, std::string const& str);
 }
 
 #endif

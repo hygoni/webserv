@@ -8,7 +8,7 @@
 /* CBNF : Customized BNF rules */
 namespace CBNF {
 
-	bool	String(Context& c, std::string str) {
+	bool	String(Context& c, std::string const& str) {
 		for (unsigned long i = 0; i < str.size(); i++) {
 			if (!ABNF::Scar(c, str[i]))
 				return false;
