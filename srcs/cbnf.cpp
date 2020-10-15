@@ -2,16 +2,16 @@
 
 #include "Context.hpp"
 #include "abnf.hpp"
+#include <string>
 #include "../includes/libft.h"
 
 /* CBNF : Customized BNF rules */
 namespace CBNF {
 
-	bool	String(Context& c, char *str) {
-		while (*str != '\0') {
-			if (!ABNF::Scar(c, *str))
+	bool	String(Context& c, std::string str) {
+		for (unsigned long i = 0; i < str.size(); i++) {
+			if (!ABNF::Scar(c, str[i]))
 				return false;
-			str++;
 		}
 		return true;
 	}

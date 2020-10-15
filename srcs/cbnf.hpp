@@ -1,11 +1,12 @@
-#ifndef SRCS_ABNF_HPP_
-#define SRCS_ABNF_HPP_
+#ifndef SRCS_CBNF_HPP_
+#define SRCS_CBNF_HPP_
 #include "Context.hpp"
+#include <string>
 
 /* Copyright 2020 hyeyoo, hyekim */
 
 namespace CBNF {
-	bool Alpha(Context &c);
+	bool String(Context &c, std::string *str);
 }
 
 #endif
