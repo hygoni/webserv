@@ -7,6 +7,9 @@
 
 namespace CBNF {
 	bool String(Context &c, std::string const& str);
+  bool  Tchar(Context& c);
+  bool  Pchar(Context& c);
+  bool  Token(Context& c);
 }
 
 #endif
