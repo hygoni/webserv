@@ -9,7 +9,7 @@
 
 class Context {
 public:
-    int                idx;
+    size_t             idx;
     std::stack<int>    save;
     int                skip;
     int                level;

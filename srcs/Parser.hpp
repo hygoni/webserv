@@ -48,12 +48,14 @@
 */
 class Component {
 	public:
+		virtual ~Component();
 		virtual void run() = 0;
 };
 
 /*
-Group().add(Accept(c, 'ch', f))
-.add(Accept(c, std::string("hello"), f))
+사용법 :
+Group().add(new Accept<char>(c, 'ch', f))
+.add(new Accept<char>(c, std::string("hello"), f))
 .run();
 */
 class Group : public Component {
@@ -62,6 +64,7 @@ class Group : public Component {
 		std::vector<Component*> _components;
 	public:
 		Group(Context& c);
+		virtual ~Group();
 		Group& add(Component* component);
 		virtual void run();
 };
@@ -71,6 +74,7 @@ class Accept : public Component {
 		Context& _c;
 		bool (*_f)(Context& c);
 	public:
+		virtual ~Accept();
 		Accept(Context &c, bool (*f)(Context& c));
 		virtual void run();
 };
@@ -82,6 +86,7 @@ class AcceptTemplate : public Component {
 		T _arg;
 		bool (*_f)(Context& c, T arg);
 	public:
+		virtual ~AcceptTemplate();
 		AcceptTemplate(Context &c, T arg, bool (*f)(Context& c, T arg));
 		virtual void run();
 };
@@ -93,15 +98,18 @@ AcceptTemplate<T>::AcceptTemplate(Context &c, T arg, bool (*f)(Context& c, T arg
 }
 
 template <typename T>
+AcceptTemplate<T>::~AcceptTemplate() {}
+
+template <typename T>
 void AcceptTemplate<T>::run() {
   if (this->_c.skip <= this->_c.level || !this->_c.state) {
       return;
-  } else if (this->_c.str.size() == 0) {
+  } else if (this->_c.idx >= this->_c.str.size()) {
 		this->_c.state = false;
 		return;
 	}
   this->_c.state = this->_f(_c, _arg);
-};
+}
 
 class Repeat : public Component {
 	private:
@@ -111,15 +119,15 @@ class Repeat : public Component {
 		int _max;
 	public:
 		Repeat(Context& c, int min, int max, Component* component);
+		virtual ~Repeat();
 		virtual void run();
 };
-
-
 
 class Alternate : public Component {
 	private:
 		Context& _c;
 	public:
+		virtual ~Alternate();
 		Alternate(Context& c);
 		virtual void run();
 };

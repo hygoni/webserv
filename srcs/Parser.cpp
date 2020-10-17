@@ -1,6 +1,17 @@
 #include "Parser.hpp"
 
+Component::~Component() {}
+
 Group::Group(Context& c) : _c(c) {}
+
+Group::~Group() {
+		std::vector<Component*>::iterator it = this->_components.begin();
+		std::vector<Component*>::iterator ite = this->_components.end();
+		while (it != ite) {
+			delete (*it);
+			it++;
+		}
+}
 
 Group& Group::add(Component* component) {
 	this->_components.push_back(component);
@@ -39,12 +50,14 @@ Accept::Accept(Context& c, bool (*f)(Context& c)) : _c(c) {
 void Accept::run() {
 	if (this->_c.skip <= this->_c.level || !this->_c.state) {
       return;
-  } else if (this->_c.str.size() == 0) {
+  } else if (this->_c.idx >= this->_c.str.size()) {
 		this->_c.state = false;
 		return;
 	}
   this->_c.state = this->_f(_c);
 }
+
+Accept::~Accept() {}
 
 Repeat::Repeat(Context& c, int min, int max, Component* component) : _c(c) {
 	this->_min = min;
@@ -52,10 +65,14 @@ Repeat::Repeat(Context& c, int min, int max, Component* component) : _c(c) {
 	this->_component = component;
 }
 
+Repeat::~Repeat() {
+	delete _component;
+}
+
 void Repeat::run() {
 	if (this->_c.skip <= this->_c.level || !this->_c.state) {
         return;
-    }
+  }
 	int i;
 	for (i = 0; this->_max == 0 ? true : i < this->_max; i++) {
 		this->_c.save.push(this->_c.idx);
@@ -70,6 +87,8 @@ void Repeat::run() {
 }
 
 Alternate::Alternate(Context& c) : _c(c) {}
+
+Alternate::~Alternate() {}
 
 void Alternate::run() {
 	if (this->_c.skip <= this->_c.level) {
