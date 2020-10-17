@@ -5,17 +5,21 @@
 
 #include <string>
 #include <stack>
+#include <climits>
 
-struct Context {
+class Context {
+public:
     int                idx;
     std::stack<int>    save;
     int                skip;
     int                level;
     bool               state;
     std::string        str;
-    explicit           Context(std::string const & str);
+
+    Context(std::string const & str);
     const char&        current() const;
     void               next();
+	void				end();
 };
 
 #endif  // SRCS_CONTEXT_HPP_
