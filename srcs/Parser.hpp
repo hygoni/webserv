@@ -65,7 +65,7 @@ class Group : public Component {
 	public:
 		Group(Context& c);
 		virtual ~Group();
-		Group& add(Component* component);
+		Group* add(Component* component);
 		virtual void run();
 };
 

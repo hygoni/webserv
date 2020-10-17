@@ -13,9 +13,9 @@ Group::~Group() {
 		}
 }
 
-Group& Group::add(Component* component) {
+Group* Group::add(Component* component) {
 	this->_components.push_back(component);
-	return *this;
+	return this;
 }
 
 /* 이게 맞나? 아닌듯 */
