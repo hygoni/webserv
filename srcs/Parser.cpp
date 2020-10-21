@@ -40,15 +40,9 @@ void Group::run() const {
 			return;
 		this->_c.level++;
 		this->_c.save.push(this->_c.idx);
-<<<<<<< Updated upstream
-	
-		std::vector<Component*>::iterator it = this->_components.begin();
-		std::vector<Component*>::iterator ite = this->_components.end();
-=======
 
 		std::vector<const Component*>::const_iterator it = this->_components.begin();
 		std::vector<const Component*>::const_iterator ite = this->_components.end();
->>>>>>> Stashed changes
 		while (it != ite) {
 			(*it)->run();
 			it++;
@@ -68,12 +62,8 @@ Accept::Accept(Context& c, bool (*f)(Context& c)) : Component(c) {
 	this->_f = f;
 }
 
-<<<<<<< Updated upstream
-void Accept::run() {
-=======
 #include <iostream>
 void Accept::run() const {
->>>>>>> Stashed changes
 	if (this->_c.skip <= this->_c.level || !this->_c.state) {
       return;
   } else if (this->_c.idx >= this->_c.str.size()) {
