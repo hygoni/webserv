@@ -19,7 +19,7 @@ public:
     Context(std::string const & str);
     const char&        current() const;
     void               next();
-	void				end();
+	void				eval();
 };
 
 #endif  // SRCS_CONTEXT_HPP_

@@ -13,7 +13,7 @@ Context::Context(std::string const & str) {
 	this->save.push(this->idx);
 }
 
-void	Context::end() {
+void	Context::eval() {
 	this->level--;
 	if ((unsigned long)(this->idx) != this->str.size())
 		this->state = false;

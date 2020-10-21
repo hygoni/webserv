@@ -2,32 +2,53 @@
 
 Component::~Component() {}
 
-Group::Group(Context& c) : _c(c) {}
-
-Group::~Group() {
-		std::vector<Component*>::iterator it = this->_components.begin();
-		std::vector<Component*>::iterator ite = this->_components.end();
-		while (it != ite) {
-			delete (*it);
-			it++;
-		}
+Component::Component(Context& c) : _c(c) {
 }
 
-Group* Group::add(Component* component) {
-	this->_components.push_back(component);
-	return this;
+Group Component::operator+(Component const& component) {
+  Group group(this->_c);
+  group.add(*this);
+  group.add(component);
+  return group;
+}
+
+Group::Group(Context& c) : Component(c) {}
+
+Group Group::operator+(Component const& component) {
+  this->add(component);
+  return *this;
+}
+
+Group::~Group() {
+		// std::vector<const Component*>::iterator it = this->_components.begin();
+		// std::vector<const Component*>::iterator ite = this->_components.end();
+		// while (it != ite) {
+		// 	delete (*it);
+		// 	it++;
+		// }
+}
+
+Group Group::add(const Component& component) {
+	this->_components.push_back(&component);
+	return *this;
 }
 
 /* 이게 맞나? 아닌듯 */
-void Group::run() {
+void Group::run() const {
 		/* group() */
     if (!this->_c.state)
 			return;
 		this->_c.level++;
 		this->_c.save.push(this->_c.idx);
+<<<<<<< Updated upstream
 	
 		std::vector<Component*>::iterator it = this->_components.begin();
 		std::vector<Component*>::iterator ite = this->_components.end();
+=======
+
+		std::vector<const Component*>::const_iterator it = this->_components.begin();
+		std::vector<const Component*>::const_iterator ite = this->_components.end();
+>>>>>>> Stashed changes
 		while (it != ite) {
 			(*it)->run();
 			it++;
@@ -43,11 +64,16 @@ void Group::run() {
     this->_c.level--;
 }
 
-Accept::Accept(Context& c, bool (*f)(Context& c)) : _c(c) {
+Accept::Accept(Context& c, bool (*f)(Context& c)) : Component(c) {
 	this->_f = f;
 }
 
+<<<<<<< Updated upstream
 void Accept::run() {
+=======
+#include <iostream>
+void Accept::run() const {
+>>>>>>> Stashed changes
 	if (this->_c.skip <= this->_c.level || !this->_c.state) {
       return;
   } else if (this->_c.idx >= this->_c.str.size()) {
@@ -59,17 +85,17 @@ void Accept::run() {
 
 Accept::~Accept() {}
 
-Repeat::Repeat(Context& c, int min, int max, Component* component) : _c(c) {
+Repeat::Repeat(Context& c, int min, int max, Component* component) : Component(c) {
 	this->_min = min;
 	this->_max = max;
 	this->_component = component;
 }
 
 Repeat::~Repeat() {
-	delete _component;
+	// delete _component;
 }
 
-void Repeat::run() {
+void Repeat::run() const {
 	if (this->_c.skip <= this->_c.level || !this->_c.state) {
         return;
   }
@@ -86,11 +112,11 @@ void Repeat::run() {
 	this->_c.state = ((i >= this->_min) && (this->_max == 0 ? true :  i <= this->_max));
 }
 
-Alternate::Alternate(Context& c) : _c(c) {}
+Alternate::Alternate(Context& c) : Component(c) {}
 
 Alternate::~Alternate() {}
 
-void Alternate::run() {
+void Alternate::run() const {
 	if (this->_c.skip <= this->_c.level) {
         return;
     }

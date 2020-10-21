@@ -46,10 +46,16 @@
 * group, ungroup, accept, repeat, alter 등에 대한 인터페이스
 * run으로 해당 Component를 실행하는 것을 정의할 수 있음.
 */
+class Group;
+
 class Component {
+  protected:
+    Context& _c;
 	public:
-		virtual ~Component();
-		virtual void run() = 0;
+    Component(Context& c);
+		virtual Group operator+(Component const& component);
+    virtual ~Component();
+    virtual void run() const = 0;
 };
 
 /*
@@ -60,39 +66,37 @@ Group().add(new Accept<char>(c, 'ch', f))
 */
 class Group : public Component {
 	private:
-		Context& _c;
-		std::vector<Component*> _components;
+		std::vector<const Component*> _components;
 	public:
 		Group(Context& c);
 		virtual ~Group();
-		Group* add(Component* component);
-		virtual void run();
+    virtual Group operator+(Component const& component);
+		Group add(const Component& component);
+    virtual void run() const;
 };
 
 class Accept : public Component {
 	private:
-		Context& _c;
 		bool (*_f)(Context& c);
 	public:
 		virtual ~Accept();
 		Accept(Context &c, bool (*f)(Context& c));
-		virtual void run();
+		virtual void run() const;
 };
 
 template <typename T>
 class AcceptTemplate : public Component {
 	private:
-		Context& _c;
 		T _arg;
 		bool (*_f)(Context& c, T arg);
 	public:
 		virtual ~AcceptTemplate();
 		AcceptTemplate(Context &c, T arg, bool (*f)(Context& c, T arg));
-		virtual void run();
+		virtual void run() const;
 };
 
 template <typename T>
-AcceptTemplate<T>::AcceptTemplate(Context &c, T arg, bool (*f)(Context& c, T arg)) : _c(c) {
+AcceptTemplate<T>::AcceptTemplate(Context &c, T arg, bool (*f)(Context& c, T arg)) : Component(c) {
 	this->_arg = arg;
 	this->_f = f;
 }
@@ -101,7 +105,7 @@ template <typename T>
 AcceptTemplate<T>::~AcceptTemplate() {}
 
 template <typename T>
-void AcceptTemplate<T>::run() {
+void AcceptTemplate<T>::run() const {
   if (this->_c.skip <= this->_c.level || !this->_c.state) {
       return;
   } else if (this->_c.idx >= this->_c.str.size()) {
@@ -113,23 +117,20 @@ void AcceptTemplate<T>::run() {
 
 class Repeat : public Component {
 	private:
-		Context& _c;
-		Component* _component;
+		const Component* _component;
 		int _min;
 		int _max;
 	public:
 		Repeat(Context& c, int min, int max, Component* component);
 		virtual ~Repeat();
-		virtual void run();
+		virtual void run() const;
 };
 
 class Alternate : public Component {
-	private:
-		Context& _c;
 	public:
 		virtual ~Alternate();
 		Alternate(Context& c);
-		virtual void run();
+		virtual void run() const;
 };
 
 #endif  // SRCS_PARSER_HPP_
