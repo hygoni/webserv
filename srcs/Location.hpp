@@ -5,12 +5,15 @@
 
 #include <map>
 #include <string>
+#include "Context.hpp"
 
 class Location {
  private:
+    Context&                            _ctx;
     std::string                         _path;
     std::map<std::string, std::string>  _attrs;
  public:
+                            Location(Context& ctx);
     std::map<std::string, std::string>::const_iterator
                             getAttribute(std::string const& key) const;
     std::string const&      getPath() const;

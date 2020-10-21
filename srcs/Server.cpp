@@ -3,6 +3,8 @@
 #include <utility>
 #include "Server.hpp"
 
+Server::Server(std::string const& str) : _ctx(str) {}
+
 void Server::setAttribute
 (std::string const& key, std::string const& value) {
     this->_attrs.insert(std::make_pair(key, value));

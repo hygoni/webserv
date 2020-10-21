@@ -3,6 +3,8 @@
 #include "Location.hpp"
 #include <utility>
 
+Location::Location(Context& ctx) : _ctx(ctx) {}
+
 void Location::setAttribute
 (std::string const& key, std::string const& value) {
     this->_attrs.insert(std::make_pair(key, value));
