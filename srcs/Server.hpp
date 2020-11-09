@@ -11,11 +11,11 @@
 
 class Server {
  private:
-     Context                            _ctx;
+     std::vector<std::string>           _text;
      std::map<std::string, std::string> _attrs;
      std::vector<Location>              _locations;
  public:
-                            Server(std::string const& str);
+                            Server(int fd);
      std::map<std::string, std::string>::const_iterator
                             getAttribute(std::string const& key) const;
      std::vector<Location>::const_iterator
