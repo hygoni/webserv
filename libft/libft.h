@@ -6,7 +6,7 @@
 /*   By: hyeyoo <9hrack@gmail.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/24 14:59:42 by hyeyoo            #+#    #+#             */
-/*   Updated: 2020/04/06 03:13:40 by hyeyoo           ###   ########.fr       */
+/*   Updated: 2020/11/09 16:53:40 by hyeyoo           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,9 @@ typedef struct	s_list
 	void			*content;
 	struct s_list	*next;
 }				t_list;
+
+
+int				get_next_line(int fd, char **line);
 
 t_list			*ft_lstnew(void *content);
 t_list			*ft_lstlast(t_list *lst);
