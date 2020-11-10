@@ -7,7 +7,6 @@
 #include <map>
 #include <vector>
 #include "Location.hpp"
-#include "Context.hpp"
 
 class Server {
  private:

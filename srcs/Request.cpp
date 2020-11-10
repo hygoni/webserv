@@ -1,6 +1,5 @@
 #include "Request.hpp"
 #include "libft.h"
-#include "construct.hpp"
 // HTTP-message   = start-line
 //                           *( header-field CRLF )
 //                           CRLF

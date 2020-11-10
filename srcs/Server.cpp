@@ -4,7 +4,6 @@
 #include <utility>
 #include "libft.h"
 #include "tokenize.hpp"
-#include "ConfigParser.hpp"
 #include "Server.hpp"
 
 /*
@@ -76,10 +75,12 @@ void Server::setAttribute
 
 std::map<std::string, std::string>::const_iterator Server::getAttribute
 (std::string const& key) const {
+    (void)key;
     return this->_attrs.cbegin();
 }
 
 void Server::addLocation(Location location) {
+    (void)location;
 }
 
 std::vector<Location>::const_iterator Server::getLocations() const {

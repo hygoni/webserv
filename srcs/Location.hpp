@@ -5,7 +5,6 @@
 
 #include <map>
 #include <string>
-#include "Context.hpp"
 
 class Location {
  private:
