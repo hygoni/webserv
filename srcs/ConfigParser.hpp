@@ -7,10 +7,7 @@
 
 class ConfigParser {
  public:
-    static bool parseKey(Context& ctx);
-    static bool parseValue(Context& ctx);
-    static bool parseAttribute(Context& ctx);
-    static bool parseLocation(Context& ctx);
+
 };
 
 #endif  // SRCS_CONFIGPARSER_HPP_

@@ -3,11 +3,7 @@
 #include "Location.hpp"
 #include <utility>
 
-Location::Location(Context& ctx) : _ctx(ctx) {}
-
-bool Location::parseLocation(Context& ctx) {
-
-}
+Location::Location() {}
 
 void Location::setAttribute
 (std::string const& key, std::string const& value) {
