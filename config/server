@@ -1,5 +1,17 @@
+<<<<<<< HEAD
 listen 80
 server_name _
 path /
 root /var/www/default
 index index.html index.htm
+=======
+server begin
+listen 80 default
+server_name _
+  location begin
+    path /
+    root /var/www/default
+    index index.html index.htm
+  location end
+server end
+>>>>>>> b5ddf4bb69a78b59a8bc3e947367d2da5f4860eb

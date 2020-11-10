@@ -39,11 +39,8 @@ void Server::parseServer() {
     if (token.size() <= 0)
       continue;
     std::string key = token[0];
-    if (key.compare("listen") == 0) {
-        assert_token_size(token.size(), 2);
-        std::string value = token[1];
-        this->setAttribute(key, value);
-    } else if (key.compare("server_name") == 0 ||
+    if (key.compare("listen") == 0 ||
+            key.compare("server_name") == 0 ||
             key.compare("root") == 0 ||
             key.compare("path") == 0) {
         assert_token_size(token.size(), 2);

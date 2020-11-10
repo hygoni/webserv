@@ -1,10 +1,12 @@
+/* Copyright 2020 hyeyoo */
+
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include "tokenize.hpp"
 
-void tokenize(const std::string& str, std::vector<std::string>& token)
-{
+void tokenize(const std::string& str, std::vector<std::string>& token) {
   const std::string delimiter = " \t";
   std::string::size_type last_pos = str.find_first_not_of(delimiter, 0);
   std::string::size_type pos = str.find_first_of(delimiter, 0);

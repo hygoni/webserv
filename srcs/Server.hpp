@@ -15,7 +15,7 @@ class Server {
      std::map<std::string, std::string> _attrs;
      std::vector<Location>              _locations;
  public:
-                            Server(int fd);
+     explicit               Server(int fd);
      void                   parseServer();
      void                   validate();
      std::map<std::string, std::string>::const_iterator
