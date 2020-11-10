@@ -9,6 +9,7 @@
 #include <cerrno>
 #include <string>
 
+#include "Request.hpp"
 #define BUFSIZE 4096
 
 int    main(void) {
@@ -52,7 +53,6 @@ int    main(void) {
         /* accept new sockets if fd is set */
         if (FD_ISSET(server_fd, &ready_fds)) {
             addr_len = sizeof(client_addr);
-            std::cout << "hello accept" << std::endl;
             client_fd = \
                 accept(server_fd, (struct sockaddr *)&client_addr, &addr_len);
             FD_SET(client_fd, &current_fds);
@@ -62,7 +62,6 @@ int    main(void) {
         }
         for (int fd = 3; fd <= max_fd; fd++) {
             int n_read;
-            std::cout << "reading from " << fd << "..." << std::endl;
             if (FD_ISSET(fd, &ready_fds)) {
                 /* when reading request is done */
                 if ((n_read = recv(fd, read_buf, BUFSIZE - 1, 0)) == 0) {
@@ -73,16 +72,18 @@ int    main(void) {
                 } else {
                     read_buf[n_read] = '\0';
                     buf[fd] += std::string(read_buf);
-                    std::string response = "HTTP/1.1 200 OK\n"
+                    Request req(buf[fd]);
+                    std::cout << req << std::endl;
+                    std::string response = "HTTP/1.1 ";
+                    try {
+                      response += "200";
+                    } catch (HttpException& err) {
+                      response += std::to_string(err.getStatus());
+                    }
+                    response += " OK\n"
                     "Date: Sun, 10 Oct 2010 23:26:07 GMT\n"
                     "Server: Apache/2.2.8 (Ubuntu) "
-                    "mod_ssl/2.2.8 OpenSSL/0.9.8g\n"
-                    "Last-Modified: Sun, 26 Sep 2010 22:04:35 GMT\n"
-                    "ETag: \"45b6-834-49130cc1182c0\""
-                    "\nAccept-Ranges: bytes"
                     "\nContent-Length: 12\n"
-                    "Connection: close\n"
-                    "Content-Type: text/html\n"
                     "\nHello world!";
                     send(fd, response.c_str(), response.size(), 0);
                 }
