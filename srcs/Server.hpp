@@ -13,17 +13,20 @@ class Server {
      std::vector<std::string>           _text;
      std::map<std::string, std::string> _attrs;
      std::vector<Location>              _locations;
+
+     int                                _listen;
+     std::string                        _server_name;
  public:
      explicit               Server(int fd);
+     /* parsing */
      void                   parseServer();
      void                   validate();
-     std::map<std::string, std::string>::const_iterator
-                            getAttribute(std::string const& key) const;
-     std::vector<Location>::const_iterator
+     void                   addLocation(Location location);
+     /* getters */
+     std::vector<Location> const&
                             getLocations() const;
-    void                    addLocation(Location location);
-    void                    setAttribute
-                            (std::string const& key, std::string const& value);
+     int                    getListen() const;
+     std::string const&     getServerName() const;
 };
 
 #endif  // SRCS_SERVER_HPP_

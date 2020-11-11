@@ -30,8 +30,18 @@ void assert_token_size(int size, int minimum) {
         throw std::exception();
 }
 
+void validateLocation(std::map<std::string, std::string> location) {
+    if (location.find("path") == location.end() ||
+            location.find("root") == location.end()) {
+        throw std::exception();
+    }
+}
+
 void Server::parseServer() {
   std::vector<std::string> token;
+  std::map<std::string, std::string> location_map;
+  std::vector<std::string> index;
+
   for (size_t i = 0; i < this->_text.size(); i++) {
     tokenize(this->_text[i], token);
     /* skip empty line */
@@ -39,22 +49,34 @@ void Server::parseServer() {
       continue;
     std::string key = token[0];
     if (key.compare("listen") == 0 ||
-            key.compare("server_name") == 0 ||
-            key.compare("root") == 0 ||
-            key.compare("path") == 0) {
+            key.compare("server_name") == 0) {
         assert_token_size(token.size(), 2);
         std::string value = token[1];
-        this->setAttribute(key, value);
+        this->_attrs[key] = value;
+    } else if (key.compare("path") == 0 ||
+            key.compare("root == 0")) {
+            assert_token_size(token.size(), 2);
+            std::string value = token[1];
+            location_map[key] = value;
+
     } else if (key.compare("index") == 0) {
         assert_token_size(token.size(), 2);
-        std::string value = "";
         for (size_t i = 1; i < token.size(); i++) {
-            value += token[i];
+            index.push_back(token[i]);
         }
-        this->setAttribute(key, value);
     }
     token.clear();
   }
+
+  /* validation */
+  validate();
+  this->_listen = stoi(this->_attrs["listen"]); /* caution: parse error */
+  this->_server_name = this->_attrs["server_name"];
+  validateLocation(location_map);
+  
+  Location location(location_map["path"], location_map["path"]);
+  location.setIndex(index);
+  this->addLocation(location);
 }
 
 /*
@@ -62,27 +84,23 @@ void Server::parseServer() {
  */
 void Server::validate() {
     if (this->_attrs.find("listen") == this->_attrs.end() ||
-            this->_attrs.find("path") == this->_attrs.end() ||
-            this->_attrs.find("root") == this->_attrs.end()) {
+            this->_attrs.find("server_name") == this->_attrs.end()) {
         throw std::exception();
     }
 }
 
-void Server::setAttribute
-(std::string const& key, std::string const& value) {
-    this->_attrs[key] = value;
-}
-
-std::map<std::string, std::string>::const_iterator Server::getAttribute
-(std::string const& key) const {
-    (void)key;
-    return this->_attrs.cbegin();
-}
-
 void Server::addLocation(Location location) {
-    (void)location;
+    this->_locations.push_back(location);
 }
 
-std::vector<Location>::const_iterator Server::getLocations() const {
-    return this->_locations.cbegin();
+std::vector<Location> const& Server::getLocations() const {
+    return this->_locations;
+}
+
+int Server::getListen() const {
+    return this->_listen;
+}
+
+std::string const& Server::getServerName() const {
+    return this->_server_name;
 }
