@@ -11,37 +11,12 @@
 /* ************************************************************************** */
 
 #include <stdlib.h>
-#include "get_next_line.hpp"
 #include <string.h>
+#include "get_next_line.hpp"
+#include "libft.h"
 
-char	*ft_strchr(const char *str, int c)
-{
-	while (*str != '\0')
-	{
-		if (*str == c)
-			return ((char*)str);
-		str++;
-	}
-	return (NULL);
-}
 
-char	*ft_strdup(const char *str)
-{
-	char	*copied;
-	size_t	len;
-
-	len = 0;
-	while (str[len] != '\0')
-	{
-		len++;
-	}
-	copied = (char*)malloc(sizeof(char) * (len + 1));
-	ft_memcpy(copied, str, len);
-	copied[len] = '\0';
-	return (copied);
-}
-
-void	ft_lstremove(t_list **lst, int fd, t_list *prev, t_list *current)
+void ft_lstremove(t_buf **lst, int fd, t_buf *prev, t_buf *current)
 {
 	while (current)
 	{
@@ -69,11 +44,11 @@ void	ft_lstremove(t_list **lst, int fd, t_list *prev, t_list *current)
 	}
 }
 
-t_list	*ft_lstnew(int fd)
+t_buf	*ft_lstnew(int fd)
 {
-	t_list	*list;
+	t_buf	*list;
 
-	if ((list = (t_list*)malloc(sizeof(t_list))) == NULL)
+	if ((list = (t_buf*)malloc(sizeof(t_buf))) == NULL)
 		return (NULL);
 	if ((list->buf = ft_strdup("")) == NULL)
 		return (NULL);
@@ -82,7 +57,7 @@ t_list	*ft_lstnew(int fd)
 	return (list);
 }
 
-t_list	*ft_lstfind(t_list *lst, int fd)
+t_buf	*ft_lstfind(t_buf *lst, int fd)
 {
 	while (lst != NULL)
 	{
