@@ -4,5 +4,4 @@ server_name _
 client_body_size_limit 8000
 client_header_size_limit 8000
 
-location location_basic
-location location_cgi
+location ./config/location_basic

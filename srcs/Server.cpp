@@ -26,11 +26,11 @@ Server::Server(const char *path) {
   }
   if (ret < 0)
     throw std::exception();
-  parseServer();
+  parse();
   validate();
 }
 
-void Server::parseServer() {
+void Server::parse() {
   std::vector<std::string> token;
   std::map<std::string, std::string> location_map;
   std::vector<std::string> index;
@@ -80,7 +80,7 @@ void Server::validate() {
         std::stoi(this->_attrs["client_body_size_limit"]);
     }
     if (this->_attrs.find("client_header_size_limit") != this->_attrs.end()) {
-      this->_client_body_size_limit = 
+      this->_client_header_size_limit = 
         std::stoi(this->_attrs["client_header_size_limit"]);
     }
 }

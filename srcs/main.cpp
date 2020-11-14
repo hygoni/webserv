@@ -1,10 +1,13 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include <iostream>
 #include "Server.hpp"
+#include "Config.hpp"
 
 int     main(void)
 {
-    Server server("./config/server");
+    Config::createInstance("./config/config");
+    Config* config = Config::getInstance();
+
+    (void)config;
+
     return 0;
 }

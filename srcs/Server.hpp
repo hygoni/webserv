@@ -22,7 +22,7 @@ class Server {
  public:
      explicit               Server(const char *path);
      /* parsing */
-     void                   parseServer();
+     void                   parse();
      void                   validate();
      void                   addLocation(Location location);
      /* getters */
