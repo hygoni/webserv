@@ -1,17 +1,15 @@
-#include <stdio.h>
+/* Copyright 2020 hyeyoo, hyekim */
+
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
 #include <unistd.h>
-<<<<<<< Updated upstream
-#include <fcntl.h>
-#include "Server.hpp"
+#include <iostream>
+#include <cstring>
+#include <cerrno>
+#include <string>
 
-int     main(void)
-{
-    int fd = open("./config/server", O_RDONLY);
-    if (fd < 0)
-        return 1;
-
-    Server server(fd);
-=======
+#include <stdio.h>
 #include <iostream>
 #include "Request.hpp"
 #include <cstring>
@@ -105,6 +103,5 @@ int    main(void) {
             }
         }
     }
->>>>>>> Stashed changes
     return 0;
 }
