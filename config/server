@@ -1,17 +1,8 @@
 listen 80
 server_name _
 
-allowed_method GET POST
-
 client_body_size_limit 8000
 client_header_size_limit 8000
 
-default_error_page /
-directory_listing on
-
-cgi_path /
-cgi_extension .php .bin .cgi
-
-path /
-root /var/www/default
-index index.html index.htm
+location location_basic
+location location_cgi
