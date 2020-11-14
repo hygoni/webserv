@@ -4,6 +4,7 @@
 /* Copyright 2020 hyeyoo */
 
 #include <map>
+#include <sys/wait.h>
 #include <string>
 
 std::string run_cgi
