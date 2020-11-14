@@ -16,8 +16,11 @@ class Server {
 
      int                                _listen;
      std::string                        _server_name;
+     int                                _client_body_size_limit;
+     int                                _client_header_size_limit;
+
  public:
-     explicit               Server(int fd);
+     explicit               Server(const char *path);
      /* parsing */
      void                   parseServer();
      void                   validate();

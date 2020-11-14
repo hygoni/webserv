@@ -5,15 +5,25 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 class Location {
  private:
+   std::vector<std::string>             _text;
+    std::map<std::string, std::string>  _attrs;
     std::string                         _path;
     std::string                         _root;
     std::vector<std::string>            _index;
+    std::vector<std::string>            _allowed_method;
+    std::string                         _cgi_path;
+    std::vector<std::string>            _cgi_extension;
+    bool                                _directory_listing;
+    std::string                         _default_error_page;
+
  public:
-                                    Location
-                                    (std::string const& path, std::string const& root);
+                                    Location(const char *path);
+    void                            parse();
+    void                            validate();
     std::string const&              getPath() const;
     std::string const&              getRoot() const;
     std::vector<std::string> const& getIndex() const;

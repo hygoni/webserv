@@ -5,10 +5,6 @@
 
 int     main(void)
 {
-    int fd = open("./config/server", O_RDONLY);
-    if (fd < 0)
-        return 1;
-
-    Server server(fd);
+    Server server("./config/server");
     return 0;
 }
