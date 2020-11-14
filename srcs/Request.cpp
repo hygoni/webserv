@@ -7,6 +7,9 @@
 // start-line = method SP request-target SP HTTP-version CRLF
 // header-field = field-name ":" OWS field-value OWS
 
+Request::~Request() {
+}
+
 void    Request::initMethod(std::string method) {
   this->_method = method;
 }
@@ -22,6 +25,7 @@ void    Request::initVersion(std::string version) {
     throw HttpException(400);
   this->_version = version;
 }
+
 
 void    Request::initStartLine(std::string raw) {
   size_t  start = 0;
@@ -65,7 +69,7 @@ void    Request::initHeaders(std::string raw) {
   size_t      start = 0;
   std::string header_field;
 
-  for (size_t i = 0; i < raw.length() - 1; i++) {
+  for (size_t i = 0; raw.length() && i < raw.length() - 1; i++) {
     if (raw.at(i) == '\r' && raw.at(i + 1) == '\n') {
       if (start == i)
         return ;
@@ -87,7 +91,63 @@ Request::Request(std::string http_message) {
     throw HttpException(400);
 }
 
-void    Request::debugOstream(std::ostream& os) const {
+void  Request::addBody(const std::string & str) {
+  std::string   extra;
+  std::map<std::string, std::string>::iterator it;
+  
+  it = _headers.find("Transfer-Encoding");
+  if (it != _headers.end() && it->first == "chunked") {
+    extra = this->parseChunk(str);
+  } else {
+    extra = str;
+  }
+  if (extra.length() + _body.length() > MAX_BODY_SIZE)
+    throw HttpException(413);
+  this->_body += extra;
+}
+// chunked-body   = *chunk
+//                                last-chunk
+//                               trailer-part
+//                               CRLF
+// chunk           = chunk-size [ chunk-ext ] CRLF
+//                         chunk-data CRLF
+// chunk-size    = 1*HEXDIG
+// last-chunk    = 1*("0") [ chunk-ext ] CRLF
+// chunk-data     = 1*OCTET
+static bool  isHex(char c) {
+  if (('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F'))
+    return true;
+  return false;
+}
+
+std::string  Request::parseChunk(const std::string & str) {
+  size_t  chunk_size = 0;
+  size_t  i;
+
+  for (i = 0; i < str.length() && isHex(str.at(i)); i++) {
+    chunk_size *= 16;
+    if (ft_isdigit(str.at(i)))
+      chunk_size += str.at(i) - '0';
+    else
+      chunk_size += ft_tolower(str.at(i)) - 'a' + 16;
+  }
+  if (i == 0 || str.length() - i != chunk_size + 4 
+      || (str.at(i) != '\r' && str.at(i + 1) != '\n')
+      || (str.at(str.length() - 2) != '\r' && str.back() != '\n')) {
+    throw HttpException(400);
+  }
+  if (chunk_size == 0) {
+    _is_closed = true;
+    return std::string();
+  }
+  return str.substr(i + 2, chunk_size);
+}
+
+bool  Request::isClosed() const {
+  return _is_closed;
+}
+
+void  Request::debugOstream(std::ostream& os) const {
   os << "-----Debug Request-----\n" \
   << "Method: \"" << _method << "\"\n" \
   << "Target: \"" << _target << "\"\n" \
