@@ -42,6 +42,7 @@ int    main(void) {
     fd_set ready_fds;
     socklen_t addr_len;
     int max_fd;
+    Request     *requests[FD_SETSIZE] = {NULL, };
     std::string raw_requests[FD_SETSIZE]; // TODO: need init
     char read_buf[BUFSIZE];
 
@@ -86,16 +87,48 @@ int    main(void) {
             int n_read;
             if (FD_ISSET(fd, &ready_fds)) {
                 if ((n_read = recv(fd, read_buf, BUFSIZE - 1, 0)) > 0) {
-                  std::cout << "n_read: " << n_read << std::endl;
                   read_buf[n_read] = '\0';
                   raw_requests[fd] += read_buf;
-                  size_t header_end = raw_requests[fd].find("\r\n\r\n");
-                  // raw_requests[fd].clear();
-                  // close(fd);
-                  // FD_CLR(fd, &current_fds);
+                  // make request
+                  if (requests[fd] == NULL) {
+                    size_t header_end = raw_requests[fd].find("\r\n\r\n");
+                    if (header_end == std::string::npos) {
+                      if (raw_requests[fd].size() <= MAX_HEADER_SIZE) {
+                        continue ;
+                      }
+                      raw_requests[fd].clear();
+                      close(fd);
+                      FD_CLR(fd, &current_fds);
+                    } else {
+                      if (header_end <= MAX_HEADER_SIZE) {
+                        requests[fd] = new Request(raw_requests[fd]);
+                      } else {
+                        close(fd);
+                        FD_CLR(fd, &current_fds);
+                      }
+                      raw_requests[fd].clear();
+                    }
+                  } else {
+                    requests[fd]->addBody(raw_requests[fd]);
+                    raw_requests[fd].clear();
+                    //오류나면 requests[fd]는 delete, set NULL;
+                    //raw_requests[fd].clear();
+                  }
+                  // request is closed
+                  if (requests[fd]->isClosed()) {
+                    //TODO: add response generation and send
+                    send_response_with_status(200, fd);
+                    delete requests[fd];
+                    requests[fd] = NULL;
+                    raw_requests[fd].clear();
+                    close(fd);
+                    FD_CLR(fd, &current_fds);
+                  }
                 } else {
                     std::cout << "connection is unexpectedly closed" << std::endl;
                     std::cout << "or error occurred while reading" << std::endl;
+                    if (requests[fd] != NULL)
+                      delete requests[fd];
                     raw_requests[fd].clear();
                     close(fd);
                     FD_CLR(fd, &current_fds);

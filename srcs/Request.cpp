@@ -40,7 +40,7 @@ void    Request::initStartLine(std::string raw) {
         this->initTarget(raw.substr(start, i - start));
         this->initVersion(raw.substr(i + 1));
         return ;
-      } 
+      }
       start = i + 1;
     }
   }
@@ -82,19 +82,21 @@ void    Request::initHeaders(std::string raw) {
 }
 
 Request::Request(std::string http_message) {
-  size_t start_line_crlf = http_message.find("\r\n");
+  size_t  start_line_crlf = http_message.find("\r\n");
   if (start_line_crlf == std::string::npos)
     throw HttpException(400);
   initStartLine(http_message.substr(0, start_line_crlf));
-  initHeaders(http_message.substr(start_line_crlf + 2));
+  size_t  header_end_crlf = http_message.find("\r\n", start_line_crlf + 2);
+  initHeaders(http_message.substr(start_line_crlf + 2, header_end_crlf + 2));
   if (_headers.find("Host") == _headers.end())
     throw HttpException(400);
+  this->addBody(http_message.substr(header_end_crlf + 2));
 }
 
 void  Request::addBody(const std::string & str) {
   std::string   extra;
   std::map<std::string, std::string>::iterator it;
-  
+
   it = _headers.find("Transfer-Encoding");
   if (it != _headers.end() && it->first == "chunked") {
     extra = this->parseChunk(str);
@@ -131,7 +133,7 @@ std::string  Request::parseChunk(const std::string & str) {
     else
       chunk_size += ft_tolower(str.at(i)) - 'a' + 16;
   }
-  if (i == 0 || str.length() - i != chunk_size + 4 
+  if (i == 0 || str.length() - i != chunk_size + 4
       || (str.at(i) != '\r' && str.at(i + 1) != '\n')
       || (str.at(str.length() - 2) != '\r' && str.back() != '\n')) {
     throw HttpException(400);
@@ -155,7 +157,7 @@ void  Request::debugOstream(std::ostream& os) const {
   << "---------Header--------\n";
   std::map<std::string, std::string>::const_iterator it;
   for (it = _headers.begin(); it != _headers.end(); it = std::next(it))
-    os << it->first << ": \"" << it->second << "\"\n"; 
+    os << it->first << ": \"" << it->second << "\"\n";
   os << "-----------------------\n";
 }
 
