@@ -1,5 +1,7 @@
 listen 80
 server_name _
-path /
-root /var/www/default
-index index.html index.htm
+
+client_body_size_limit 8000
+client_header_size_limit 8000
+
+location ./config/location_basic
