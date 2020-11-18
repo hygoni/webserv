@@ -10,7 +10,7 @@ class Message {
    std::map<int, std::string>   _msg;
    static Message*              _instance;
  public:
-   Message*           getInstance();
+   static Message*              getInstance();
    std::string const& getMessage(int status);
 };
 
