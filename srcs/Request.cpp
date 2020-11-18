@@ -54,14 +54,13 @@ std::pair<std::string, std::string>    Request::makeHeader(std::string header_fi
   field_name = header_field.substr(0, sep_i);
   if (field_name.length() < 1 || field_name.front() == ' ' || field_name.back() == ' ')
     throw HttpException(400);
-  if (field_name == "Host" && _headers.find("Host") != _headers.end())
-    throw HttpException(400);
   field_value = std::string("");
   if (sep_i != header_field.length() - 1) {
     field_value = header_field.substr(sep_i + 1);
     if (field_value.at(0) == ' ')
       field_value = field_value.substr(1);
   }
+  checkOverlapHeader(field_name, field_value);
   return (std::make_pair(field_name, field_value));
 }
 
@@ -81,31 +80,77 @@ void    Request::initHeaders(std::string raw) {
   throw HttpException(400);
 }
 
+void  Request::checkOverlapHeader(const std::string & name, const std::string & value) const {
+  std::map<std::string, std::string>::const_iterator it;
+  if (name == "Host" && _headers.find("Host") != _headers.end())
+    throw HttpException(400);
+
+  if (_headers.find("Transfer-Encoding") == _headers.end())
+    return ;
+  if (name == "Content-Length" && (it = _headers.find("Content-Length")) != _headers.end()
+      && it->second != value)
+    throw HttpException(400);
+}
+
+void  Request::checkHeaders() {
+  std::map<std::string, std::string>::iterator it;
+  size_t  i;
+
+  if (_headers.find("Host") == _headers.end())
+    throw HttpException(400);
+  if ((it = _headers.find("Transfer-Encoding")) != _headers.end()) {
+    if (it->second != "chunked")
+      throw HttpException(400); // TODO: abnf OWS ',' required
+    _headers.erase("Content-Length");
+    _chunked = true;
+  } else if ((it = _headers.find("Content-Length")) != _headers.end()) {
+    for (i = 0; i < it->second.length() && ft_isdigit(it->second.at(i)); i++) {
+      _content_length = _content_length * 10 + it->second.at(i) - '0';
+    }
+    if (i == 0 || i != it->second.length())
+      throw HttpException(400);
+  }
+}
+
 Request::Request(std::string http_message) {
+  _is_closed = false;
+  _chunked = false;
+  _content_length = 0;
   size_t  start_line_crlf = http_message.find("\r\n");
   if (start_line_crlf == std::string::npos)
     throw HttpException(400);
   initStartLine(http_message.substr(0, start_line_crlf));
-  size_t  header_end_crlf = http_message.find("\r\n", start_line_crlf + 2);
+  size_t  header_end_crlf = http_message.find("\r\n\r\n", start_line_crlf + 2);
   initHeaders(http_message.substr(start_line_crlf + 2, header_end_crlf + 2));
-  if (_headers.find("Host") == _headers.end())
-    throw HttpException(400);
+  checkHeaders();
+  if (_chunked == false && _content_length == 0)
+    _is_closed = true;
   this->addBody(http_message.substr(header_end_crlf + 2));
+  std::cout << _is_closed << " CL: " << _content_length << std::endl;
 }
 
 void  Request::addBody(const std::string & str) {
   std::string   extra;
   std::map<std::string, std::string>::iterator it;
 
-  it = _headers.find("Transfer-Encoding");
-  if (it != _headers.end() && it->first == "chunked") {
-    extra = this->parseChunk(str);
+  if (_is_closed)
+    return ;
+  if (_chunked) {
+    extra = parseChunk(str);
   } else {
     extra = str;
   }
   if (extra.length() + _body.length() > MAX_BODY_SIZE)
     throw HttpException(413);
-  this->_body += extra;
+  _body += extra;
+  if (_body.length() >= _content_length) {
+    _body = _body.substr(0, _content_length);
+    _is_closed = true;
+  }
+}
+
+void  Request::checkClosed() {
+
 }
 // chunked-body   = *chunk
 //                                last-chunk
