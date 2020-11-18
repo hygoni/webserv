@@ -17,3 +17,10 @@ void tokenize(const std::string& str, std::vector<std::string>& token) {
     pos = str.find_first_of(delimiter, last_pos);
   }
 }
+
+void assert_token_size(int size, int minimum) {
+    if (minimum == 0)
+        return;
+    if (size < minimum)
+        throw std::exception();
+}
