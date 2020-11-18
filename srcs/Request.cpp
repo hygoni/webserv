@@ -194,6 +194,27 @@ bool  Request::isClosed() const {
   return _is_closed;
 }
 
+std::string Request::getMethod() const {
+  return _method;
+}
+
+std::string Request::getTarget() const {
+  return _target;
+}
+
+std::string Request::getVersion() const {
+  return _version;
+}
+
+std::string Request::getBody() const {
+  return _body;
+}
+
+std::map<std::string, std::string> Request::getHeaders() const {
+  return _headers;
+}
+
+
 void  Request::debugOstream(std::ostream& os) const {
   os << "-----Debug Request-----\n" \
   << "Method: \"" << _method << "\"\n" \

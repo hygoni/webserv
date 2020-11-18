@@ -41,6 +41,7 @@ public:
   std::string getTarget() const;
   std::string getVersion() const;
   std::string getBody() const;
+  std::map<std::string, std::string> getHeaders() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Request& request);
