@@ -30,6 +30,9 @@ class Server {
                             getLocations() const;
      int                    getListen() const;
      std::string const&     getServerName() const;
+     int                    getClientBodySizeLimit() const;
+     int                    getClientHeaderSizeLimit() const;
+
 };
 
 #endif  // SRCS_SERVER_HPP_

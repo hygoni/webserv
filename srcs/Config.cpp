@@ -62,3 +62,7 @@ void Config::validate() {
     if (this->_servers.size() == 0)
         throw std::exception();
 }
+
+std::vector<Server> const& Config::getServers() const {
+    return this->_servers;
+}

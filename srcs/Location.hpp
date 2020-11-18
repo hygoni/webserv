@@ -24,11 +24,17 @@ class Location {
                                     Location(const char *path);
     void                            parse();
     void                            validate();
+    void                            addIndex(std::string const& index);
+    void                            setIndex(std::vector<std::string> index);
+    /* getters */
     std::string const&              getPath() const;
     std::string const&              getRoot() const;
     std::vector<std::string> const& getIndex() const;
-    void                            addIndex(std::string const& index);
-    void                            setIndex(std::vector<std::string> index);
+    std::vector<std::string> const& getAllowedMethod() const;
+    std::string const&              getCGIPath() const;
+    std::vector<std::string> const& getCGIExtension() const;
+    bool                            getDirectoryListing() const;
+    std::string const&              getDefaultErrorPage() const;
 };
 
 #endif  // SRCS_LOCATION_HPP_

@@ -21,6 +21,7 @@ class Config {
  public:
      static void                createInstance(const char* path);
      static Config*             getInstance();
+     std::vector<Server> const& getServers() const;
      void                       parse();
      void                       validate();
 };

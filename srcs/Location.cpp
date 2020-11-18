@@ -109,3 +109,23 @@ void Location::addIndex(std::string const& index) {
 void Location::setIndex(std::vector<std::string> index) {
     this->_index = index;
 }
+
+std::vector<std::string> const& Location::getAllowedMethod() const {
+    return this->_allowed_method;
+}
+
+std::string const& Location::getCGIPath() const {
+    return this->_cgi_path;
+}
+
+std::vector<std::string> const& Location::getCGIExtension() const {
+    return this->_cgi_extension;
+}
+
+bool Location::getDirectoryListing() const {
+    return this->_directory_listing;
+}
+
+std::string const& Location::getDefaultErrorPage() const {
+    return this->_default_error_page;
+}

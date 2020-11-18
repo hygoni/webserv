@@ -100,3 +100,11 @@ int Server::getListen() const {
 std::string const& Server::getServerName() const {
     return this->_server_name;
 }
+
+int Server::getClientBodySizeLimit() const {
+    return this->_client_body_size_limit;
+}
+
+int Server::getClientHeaderSizeLimit() const {
+    return this->_client_header_size_limit;
+}
