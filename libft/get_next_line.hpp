@@ -16,21 +16,16 @@
 # define BUFFER_SIZE 4096
 # include <string.h>
 
-typedef struct	s_list
+typedef struct	s_buf
 {
 	int				fd;
 	char			*buf;
-	struct s_list	*next;
-}				t_list;
+	struct s_buf	*next;
+}				t_buf;
 
-t_list			*ft_lstnew(int fd);
-t_list			*ft_lstfind(t_list *lst, int fd);
-void			ft_lstadd_front(t_list **lst, t_list *new_node);
-char			*ft_strchr(const char *str, int c);
-char			*ft_strjoin(char *original, char *to_append);
+t_buf			*ft_lstnew(int fd);
+t_buf			*ft_lstfind(t_buf *lst, int fd);
 int				get_next_line(int fd, char **line);
-void			*ft_memcpy(void *dest, const void *src, size_t n);
-char			*ft_strdup(const char *str);
-void			ft_lstremove(t_list **lst, int fd, t_list *prev, t_list *curr);
+void			ft_lstremove(t_buf **lst, int fd, t_buf *prev, t_buf *curr);
 
 #endif

@@ -13,45 +13,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "get_next_line.hpp"
+#include "libft.h"
 
-void		*ft_memcpy(void *dest, const void *src, size_t n)
-{
-	char		*c_dest;
-	const char	*c_src;
-	size_t		i;
-
-	c_dest = (char*)dest;
-	c_src = (char*)src;
-	i = 0;
-	while (i < n)
-	{
-		c_dest[i] = c_src[i];
-		i++;
-	}
-	return (dest);
-}
-
-char		*ft_strjoin(char *orig, char *append)
-{
-	char	*ret;
-	size_t	o_len;
-	size_t	append_len;
-
-	o_len = 0;
-	append_len = 0;
-	while (orig[o_len] != '\0')
-		o_len++;
-	while (append[append_len] != '\0')
-		append_len++;
-	if ((ret = (char*)malloc(sizeof(char) * (o_len + append_len + 1))) == NULL)
-		return (NULL);
-	ft_memcpy(ret, orig, o_len);
-	ft_memcpy(ret + o_len, append, append_len);
-	ret[o_len + append_len] = '\0';
-	return (ret);
-}
-
-static int	parse_next_line(char **line, t_list *list)
+static int	parse_next_line(char **line, t_buf *list)
 {
 	char	*new_line;
 	char	*buf;
@@ -74,7 +38,7 @@ static int	parse_next_line(char **line, t_list *list)
 	}
 }
 
-static int	read_next_line(int fd, char **line, t_list *list)
+static int	read_next_line(int fd, char **line, t_buf *list)
 {
 	char	*new_line;
 	int		n_read;
@@ -99,9 +63,9 @@ static int	read_next_line(int fd, char **line, t_list *list)
 
 int			get_next_line(int fd, char **line)
 {
-	t_list			*new_node;
+	t_buf			*new_node;
 	int				ret;
-	static t_list	*buf_list = NULL;
+	static t_buf	*buf_list = NULL;
 
 	if (BUFFER_SIZE <= 0 || !line || fd < 0)
 		return (-1);

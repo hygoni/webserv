@@ -9,7 +9,7 @@ LIB = -L./libft -lft
 
 ${NAME}: ${OBJS}
 	make -C ./libft
-	${CC} ${CFLAGS} ${INC} ${LIB} ${OBJS} -o ${NAME}
+	${CC} ${CFLAGS} ${INC} ${OBJS} ${LIB} -o ${NAME}
 
 
 %.o : %.cpp
