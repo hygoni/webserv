@@ -93,6 +93,7 @@ void Response::processByMethod
   if (request.getMethod().compare("GET") == 0) {
     processGETMethod(request, location);
   } else if (request.getMethod().compare("HEAD") == 0) {
+    processHEADMethod(request, location);
   } else if (request.getMethod().compare("POST") == 0) {
   } else if (request.getMethod().compare("PUT") == 0) {
   } else if (request.getMethod().compare("DELETE") == 0) {
@@ -151,6 +152,38 @@ void Response::processGETMethod
     this->endHeader();
     this->addBody(content);
   }
+}
+
+/*
+ * processHEADMethod
+ * processes HEAD request
+ * main difference between GET and HEAD is,
+ * there must be no content in HEAD's response
+ */
+void Response::processHEADMethod
+(Request const& request, Location const& location) {
+  struct stat   buf;
+  std::string   path;
+  int           ret;
+  
+  path = location.getRoot() + request.getTarget();
+  ret = stat(path.c_str(), &buf);
+  if (ret < 0) {
+    if (errno == EACCES) {
+      /* Forbidden */
+      *this = Response(403);
+    } else if (errno == ENOENT) {
+      /* Not Found */
+      *this = Response(404);
+    } else {
+      /* Internal Server Error */
+      *this = Response(500);
+    }
+    return ;
+  }
+  this->addStatusLine(200);
+  this->addHeader("Content-Length", "0");
+  this->endHeader();
 }
 
 /* 
