@@ -58,6 +58,7 @@ void Response::addBody(std::string const& content) {
 Response::Response(int status) : _offset(0) {
   /* status line */
   this->addStatusLine(status);
+  this->addHeader("Content-Length", "0");
   this->endHeader();
 }
 

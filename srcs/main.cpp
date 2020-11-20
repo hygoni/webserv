@@ -11,29 +11,16 @@
 
 #include <stdio.h>
 #include <iostream>
-#include "Request.hpp"
 #include <cstring>
 #include <cerrno>
 #include <string>
+#include "Request.hpp"
+#include "Response.hpp"
+#include "Config.hpp"
 
-#define PORT 8083
+#define PORT 8006
 #define BUFSIZE 8192
 #define MAX_HEADER_SIZE 8192
-// TODO: get MAX_BODY_SIZE from config
-void    send_response_with_status(int status, int fd) {
-  std::string response = "HTTP/1.1 ";
-  response += std::to_string(status);
-  response += " OK\r\nDate: Sun, 10 Oct 2010 23:26:07 GMT\r\n" \
-                    "Server: Apache/2.2.8 (Ubuntu)\r\n" \
-                    "mod_ssl/2.2.8 OpenSSL/0.9.8g\r\n" \
-                    "Last-Modified: Sun, 26 Sep 2010 22:04:35 GMT\r\n" \
-                    "Accept-Ranges: bytes\r\n" \
-                    "Content-Length: 12\r\n" \
-                    "Connection: close\r\n" \
-                    "Content-Type: text/html\r\n" \
-                    "\r\nHello world!";
-  send(fd, response.c_str(), response.size(), 0);
-}
 
 int    main(void) {
   int server_fd, client_fd, fd_num;
@@ -42,29 +29,36 @@ int    main(void) {
   fd_set current_fds;
   fd_set ready_fds;
   socklen_t addr_len;
+  int option = 1;
   int max_fd;
   Request     *requests[FD_SETSIZE] = {NULL, };
-  std::string raw_requests[FD_SETSIZE]; // TODO: need init
+  std::string raw_requests[FD_SETSIZE]; /*TODO: need init */
   char read_buf[BUFSIZE];
 
+  /* load config */
+  Config::createInstance("./config/config");
+  Config* config = Config::getInstance();
+  (void)config;
+ 
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     std::cout << strerror(errno) << std::endl;
     return 1;
   }
+  /* reuse address */
+  setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+  /* TODO: manage multiple servers */
   server_addr.sin_family = AF_INET;
-  /* TODO: read from config */
   server_addr.sin_port = htons(PORT);
   std::cout << "port: " << PORT << std::endl;
-  /* TODO: read from config */
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   memset(&(server_addr.sin_zero), 0, 8);
-
   if (bind(server_fd, (struct sockaddr *)&server_addr,
       sizeof(struct sockaddr)) < 0) {
     std::cout << strerror(errno) << std::endl;
     return 1;
   }
   listen(server_fd, backlog);
+
   FD_ZERO(&current_fds);
   FD_SET(server_fd, &current_fds);
   max_fd = server_fd;
@@ -91,8 +85,7 @@ int    main(void) {
         if ((n_read = recv(fd, read_buf, BUFSIZE - 1, 0)) > 0) {
           read_buf[n_read] = '\0';
           raw_requests[fd] += read_buf;
-          // make request
-
+          /* make new request instance */
           if (requests[fd] == NULL) {
             size_t header_end = raw_requests[fd].find("\r\n\r\n");
             if (header_end == std::string::npos) {
@@ -103,13 +96,15 @@ int    main(void) {
               close(fd);
               FD_CLR(fd, &current_fds);
             } else {
+              /* detect oversized header */
               if (header_end <= MAX_HEADER_SIZE) {
                 try {
                   requests[fd] = new Request(raw_requests[fd]);
                   std::cout << *requests[fd] << std::endl;
                 } catch (HttpException & err) {
                   std::cout << "exception:" << err.getStatus() << std::endl;
-                  send_response_with_status(err.getStatus(), fd);
+                  Response response(err.getStatus());
+                  response.sendResponse(fd);
                   delete requests[fd];
                   requests[fd] = NULL;
                   raw_requests[fd].clear();
@@ -124,15 +119,21 @@ int    main(void) {
               raw_requests[fd].clear();
             }
           } else {
+            /* append on existing request */
             requests[fd]->addBody(raw_requests[fd]);
             raw_requests[fd].clear();
-            //오류나면 requests[fd]는 delete, set NULL;
-            //raw_requests[fd].clear();
+            /* 오류나면 requests[fd]는 delete, set NULL; */
+            /* raw_requests[fd].clear(); */
           }
-          // request is closed
+          /* request is closed */
           if (requests[fd]->isClosed()) {
-            //TODO: add response generation and send
-            send_response_with_status(200, fd);
+            /* TODO: add response generation and send */
+            try {
+              Response response(*requests[fd]);
+              response.sendResponse(fd);
+            } catch (std::exception const& e) {
+              std::cout << "error occurred generating response" << std::endl;
+            }
             delete requests[fd];
             requests[fd] = NULL;
             raw_requests[fd].clear();
