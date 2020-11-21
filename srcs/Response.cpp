@@ -95,6 +95,7 @@ void Response::processByMethod
   } else if (request.getMethod().compare("HEAD") == 0) {
     processHEADMethod(request, location);
   } else if (request.getMethod().compare("POST") == 0) {
+    processPOSTMethod(request, location);
   } else if (request.getMethod().compare("PUT") == 0) {
   } else if (request.getMethod().compare("DELETE") == 0) {
   } else {
@@ -184,6 +185,40 @@ void Response::processHEADMethod
   this->addStatusLine(200);
   this->addHeader("Content-Length", "0");
   this->endHeader();
+}
+
+void Response::processPOSTMethod
+(Request const& request, Location const& location) {
+  struct stat   buf;
+  std::string   path;
+  int           ret;
+  
+  /* POST is allowed only for CGI requests
+   * TODO: add CGI
+   * */
+  if (location.getCGIPath().empty()) {
+    /* Method Not Allowed */
+    *this = Response(405);
+  } else {
+    path = location.getRoot() + request.getTarget();
+    ret = stat(path.c_str(), &buf);
+    if (ret < 0) {
+      if (errno == EACCES) {
+        /* Forbidden */
+        *this = Response(403);
+      } else if (errno == ENOENT) {
+        /* Not Found */
+        *this = Response(404);
+      } else {
+        /* Internal Server Error */
+        *this = Response(500);
+      }
+      return ;
+    }
+    this->addStatusLine(200);
+    this->addHeader("Content-Length", "0");
+    this->endHeader();
+  }
 }
 
 /* 
