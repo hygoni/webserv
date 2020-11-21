@@ -1,7 +1,5 @@
 /* Copyright 2020 hyeyoo */
 
-#define BUFSIZE 8192
-
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -11,27 +9,11 @@
 #include "Config.hpp"
 #include "Message.hpp"
 
-Response::Response(Request const& request) : _offset(0) {
-  std::vector<Server>::const_iterator it;
-  std::vector<Server>::const_iterator ite;
-  Config*                             config;
-  
-  config = Config::getInstance();
-  if (config == nullptr)
-    throw std::exception();
-
-  it = config->getServers().begin();
-  ite = config->getServers().end();
-
-  /* process request */
-  while (it != ite) {
-    Server const& server = *it;
-    if (process(request, server)) {
-        return ;
-    }
-    it++;
+Response::Response
+(Request const& request, Server const& server) : _offset(0) {
+  if (process(request, server)) {
+      return ;
   }
-
   /* no matching server found */
   *this = Response(400);
 }
@@ -91,11 +73,11 @@ bool Response::process(Request const& request, Server const& server) {
 void Response::processByMethod
 (Request const& request, Location const& location) {
   if (request.getMethod().compare("GET") == 0) {
-    processGETMethod(request, location);
+    processGetMethod(request, location);
   } else if (request.getMethod().compare("HEAD") == 0) {
-    processHEADMethod(request, location);
+    processHeadMethod(request, location);
   } else if (request.getMethod().compare("POST") == 0) {
-    processPOSTMethod(request, location);
+    processPostMethod(request, location);
   } else if (request.getMethod().compare("PUT") == 0) {
   } else if (request.getMethod().compare("DELETE") == 0) {
   } else {
@@ -121,7 +103,7 @@ int readContent(std::string const& path, std::string& content) {
   return 0;
 }
 
-void Response::processGETMethod
+void Response::processGetMethod
 (Request const& request, Location const& location) {
   struct stat   buf;
   std::string   path;
@@ -156,12 +138,12 @@ void Response::processGETMethod
 }
 
 /*
- * processHEADMethod
+ * processHeadMethod
  * processes HEAD request
  * main difference between GET and HEAD is,
  * there must be no content in HEAD's response
  */
-void Response::processHEADMethod
+void Response::processHeadMethod
 (Request const& request, Location const& location) {
   struct stat   buf;
   std::string   path;
@@ -187,7 +169,7 @@ void Response::processHEADMethod
   this->endHeader();
 }
 
-void Response::processPOSTMethod
+void Response::processPostMethod
 (Request const& request, Location const& location) {
   struct stat   buf;
   std::string   path;

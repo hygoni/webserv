@@ -19,7 +19,6 @@
 #include "Config.hpp"
 
 #define PORT 8006
-#define BUFSIZE 8192
 #define MAX_HEADER_SIZE 8192
 
 int    main(void) {
@@ -38,6 +37,7 @@ int    main(void) {
   /* load config */
   Config::createInstance("./config/config");
   Config* config = Config::getInstance();
+  Server const& server = config->getServers()[0];
   (void)config;
  
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -129,7 +129,7 @@ int    main(void) {
           if (requests[fd]->isClosed()) {
             /* TODO: add response generation and send */
             try {
-              Response response(*requests[fd]);
+              Response response(*requests[fd], server);
               response.send(fd);
             } catch (std::exception const& e) {
               std::cout << "error occurred generating response" << std::endl;
