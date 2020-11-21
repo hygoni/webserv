@@ -22,7 +22,7 @@ class Response {
   void  addHeader(std::string key, std::string value);
   void  endHeader();
   void  addBody(std::string const& content);
-  int   sendResponse(int fd);
+  int   send(int fd);
 };
 
 #endif  // SRCS_RESPONSE_HPP_

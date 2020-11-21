@@ -104,7 +104,7 @@ int    main(void) {
                 } catch (HttpException & err) {
                   std::cout << "exception:" << err.getStatus() << std::endl;
                   Response response(err.getStatus());
-                  response.sendResponse(fd);
+                  response.send(fd);
                   delete requests[fd];
                   requests[fd] = NULL;
                   raw_requests[fd].clear();
@@ -130,7 +130,7 @@ int    main(void) {
             /* TODO: add response generation and send */
             try {
               Response response(*requests[fd]);
-              response.sendResponse(fd);
+              response.send(fd);
             } catch (std::exception const& e) {
               std::cout << "error occurred generating response" << std::endl;
             }

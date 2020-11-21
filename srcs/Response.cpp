@@ -227,12 +227,12 @@ void Response::processPOSTMethod
  * if val >= 0, it is bytes left to send
  * if val < 0, error occurred while sending
  */
-int Response::sendResponse(int fd) {
+int Response::send(int fd) {
   std::string buf;
   int ret;
 
   buf = this->_response.substr(this->_offset, this->_offset + BUFSIZE);
-  ret = send(fd, buf.c_str(), BUFSIZE, 0);
+  ret = ::send(fd, buf.c_str(), BUFSIZE, 0);
   if (ret < 0)
   return ret;
   /* advance offset */
