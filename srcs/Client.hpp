@@ -5,12 +5,12 @@
 #include "Response.hpp"
 
 class Client {
- private:
-   int        _fd;
-   Request*   _request;
-   Response*  _response;
- public:
+private:
+  int        _fd;
+  Request*   _request;
+  Response*  _response;
+public:
 
-}
+};
 
 #endif  //  SRCS_CLIENT_HPP_
