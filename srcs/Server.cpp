@@ -65,6 +65,9 @@ void Server::parse() {
   validate();
 }
 
+Server::~Server() {
+}
+
 /*
  * check if necessary fields are present
  */
@@ -161,4 +164,8 @@ int Server::getClientHeaderSizeLimit() const {
 
 int Server::getFd() const {
   return this->_fd;
+}
+
+std::vector<Client>&  Server::getClients() {
+  return _clients;
 }

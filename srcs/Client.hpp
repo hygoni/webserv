@@ -2,10 +2,11 @@
 #define SRCS_CLIENT_HPP_
 
 #include "Request.hpp"
+#include "Socket.hpp"
 #include <netinet/in.h>
 
 class Response;
-class Client {
+class Client : public Socket {
 private:
   int        _fd;
   Request*   _request;

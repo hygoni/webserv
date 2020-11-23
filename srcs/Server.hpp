@@ -7,12 +7,11 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include "Client.hpp"
 
 
-class Server {
+class Server : public Socket {
 private:
   std::vector<Client>                 _clients;
   std::vector<std::string>            _text;
@@ -23,17 +22,18 @@ private:
   std::string                         _server_name;
   int                                 _client_body_size_limit;
   int                                 _client_header_size_limit;
-
   int                                 _fd;
+
+  /* parsing */
+  void                                parse();
+  void                                validate();
+  void                                addLocation(Location location);
 
   short                               ft_htons(short num);
   long                                ft_htonl(long num);
 public:
   explicit                            Server(const char *path);
-  /* parsing */
-  void                                parse();
-  void                                validate();
-  void                                addLocation(Location location);
+  virtual                             ~Server();
 
   int                                 initSocket();
   int                                 accept();
@@ -44,6 +44,7 @@ public:
   int                                 getClientBodySizeLimit() const;
   int                                 getClientHeaderSizeLimit() const;
   int                                 getFd() const;
+  std::vector<Client>&                getClients();
 };
 
 #endif  // SRCS_SERVER_HPP_
