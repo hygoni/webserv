@@ -1,5 +1,6 @@
 /* Copyright 2020 hyeyoo */
 
+#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -53,14 +54,16 @@ bool Response::process(Request const& request, Server const& server) {
   /* find matching location */
   while (it != ite) {
     Location const& location = *it;
-    /* TODO: add CGI */
     if (request.getTarget().find(location.getPath()) == 0) {
       std::vector<std::string> allowed = location.getAllowedMethod();
       /* Method Not Allowed */
       if (std::find(allowed.begin(), allowed.end(), request.getMethod())
           == allowed.end() && allowed.size() > 0) {
         *this = Response(405);
+      } else if (!location.getCgiPath.empty()) {
+        processCgi(request, location);
       } else {
+        /* process non-CGI */
         processByMethod(request, location);
       }
       return true;
@@ -70,6 +73,53 @@ bool Response::process(Request const& request, Server const& server) {
   return false;
 }
 
+int Response::writeBody() {
+  int ret = write(_body_write_fd, _body_buf, _body_length);
+  _body_length = 0;
+  return ret;
+}
+
+char* Ressponse::getBodyBuffer() const {
+  return _body_buf;
+}
+
+size_t Ressponse::getBodyLength() const {
+  return _body_length;
+}
+
+void Ressponse::setBodyLength(int len) {
+  _body_length = len;
+}
+
+bool Response::isBodyReady() const {
+  return (_body_length > 0);
+}
+
+int Response::readResponse() {
+  return (_response_length = read(_response_read_fd, _response_buf, BUFSIZE));
+}
+
+char* Response::getResponseBuffer() const {
+  return _response_buf;
+}
+
+size_t Response::getResponseLength() const {
+  return _response_length;
+}
+
+void Response::processCgi
+(Request const& request, Location const& location) {
+  int body_fd[2];
+  pipe(body_fd);
+  std::map<std::string, std::string> env_map;
+  setBodyWriteFd(body_fd[1]);
+  run_cgi(location.getCgiPath().c_str(), env_map, body_fd[0]);
+}
+
+
+/*
+ * TODO: what about CGI?
+ */
 void Response::processByMethod
 (Request const& request, Location const& location) {
   if (request.getMethod().compare("GET") == 0) {
@@ -84,23 +134,6 @@ void Response::processByMethod
     /* Not Implemented */
     *this = Response(501);
   }
-}
-
-int readContent(std::string const& path, std::string& content) {
-  int fd;
-  int ret;
-  char buf[BUFSIZE + 1];
-
-  fd = open(path.c_str(), O_RDONLY);
-  if (fd < 0)
-    return fd;
-  while ((ret = read(fd, buf, BUFSIZE)) > 0) {
-    buf[ret] = '\0';
-    content += std::string(buf);
-  }
-  if (ret < 0)
-    return ret;
-  return 0;
 }
 
 void Response::processGetMethod

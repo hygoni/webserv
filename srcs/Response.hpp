@@ -2,6 +2,7 @@
 #define SRCS_RESPONSE_HPP_
 
 #include <map>
+#include <unistd.h>
 #include "Server.hpp"
 #include "Request.hpp"
 #define BUFSIZE 4096
@@ -11,14 +12,16 @@ class Response {
   int          _offset;
   std::string  _response;
   /*
-   * if _read_fd or _write_fd is negative,
-   * it does not read or write
+   * if fd is negative,
+   * it's not using it
    */
-  int          _read_fd; /* read from file */
-  int          _write_fd; /* write to file */
-  char         _buf[BUFSIZE + 1];
-  int          _len;
-  bool         _ready; /* it's ready to write  */
+  int          _body_write_fd; /* write end of body pipe */
+  char         _body_buf[BUFSIZE + 1];
+  size_t       _body_length;
+  int          _response_read_fd; /* read end of response */
+  char         _response_buf[BUFSIZE + 1];
+  size_t       _response_length;
+  pid_t        _cgi_pid;
  public:
         Response(Request const& request, Server const& server);
         Response(int status);
@@ -32,11 +35,21 @@ class Response {
   void  addHeader(std::string key, std::string value);
   void  endHeader();
   void  addBody(std::string const& content);
-  int   send(int client_fd);
-  int   read();
-  int   getReadFd() const;
-  int   getWriteFd() const;
-  bool  isReadyToWrite() const;
+  
+  int   readBody();
+  int   writeBody();
+  int   readResponse();
+  int   writeResponse();
+  /* getters */
+  int   getBodyWriteFd() const;
+  int   getResponseReadFd() const;
+  pid_t getCgiPid() const;
+  bool  isBodyReady() const;
+  bool  isResponseReady() const;
+  /* setters */
+  void  setResponseReadFd(int fd);
+  void  setBodyWriteFd(int fd);
+  void  setCgiPid(pid_t pid);
 };
 
 #endif  // SRCS_RESPONSE_HPP_
