@@ -5,10 +5,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <algorithm>
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Config.hpp"
 #include "Message.hpp"
+#include "CGI.hpp"
 
 Response::Response
 (Request const& request, Server const& server) : _offset(0) {
@@ -45,6 +47,16 @@ Response::Response(int status) : _offset(0) {
   this->endHeader();
 }
 
+void Response::processCgi
+(Request const& request, Location const& location) {
+  (void)request;
+  int body_fd[2];
+  pipe(body_fd);
+  std::map<std::string, std::string> env_map;
+  setBodyWriteFd(body_fd[1]);
+  run_cgi(*this, location.getCgiPath().c_str(), env_map, body_fd[0]);
+}
+
 bool Response::process(Request const& request, Server const& server) {
   std::vector<Location>::const_iterator it;
   std::vector<Location>::const_iterator ite;
@@ -60,7 +72,8 @@ bool Response::process(Request const& request, Server const& server) {
       if (std::find(allowed.begin(), allowed.end(), request.getMethod())
           == allowed.end() && allowed.size() > 0) {
         *this = Response(405);
-      } else if (!location.getCgiPath.empty()) {
+      } else if (!location.getCgiPath().empty()) {
+        /* process CGI */
         processCgi(request, location);
       } else {
         /* process non-CGI */
@@ -79,15 +92,28 @@ int Response::writeBody() {
   return ret;
 }
 
-char* Ressponse::getBodyBuffer() const {
+int Response::closeBody() {
+  return close(_body_write_fd);
+}
+
+char* Response::getBodyBuffer() {
   return _body_buf;
 }
 
-size_t Ressponse::getBodyLength() const {
+char* Response::getResponseBuffer() {
+  return _response_buf;
+}
+
+size_t Response::getBodyLength() const {
   return _body_length;
 }
 
-void Ressponse::setBodyLength(int len) {
+
+size_t Response::getResponseLength() const {
+  return _response_length;
+}
+
+void Response::setBodyLength(size_t len) {
   _body_length = len;
 }
 
@@ -95,25 +121,20 @@ bool Response::isBodyReady() const {
   return (_body_length > 0);
 }
 
+void Response::setCgiPid(int pid) {
+  _cgi_pid = pid;
+}
+
+void Response::setResponseReadFd(int fd) {
+  _response_read_fd = fd;
+}
+
+void Response::setBodyWriteFd(int fd) {
+  _body_write_fd = fd;
+}
+
 int Response::readResponse() {
   return (_response_length = read(_response_read_fd, _response_buf, BUFSIZE));
-}
-
-char* Response::getResponseBuffer() const {
-  return _response_buf;
-}
-
-size_t Response::getResponseLength() const {
-  return _response_length;
-}
-
-void Response::processCgi
-(Request const& request, Location const& location) {
-  int body_fd[2];
-  pipe(body_fd);
-  std::map<std::string, std::string> env_map;
-  setBodyWriteFd(body_fd[1]);
-  run_cgi(location.getCgiPath().c_str(), env_map, body_fd[0]);
 }
 
 
@@ -158,15 +179,13 @@ void Response::processGetMethod
     return ;
   }
 
-  std::string content;
-  if (readContent(path, content) < 0) {
+  if (false) {
     /* Internal Server Error */
     *this = Response(500);
   } else {
     this->addStatusLine(200);
-    this->addHeader("Content-Length", std::to_string(content.size()));
+    this->addHeader("Content-Length", "0");
     this->endHeader();
-    this->addBody(content);
   }
 }
 
@@ -211,7 +230,7 @@ void Response::processPostMethod
   /* POST is allowed only for CGI requests
    * TODO: add CGI
    * */
-  if (location.getCGIPath().empty()) {
+  if (location.getCgiPath().empty()) {
     /* Method Not Allowed */
     *this = Response(405);
   } else {

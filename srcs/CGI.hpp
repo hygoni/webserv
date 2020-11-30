@@ -6,9 +6,14 @@
 #include <map>
 #include <sys/wait.h>
 #include <string>
+#include "Response.hpp"
 
-std::string run_cgi
-(char* cgi_path, std::map<std::string, std::string> const& env_map);
+void run_cgi
+(Response& response,
+const char* cgi_path,
+std::map<std::string, std::string> const& env_map,
+int body_read_fd);
+
 char        **generate_env(std::map<std::string, std::string> const& env_map);
 
 #endif  // SRCS_CGI_HPP_

@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include "CGI.hpp"
+#include "Response.hpp"
 #include "libft.h"
 
 #define BUFSIZE 4096
@@ -39,16 +40,19 @@ char    **generate_env(std::map<std::string, std::string> const& env_map) {
 
 void run_cgi
 (Response& response,
-char* cgi_path,
+const char* cgi_path,
 std::map<std::string, std::string> const& env_map,
 int body_read_fd) {
     int response_fd[2];
     pid_t pid;
+    char *dup;
     char **env;
-    char* argv[] = {cgi_path, NULL};
+    char *argv[] = {(dup = ft_strdup(cgi_path)), NULL};
 
-    if ((env = generate_env(env_map)) == NULL)
-        throw std::exception();
+    if ((env = generate_env(env_map)) == NULL) {
+      free(dup);
+      throw std::exception();
+    }
     pipe(response_fd);
     pid = fork();
     if (pid == 0) {
@@ -62,9 +66,10 @@ int body_read_fd) {
         if (execve(cgi_path, argv, env) < 0)
             throw std::exception();
     } else {
+        free(dup);
         ft_free_null_terminated_array(reinterpret_cast<void**>(env));
         close(response_fd[1]);
-        response.setResponseReadFd(fd[0]);
+        response.setResponseReadFd(response_fd[0]);
         response.setCgiPid(pid);
     }
 }

@@ -31,22 +31,30 @@ class Response {
   void  processGetMethod(Request const& request, Location const& location);
   void  processHeadMethod(Request const& request, Location const& location);
   void  processPostMethod(Request const& request, Location const& location);
+  void  processCgi(Request const& request, Location const& location);
+  int   send(int fd);
   void  addStatusLine(int status);
   void  addHeader(std::string key, std::string value);
   void  endHeader();
   void  addBody(std::string const& content);
-  
+ 
   int   readBody();
   int   writeBody();
+  int   closeBody();
   int   readResponse();
   int   writeResponse();
   /* getters */
+  char* getBodyBuffer();
+  char* getResponseBuffer();
   int   getBodyWriteFd() const;
   int   getResponseReadFd() const;
+  size_t   getBodyLength() const;
+  size_t   getResponseLength() const;
   pid_t getCgiPid() const;
   bool  isBodyReady() const;
   bool  isResponseReady() const;
   /* setters */
+  void  setBodyLength(size_t len);
   void  setResponseReadFd(int fd);
   void  setBodyWriteFd(int fd);
   void  setCgiPid(pid_t pid);
