@@ -4,6 +4,7 @@
 #include <utility>
 #include <unistd.h>
 #include <fcntl.h>
+#include "Fd.hpp"
 #include "libft.h"
 #include "tokenize.hpp"
 #include "Server.hpp"
@@ -131,11 +132,12 @@ int  Server::initSocket() {
   return _fd;
 }
 
-int   Server::accept() {
+int   Server::accept(fd_set rfds) {
   Client client(_fd);
-
+  int client_fd = client.getFd();
   _clients.push_back(client);
-  return client.getFd();
+  Fd::set(client_fd, rfds);
+  return client_fd;
 }
 
 void Server::addLocation(Location location) {

@@ -11,7 +11,7 @@
 #include "Client.hpp"
 
 
-class Server : public Socket {
+class Server {
 private:
   std::vector<Client>                 _clients;
   std::vector<std::string>            _text;
@@ -36,7 +36,7 @@ public:
   virtual                             ~Server();
 
   int                                 initSocket();
-  int                                 accept();
+  int                                 accept(fd_set rfds);
    /* getters */
   std::vector<Location> const&        getLocations() const;
   int                                 getListen() const;

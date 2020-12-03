@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include "HttpException.hpp"
 #define MAX_BODY_SIZE 40000
 /* Copyright 2020 hyeyoo, hyekim */
