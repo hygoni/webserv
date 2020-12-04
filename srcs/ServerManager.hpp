@@ -6,10 +6,10 @@
 # include <sys/select.h>
 class ServerManager {
 private:
-  std::vector<Server>  _servers;
+  std::vector<Server>&  _servers;
   ServerManager();
 public:
-  ServerManager(Config const & config);
+  ServerManager(Config& config);
   ~ServerManager();
 
   void  run();

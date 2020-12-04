@@ -23,10 +23,10 @@ class Response {
   size_t       _response_length;
   pid_t        _cgi_pid;
  public:
-        Response(Request const& request, Server const& server);
+        Response(Request const& request, std::vector<Location> const& locations);
         Response(int status);
    /* process request methods */
-  bool  process(Request const& request, Server const& server);
+  bool  process(Request const& request, std::vector<Location> const& locations);
   void  processByMethod(Request const& request, Location const& location);
   void  processGetMethod(Request const& request, Location const& location);
   void  processHeadMethod(Request const& request, Location const& location);
@@ -43,6 +43,10 @@ class Response {
   int   closeBody();
   int   readResponse();
   int   writeResponse();
+
+
+  void  putBodyBuffer(char *buf, size_t size);
+
   /* getters */
   char* getBodyBuffer();
   char* getResponseBuffer();

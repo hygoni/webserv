@@ -35,7 +35,7 @@ public:
   ~Request();
   Request(std::string raw);
   void  debugOstream(std::ostream& os) const;
-  void  addBody(const std::string & str);
+  std::string const& addBody(const std::string & str);
   bool  isClosed() const;
 
   std::string getMethod() const;

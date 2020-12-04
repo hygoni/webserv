@@ -7,3 +7,7 @@ bool Fd::isSet(int fd, fd_set const & fds) {
 void  Fd::set(int fd, fd_set & fds) {
   fds.fds_bits[fd / 32] |= (1 << (fd % 32));
 }
+
+void  Fd::clear(int fd, fd_set & fds) {
+  fds.fds_bits[fd / 32] = (0 << (fd % 32));
+}

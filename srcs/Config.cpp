@@ -63,6 +63,6 @@ void Config::validate() {
         throw std::exception();
 }
 
-std::vector<Server> const& Config::getServers() const {
+std::vector<Server>& Config::getServers() {
     return this->_servers;
 }

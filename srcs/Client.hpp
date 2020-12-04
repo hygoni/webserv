@@ -2,6 +2,7 @@
 #define SRCS_CLIENT_HPP_
 
 #include "Request.hpp"
+#include "Location.hpp"
 #include <netinet/in.h>
 
 class Response;
@@ -11,10 +12,10 @@ private:
   Request*    _request;
   Response*   _response;
   std::string _raw_request;
+  const std::vector<Location>& _locations;
 
-  Client();
 public:
-  Client(int server_fd);
+  Client(int server_fd, const std::vector<Location>& locations);
   ~Client();
 
   int   recv();

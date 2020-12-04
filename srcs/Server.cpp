@@ -96,7 +96,7 @@ short     Server::ft_htons(short num) {
     return num;
   }
   for (size_t i = 0; i < sizeof(short); i++) {
-    ((char *)&result)[i] = ((char *)&result)[sizeof(short) - i];
+    ((char *)&result)[i] = ((char *)&num)[sizeof(short) - i];
   }
   return result;
 }
@@ -108,7 +108,7 @@ long     Server::ft_htonl(long num) {
     return num;
   }
   for (size_t i = 0; i < sizeof(long); i++) {
-    ((char *)&result)[i] = ((char *)&result)[sizeof(long) - i];
+    ((char *)&result)[i] = ((char *)&num)[sizeof(long) - i];
   }
   return result;
 }
@@ -123,17 +123,19 @@ int  Server::initSocket() {
   //   throw std::exception();
   // why ??
   server_addr.sin_family = AF_INET;
-  server_addr.sin_port = ft_htons(_listen);
-  server_addr.sin_addr.s_addr = ft_htonl(INADDR_ANY);
+  server_addr.sin_port = htons(_listen);
+  std::cout << _listen << std::endl;
+  server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   ft_memset(&(server_addr.sin_zero), 0, sizeof(server_addr.sin_zero));
   if (bind(_fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) < 0 ||
       listen (_fd, 10) < 0)
     throw std::exception();
+  std::cout << "bind success" << std::endl;
   return _fd;
 }
 
-int   Server::accept(fd_set rfds) {
-  Client client(_fd);
+int   Server::accept(fd_set& rfds) {
+  Client client(_fd, _locations);
   int client_fd = client.getFd();
   _clients.push_back(client);
   Fd::set(client_fd, rfds);

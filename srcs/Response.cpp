@@ -13,8 +13,8 @@
 #include "CGI.hpp"
 
 Response::Response
-(Request const& request, Server const& server) : _offset(0) {
-  if (process(request, server)) {
+(Request const& request, std::vector<Location> const& locations) : _offset(0) {
+  if (process(request, locations)) {
       return ;
   }
   /* no matching server found */
@@ -57,12 +57,13 @@ void Response::processCgi
   run_cgi(*this, location.getCgiPath().c_str(), env_map, body_fd[0]);
 }
 
-bool Response::process(Request const& request, Server const& server) {
+bool Response::process
+(Request const& request, std::vector<Location> const& locations) {
   std::vector<Location>::const_iterator it;
   std::vector<Location>::const_iterator ite;
 
-  it = server.getLocations().begin();
-  ite = server.getLocations().end();
+  it = locations.begin();
+  ite = locations.end();
   /* find matching location */
   while (it != ite) {
     Location const& location = *it;
