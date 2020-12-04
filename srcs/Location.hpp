@@ -15,8 +15,8 @@ class Location {
     std::string                         _root;
     std::vector<std::string>            _index;
     std::vector<std::string>            _allowed_method;
-    std::string                         _cgi_path;
-    std::vector<std::string>            _cgi_extension;
+    std::string                         _Cgi_path;
+    std::vector<std::string>            _Cgi_extension;
     bool                                _directory_listing;
     std::string                         _default_error_page;
 
@@ -31,8 +31,8 @@ class Location {
     std::string const&              getRoot() const;
     std::vector<std::string> const& getIndex() const;
     std::vector<std::string> const& getAllowedMethod() const;
-    std::string const&              getCGIPath() const;
-    std::vector<std::string> const& getCGIExtension() const;
+    std::string const&              getCgiPath() const;
+    std::vector<std::string> const& getCgiExtension() const;
     bool                            getDirectoryListing() const;
     std::string const&              getDefaultErrorPage() const;
 };

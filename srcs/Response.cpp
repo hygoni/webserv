@@ -1,13 +1,16 @@
 /* Copyright 2020 hyeyoo */
 
+#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <algorithm>
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Config.hpp"
 #include "Message.hpp"
+#include "CGI.hpp"
 
 Response::Response
 (Request const& request, Server const& server) : _offset(0) {
@@ -44,6 +47,16 @@ Response::Response(int status) : _offset(0) {
   this->endHeader();
 }
 
+void Response::processCgi
+(Request const& request, Location const& location) {
+  (void)request;
+  int body_fd[2];
+  pipe(body_fd);
+  std::map<std::string, std::string> env_map;
+  setBodyWriteFd(body_fd[1]);
+  run_cgi(*this, location.getCgiPath().c_str(), env_map, body_fd[0]);
+}
+
 bool Response::process(Request const& request, Server const& server) {
   std::vector<Location>::const_iterator it;
   std::vector<Location>::const_iterator ite;
@@ -53,14 +66,17 @@ bool Response::process(Request const& request, Server const& server) {
   /* find matching location */
   while (it != ite) {
     Location const& location = *it;
-    /* TODO: add CGI */
     if (request.getTarget().find(location.getPath()) == 0) {
       std::vector<std::string> allowed = location.getAllowedMethod();
       /* Method Not Allowed */
       if (std::find(allowed.begin(), allowed.end(), request.getMethod())
           == allowed.end() && allowed.size() > 0) {
         *this = Response(405);
+      } else if (!location.getCgiPath().empty()) {
+        /* process CGI */
+        processCgi(request, location);
       } else {
+        /* process non-CGI */
         processByMethod(request, location);
       }
       return true;
@@ -70,6 +86,61 @@ bool Response::process(Request const& request, Server const& server) {
   return false;
 }
 
+int Response::writeBody() {
+  int ret = write(_body_write_fd, _body_buf, _body_length);
+  _body_length = 0;
+  return ret;
+}
+
+int Response::closeBody() {
+  return close(_body_write_fd);
+}
+
+char* Response::getBodyBuffer() {
+  return _body_buf;
+}
+
+char* Response::getResponseBuffer() {
+  return _response_buf;
+}
+
+size_t Response::getBodyLength() const {
+  return _body_length;
+}
+
+
+size_t Response::getResponseLength() const {
+  return _response_length;
+}
+
+void Response::setBodyLength(size_t len) {
+  _body_length = len;
+}
+
+bool Response::isBodyReady() const {
+  return (_body_length > 0);
+}
+
+void Response::setCgiPid(int pid) {
+  _cgi_pid = pid;
+}
+
+void Response::setResponseReadFd(int fd) {
+  _response_read_fd = fd;
+}
+
+void Response::setBodyWriteFd(int fd) {
+  _body_write_fd = fd;
+}
+
+int Response::readResponse() {
+  return (_response_length = read(_response_read_fd, _response_buf, BUFSIZE));
+}
+
+
+/*
+ * TODO: what about CGI?
+ */
 void Response::processByMethod
 (Request const& request, Location const& location) {
   if (request.getMethod().compare("GET") == 0) {
@@ -84,23 +155,6 @@ void Response::processByMethod
     /* Not Implemented */
     *this = Response(501);
   }
-}
-
-int readContent(std::string const& path, std::string& content) {
-  int fd;
-  int ret;
-  char buf[BUFSIZE + 1];
-
-  fd = open(path.c_str(), O_RDONLY);
-  if (fd < 0)
-    return fd;
-  while ((ret = read(fd, buf, BUFSIZE)) > 0) {
-    buf[ret] = '\0';
-    content += std::string(buf);
-  }
-  if (ret < 0)
-    return ret;
-  return 0;
 }
 
 void Response::processGetMethod
@@ -125,15 +179,13 @@ void Response::processGetMethod
     return ;
   }
 
-  std::string content;
-  if (readContent(path, content) < 0) {
+  if (false) {
     /* Internal Server Error */
     *this = Response(500);
   } else {
     this->addStatusLine(200);
-    this->addHeader("Content-Length", std::to_string(content.size()));
+    this->addHeader("Content-Length", "0");
     this->endHeader();
-    this->addBody(content);
   }
 }
 
@@ -178,7 +230,7 @@ void Response::processPostMethod
   /* POST is allowed only for CGI requests
    * TODO: add CGI
    * */
-  if (location.getCGIPath().empty()) {
+  if (location.getCgiPath().empty()) {
     /* Method Not Allowed */
     *this = Response(405);
   } else {

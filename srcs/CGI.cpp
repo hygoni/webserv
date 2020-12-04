@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include "CGI.hpp"
+#include "Response.hpp"
 #include "libft.h"
 
 #define BUFSIZE 4096
@@ -37,37 +38,38 @@ char    **generate_env(std::map<std::string, std::string> const& env_map) {
     return env;
 }
 
-std::string run_cgi
-(char* cgi_path, std::map<std::string, std::string> const& env_map) {
+void run_cgi
+(Response& response,
+const char* cgi_path,
+std::map<std::string, std::string> const& env_map,
+int body_read_fd) {
+    int response_fd[2];
     pid_t pid;
-    int fd[2];
+    char *dup;
     char **env;
-    char* argv[] = {cgi_path, NULL};
-    char read_buf[BUFSIZE + 1];
-    std::string     output;
+    char *argv[] = {(dup = ft_strdup(cgi_path)), NULL};
 
-    if ((env = generate_env(env_map)) == NULL)
-        throw std::exception();
-    pipe(fd);
+    if ((env = generate_env(env_map)) == NULL) {
+      free(dup);
+      throw std::exception();
+    }
+    pipe(response_fd);
     pid = fork();
     if (pid == 0) {
-        dup2(fd[1], 1);
-        close(fd[0]);
-        close(fd[1]);
+        /* redirect body to stdin */
+        dup2(body_read_fd, 0);
+        close(body_read_fd);
+        /* redirect stdout to response */
+        dup2(response_fd[1], 1);
+        close(response_fd[0]);
+        close(response_fd[1]);
         if (execve(cgi_path, argv, env) < 0)
             throw std::exception();
     } else {
-        int             ret;
-
-        waitpid(pid, NULL, 0);
-        close(fd[1]);
+        free(dup);
         ft_free_null_terminated_array(reinterpret_cast<void**>(env));
-        while ((ret = read(fd[0], read_buf, BUFSIZE)) > 0) {
-            read_buf[ret] = '\0';
-            output += read_buf;
-        }
-        if (ret < 0)
-            throw std::exception();
+        close(response_fd[1]);
+        response.setResponseReadFd(response_fd[0]);
+        response.setCgiPid(pid);
     }
-    return output;
 }
