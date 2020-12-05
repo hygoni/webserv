@@ -51,7 +51,7 @@ int  Client::recv() {
 
             _request = new Request(req_header);
             if (_request->hasBody()) {
-              _request->setBody(new Body(req_body.c_str(), req_body.size()));
+              _request->setBody(new Body(req_body.c_str(), req_body.size(), false));
             }
 
             /* make response */
@@ -89,6 +89,22 @@ int   Client::send() {
 
 int   Client::getFd() const {
   return _fd;
+}
+
+Request *Client::getRequest() {
+  return _request;
+}
+
+Response *Client::getResponse() {
+  return _response;
+}
+
+int *Client::getRequestPipe() {
+  return _request_pipe;
+}
+
+int *Client::getResponsePipe() {
+  return _response_pipe;
 }
 
 const std::vector<Location>&  Client::getLocations() const {

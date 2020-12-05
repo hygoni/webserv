@@ -9,7 +9,7 @@
 #include "Response.hpp"
 
 void run_cgi
-(Response& response,
+(Client& client,
 const char* cgi_path,
 std::map<std::string, std::string> const& env_map,
 int body_read_fd);

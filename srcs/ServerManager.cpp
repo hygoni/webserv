@@ -1,4 +1,5 @@
 #include "ServerManager.hpp"
+#include "Response.hpp"
 #include "Fd.hpp"
 
 // request는 closed 됬는데 요청이 계속 들어오면 어떻게 해야하지? recv로 버퍼를 청소해야 하나? 아니면 그냥 냅두나?
@@ -41,14 +42,14 @@ void  ServerManager::run() {
           c_it->recv();
         }
         /* flsuh buffer */
-        int body_write_fd = c_it->getRequestPipe[1];
-        if (Fd::isSet(bodyWriteFd, ready_fds[1])) {
-          c_it->send(body_write_fd);
+        int body_write_fd = c_it->getRequestPipe()[1];
+        if (Fd::isSet(body_write_fd, ready_fds[1])) {
+          c_it->send();
         }
         /* put response to buffer */
-        int response_read_fd = c_it->getResponsePipe[0];
+        int response_read_fd = c_it->getResponsePipe()[0];
         if (Fd::isSet(response_read_fd, ready_fds[0])) {
-          c_it->getResponse()->recv()
+          c_it->getResponse()->recv(response_read_fd);
         }
         /* flush buffer */
         if (Fd::isSet(c_it->getFd(), ready_fds[1])) {

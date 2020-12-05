@@ -13,8 +13,7 @@
 #include "CGI.hpp"
 #include "Client.hpp"
 
-Response::Response
-(Client& client) {
+Response::Response(Client& client) : _body(false) {
   if (process(client)) {
       return ;
   }
@@ -28,14 +27,16 @@ int Response::recv(int fd) {
 
 int Response::send(int fd) {
   if (_is_header_sent == false) {
-    return _header.send(fd);
+    std::string header = _header.toString();
+    _is_header_sent = true;
+    return ::send(fd,  header.c_str(), header.size(), 0);
   } else {
     return _body.send(fd);
   }
 }
 
 /* generate response with specific status */
-Response::Response(int status) {
+Response::Response(int status) : _body(false) {
   _header = Header(status);
   _header["Content-Length"] = "0";
 }
@@ -43,7 +44,7 @@ Response::Response(int status) {
 void Response::processCgi
 (Client& client, Location const& location) {
   std::map<std::string, std::string> env_map;
-  run_cgi(*this, location.getCgiPath().c_str(), env_map, client.getRequestPipe[0]);
+  run_cgi(client, location.getCgiPath().c_str(), env_map, client.getRequestPipe()[0]);
 }
 
 bool Response::process
