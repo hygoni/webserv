@@ -46,8 +46,8 @@ int  Client::recv() {
         if (header_end <= MAX_HEADER_SIZE) {
           try {
             /* make request */
-            std::string req_header = _raw_request.substr(0, header_end + 2);
-            std::string req_body = _raw_request.substr(header_end + 2);
+            std::string req_header = _raw_request.substr(0, header_end + 4);
+            std::string req_body = _raw_request.substr(header_end + 4);
 
             _request = new Request(req_header);
             if (_request->hasBody()) {

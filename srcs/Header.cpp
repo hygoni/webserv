@@ -32,7 +32,7 @@ size_t              Header::erase(const std::string& key) {
 bool                Header::isExist(const std::string& key) const {
   std::map<std::string, std::string>::const_iterator it;
 
-  return _items.find(key) == _items.end();
+  return _items.find(key) != _items.end();
 }
 
 std::string         Header::toString() const {
