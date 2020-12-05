@@ -3,6 +3,8 @@
 
 /* Copyright 2020 hyeyoo */
 
+#include <string.h>
+
 class Buffer {
  private:
   size_t  _len;
@@ -13,7 +15,7 @@ class Buffer {
         Buffer(size_t size);
         ~Buffer();
   bool  isEmpty();
-  int   read(int fd);
+  int   recv(int fd);
   int   send(int fd);
   void  setBuffer(char *buf, size_t size);
 };

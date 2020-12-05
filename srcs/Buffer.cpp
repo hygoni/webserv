@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <exception>
+#include <sys/socket.h>
 #include "Buffer.hpp"
 #include "libft.h"
 
@@ -7,7 +9,7 @@
 Buffer::Buffer(size_t size) {
   _len  = 0;
   _size = size;
-  _buf = malloc(sizeof(char) * (size + 1));
+  _buf = (char*)malloc(sizeof(char) * (size + 1));
 }
 
 Buffer::~Buffer() {
@@ -21,16 +23,17 @@ int Buffer::recv(int fd) {
   if (!isEmpty())
     return 0;
 
-  if ((n_read = recv(fd, _buf, _size, 0)) < 0);
+  if ((n_read = ::recv(fd, _buf, _size, 0)) < 0)
     throw std::exception();
   _buf[n_read] = '\0';
   _len = n_read;
+  return n_read;
 }
 
-int send(int fd) {
+int Buffer::send(int fd) {
   int n_written;
   
-  if ((n_written = send(fd, _buf, _len, 0)) < 0)
+  if ((n_written = ::send(fd, _buf, _len, 0)) < 0)
     throw std::exception();
 
   /* not all data of buffer was written */
