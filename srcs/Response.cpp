@@ -11,14 +11,27 @@
 #include "Config.hpp"
 #include "Message.hpp"
 #include "CGI.hpp"
+#include "Client.hpp"
 
 Response::Response
-(Request const& request, std::vector<Location> const& locations) : _offset(0) {
-  if (process(request, locations)) {
+(Client const& client) : _offset(0) {
+  if (process(client)) {
       return ;
   }
   /* no matching server found */
   *this = Response(400);
+}
+
+int Response::recv(int fd) {
+  return _body.recv(fd);
+}
+
+int Response::send(int fd) {
+  if (_is_header_sent == false) {
+    return _header.send(fd);
+  } else {
+    return _body.send(fd);
+  }
 }
 
 void Response::addStatusLine(int status) {
@@ -48,22 +61,18 @@ Response::Response(int status) : _offset(0) {
 }
 
 void Response::processCgi
-(Request const& request, Location const& location) {
-  (void)request;
-  int body_fd[2];
-  pipe(body_fd);
+(Client& client, Location const& location) {
   std::map<std::string, std::string> env_map;
-  setBodyWriteFd(body_fd[1]);
-  run_cgi(*this, location.getCgiPath().c_str(), env_map, body_fd[0]);
+  run_cgi(*this, location.getCgiPath().c_str(), env_map, client.getRequestPipe[0]);
 }
 
 bool Response::process
-(Request const& request, std::vector<Location> const& locations) {
+(Client& client) {
   std::vector<Location>::const_iterator it;
   std::vector<Location>::const_iterator ite;
 
-  it = locations.begin();
-  ite = locations.end();
+  it = client.getLocations().begin();
+  ite = client.getLocations().end();
   /* find matching location */
   while (it != ite) {
     Location const& location = *it;
@@ -75,10 +84,10 @@ bool Response::process
         *this = Response(405);
       } else if (!location.getCgiPath().empty()) {
         /* process CGI */
-        processCgi(request, location);
+        processCgi(client, location);
       } else {
         /* process non-CGI */
-        processByMethod(request, location);
+        processByMethod(client, location);
       }
       return true;
     }
@@ -87,71 +96,24 @@ bool Response::process
   return false;
 }
 
-int Response::writeBody() {
-  int ret = write(_body_write_fd, _body_buf, _body_length);
-  _body_length = 0;
-  return ret;
-}
-
-int Response::closeBody() {
-  return close(_body_write_fd);
-}
-
-char* Response::getBodyBuffer() {
-  return _body_buf;
-}
-
-char* Response::getResponseBuffer() {
-  return _response_buf;
-}
-
-size_t Response::getBodyLength() const {
-  return _body_length;
-}
-
-
-size_t Response::getResponseLength() const {
-  return _response_length;
-}
-
-void Response::setBodyLength(size_t len) {
-  _body_length = len;
-}
-
-bool Response::isBodyReady() const {
-  return (_body_length > 0);
-}
-
 void Response::setCgiPid(int pid) {
   _cgi_pid = pid;
 }
-
-void Response::setResponseReadFd(int fd) {
-  _response_read_fd = fd;
-}
-
-void Response::setBodyWriteFd(int fd) {
-  _body_write_fd = fd;
-}
-
-int Response::readResponse() {
-  return (_response_length = read(_response_read_fd, _response_buf, BUFSIZE));
-}
-
 
 /*
  * TODO: what about CGI?
  */
 void Response::processByMethod
-(Request const& request, Location const& location) {
-  if (request.getMethod().compare("GET") == 0) {
-    processGetMethod(request, location);
-  } else if (request.getMethod().compare("HEAD") == 0) {
-    processHeadMethod(request, location);
-  } else if (request.getMethod().compare("POST") == 0) {
-    processPostMethod(request, location);
-  } else if (request.getMethod().compare("PUT") == 0) {
-  } else if (request.getMethod().compare("DELETE") == 0) {
+(Client& client, Location const& location) {
+  Header& header = *(client.getRequest()->getHeader());
+  if (header.getMethod().compare("GET") == 0) {
+    processGetMethod(client, location);
+  } else if (header.getMethod().compare("HEAD") == 0) {
+    processHeadMethod(client, location);
+  } else if (header.getMethod().compare("POST") == 0) {
+    processPostMethod(client, location);
+  } else if (header.getMethod().compare("PUT") == 0) {
+  } else if (header.getMethod().compare("DELETE") == 0) {
   } else {
     /* Not Implemented */
     *this = Response(501);
@@ -197,12 +159,12 @@ void Response::processGetMethod
  * there must be no content in HEAD's response
  */
 void Response::processHeadMethod
-(Request const& request, Location const& location) {
+(Request const& client, Location const& location) {
   struct stat   buf;
   std::string   path;
   int           ret;
   
-  path = location.getRoot() + request.getTarget();
+  path = location.getRoot() + client->getRequest()->getHeader()->getTarget();
   ret = stat(path.c_str(), &buf);
   if (ret < 0) {
     if (errno == EACCES) {
@@ -217,7 +179,8 @@ void Response::processHeadMethod
     }
     return ;
   }
-  this->addStatusLine(200);
+
+  this->header->addStatusLine(200);
   this->addHeader("Content-Length", "0");
   this->endHeader();
 }
@@ -254,23 +217,4 @@ void Response::processPostMethod
     this->addHeader("Content-Length", "0");
     this->endHeader();
   }
-}
-
-/* 
- * send
- * return value ( = val)
- * if val >= 0, it is bytes left to send
- * if val < 0, error occurred while sending
- */
-int Response::send(int fd) {
-  std::string buf;
-  int ret;
-
-  buf = this->_response.substr(this->_offset, this->_offset + BUFSIZE);
-  ret = ::send(fd, buf.c_str(), BUFSIZE, 0);
-  if (ret < 0)
-  return ret;
-  /* advance offset */
-  this->_offset += ret;
-  return (this->_response.size() - this->_offset);
 }
