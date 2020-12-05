@@ -186,6 +186,14 @@ std::string Request::getVersion() const {
   return _header->getVersion();
 }
 
+size_t getContentLength() const {
+  return _content_length;
+}
+
+bool isChunked() const {
+  return _chunked;
+}
+
 Body        *Request::getBody() {
   return _body;
 }

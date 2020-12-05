@@ -35,6 +35,8 @@ public:
   std::string getMethod() const;
   std::string getTarget() const;
   std::string getVersion() const;
+  size_t         getContentLength() const;
+  bool           isChunked() const;
   Header *getHeader();
   Body   *getBody();
   void   setBody(Body *body);
