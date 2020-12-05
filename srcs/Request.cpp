@@ -10,43 +10,35 @@
 Request::~Request() {
 }
 
-void    Request::initMethod(std::string method) {
-  this->_method = method;
-}
-
-void    Request::initTarget(std::string target) {
-  if (target.length() > 8000)
-    throw HttpException(414);
-  this->_target = target;
-}
-
-void    Request::initVersion(std::string version) {
-  if (version != "HTTP/1.1")
-    throw HttpException(400);
-  this->_version = version;
-}
-
-
 void    Request::initStartLine(std::string raw) {
   size_t  start = 0;
   size_t  space_count = 0;
+  std::string method;
+  std::string target;
+  std::string version;
 
   for (size_t i = 0; raw.length() > 0 && i < raw.length() - 1; i++) {
     if (raw.at(i) == ' ') {
       space_count++;
       if (space_count == 1) {
-        this->initMethod(raw.substr(start, i - start));
+        method = raw.substr(start, i - start);
       } else if (space_count == 2) {
-        this->initTarget(raw.substr(start, i - start));
-        this->initVersion(raw.substr(i + 1));
+        target = raw.substr(start, i - start);
+        version = raw.substr(i + 1);
+        if (target.length() > 8000)
+          throw HttpException(414);
+        if (version != "HTTP/1.1")
+          throw HttpException(400);
+        _header = Header(method, target, version);
         return ;
       }
       start = i + 1;
     }
   }
+  throw HttpException(400);
 }
 
-std::pair<std::string, std::string>    Request::makeHeader(std::string header_field) {
+void    Request::addHeader(std::string header_field) {
   size_t  sep_i = header_field.find(":");
   std::string field_name, field_value;
   if (sep_i == std::string::npos)
@@ -61,7 +53,8 @@ std::pair<std::string, std::string>    Request::makeHeader(std::string header_fi
       field_value = field_value.substr(1);
   }
   checkOverlapHeader(field_name, field_value);
-  return (std::make_pair(field_name, field_value));
+  _header[field_name] = field_value;
+  return ;
 }
 
 void    Request::initHeaders(std::string raw) {
@@ -73,7 +66,7 @@ void    Request::initHeaders(std::string raw) {
       if (start == i)
         return ;
       header_field = raw.substr(start, i - start);
-      this->_headers.insert(makeHeader(header_field));
+      addHeader(header_field);
       start = i + 2;
     }
   }
@@ -82,32 +75,31 @@ void    Request::initHeaders(std::string raw) {
 
 void  Request::checkOverlapHeader(const std::string & name, const std::string & value) const {
   std::map<std::string, std::string>::const_iterator it;
-  if (name == "Host" && _headers.find("Host") != _headers.end())
+  if (name == "Host" && _header.isExist("Host"))
     throw HttpException(400);
 
-  if (_headers.find("Transfer-Encoding") == _headers.end())
+  if (_header.isExist("Transfer-Encoding"))
     return ;
-  if (name == "Content-Length" && (it = _headers.find("Content-Length")) != _headers.end()
-      && it->second != value)
+  if (name == "Content-Length" && _header.isExist("Content-Length") 
+      && _header["Content-Length"] != value)
     throw HttpException(400);
 }
 
 void  Request::checkHeaders() {
-  std::map<std::string, std::string>::iterator it;
   size_t  i;
 
-  if (_headers.find("Host") == _headers.end())
+  if (!_header.isExist("Host"))
     throw HttpException(400);
-  if ((it = _headers.find("Transfer-Encoding")) != _headers.end()) {
-    if (it->second != "chunked")
+  if (_header.isExist("Transfer-Encoding")) {
+    if (_header["Transfer-Encoding"] == "chunked")
       throw HttpException(400); // TODO: abnf OWS ',' required
-    _headers.erase("Content-Length");
+    _header.erase("Content-Length");
     _chunked = true;
-  } else if ((it = _headers.find("Content-Length")) != _headers.end()) {
-    for (i = 0; i < it->second.length() && ft_isdigit(it->second.at(i)); i++) {
-      _content_length = _content_length * 10 + it->second.at(i) - '0';
+  } else if (_header.isExist("Content-Length")) {
+    for (i = 0; i < _header["Content-Length"].length() && ft_isdigit(_header["Content-Length"].at(i)); i++) {
+      _content_length = _content_length * 10 + _header["Content-Length"].at(i) - '0';
     }
-    if (i == 0 || i != it->second.length())
+    if (i == 0 || i != _header["Content-Length"].length())
       throw HttpException(400);
   }
 }
@@ -125,16 +117,14 @@ Request::Request(std::string http_message) {
   checkHeaders();
   if (_chunked == false && _content_length == 0)
     _is_closed = true;
-  this->addBody(http_message.substr(header_end_crlf + 2));
-  std::cout << _is_closed << " CL: " << _content_length << std::endl;
+  addBody(http_message.substr(header_end_crlf + 2));
 }
 
-void  Request::addBody(const std::string & str) {
+std::string   Request::addBody(const std::string & str) {
   std::string   extra;
-  std::map<std::string, std::string>::iterator it;
 
   if (_is_closed)
-    return ;
+    return "";
   if (_chunked) {
     extra = parseChunk(str);
   } else {
@@ -147,6 +137,7 @@ void  Request::addBody(const std::string & str) {
     _body = _body.substr(0, _content_length);
     _is_closed = true;
   }
+  return extra;
 }
 
 void  Request::checkClosed() {
@@ -195,35 +186,33 @@ bool  Request::isClosed() const {
 }
 
 std::string Request::getMethod() const {
-  return _method;
+  return _header.getMethod();
 }
 
 std::string Request::getTarget() const {
-  return _target;
+  return _header.getTarget();
 }
 
 std::string Request::getVersion() const {
-  return _version;
+  return _header.getVersion();
 }
 
 std::string Request::getBody() const {
   return _body;
 }
 
-std::map<std::string, std::string> Request::getHeaders() const {
-  return _headers;
+Header      Request::getHeader() const {
+  return _header;
 }
-
 
 void  Request::debugOstream(std::ostream& os) const {
   os << "-----Debug Request-----\n" \
-  << "Method: \"" << _method << "\"\n" \
-  << "Target: \"" << _target << "\"\n" \
-  << "Version: \"" << _version << "\"\n" \
+  << "Method: \"" << getMethod() << "\"\n" \
+  << "Target: \"" << getTarget() << "\"\n" \
+  << "Version: \"" << getVersion() << "\"\n" \
   << "---------Header--------\n";
   std::map<std::string, std::string>::const_iterator it;
-  for (it = _headers.begin(); it != _headers.end(); it = std::next(it))
-    os << it->first << ": \"" << it->second << "\"\n";
+  os << _header.toString();
   os << "-----------------------\n";
 }
 
