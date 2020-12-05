@@ -6,6 +6,7 @@
 #include "CGI.hpp"
 #include "Response.hpp"
 #include "libft.h"
+#include "Client.hpp"
 
 #define BUFSIZE 4096
 
@@ -39,11 +40,10 @@ char    **generate_env(std::map<std::string, std::string> const& env_map) {
 }
 
 void run_cgi
-(Response& response,
+(Client& client,
 const char* cgi_path,
 std::map<std::string, std::string> const& env_map,
 int body_read_fd) {
-    int response_fd[2];
     pid_t pid;
     char *dup;
     char **env;
@@ -53,23 +53,22 @@ int body_read_fd) {
       free(dup);
       throw std::exception();
     }
-    pipe(response_fd);
+    pipe(client.getResponsePipe());
     pid = fork();
     if (pid == 0) {
         /* redirect body to stdin */
         dup2(body_read_fd, 0);
         close(body_read_fd);
         /* redirect stdout to response */
-        dup2(response_fd[1], 1);
-        close(response_fd[0]);
-        close(response_fd[1]);
+        dup2(client.getResponsePipe()[1], 1);
+        close(client.getResponsePipe()[0]);
+        close(client.getResponsePipe()[1]);
         if (execve(cgi_path, argv, env) < 0)
             throw std::exception();
     } else {
         free(dup);
         ft_free_null_terminated_array(reinterpret_cast<void**>(env));
-        close(response_fd[1]);
-        response.setResponseReadFd(response_fd[0]);
-        response.setCgiPid(pid);
+        close(client.getResponsePipe()[1]);
+        client.getResponse()->setCgiPid(pid);
     }
 }
