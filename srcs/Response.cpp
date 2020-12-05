@@ -14,7 +14,7 @@
 #include "Client.hpp"
 
 Response::Response
-(Client const& client) : _offset(0) {
+(Client& client) {
   if (process(client)) {
       return ;
   }
@@ -34,30 +34,10 @@ int Response::send(int fd) {
   }
 }
 
-void Response::addStatusLine(int status) {
-  Message* msg = Message::getInstance();
-  this->_response += "HTTP/1.1 " + std::to_string(status) + " ";
-  this->_response += msg->getMessage(status) + "\r\n";
-}
-
-void Response::addHeader(std::string key, std::string value) {
-  this->_response += (key + ": " + value + "\r\n");
-}
-
-void Response::endHeader() {
-  this->_response += "\r\n";
-}
-
-void Response::addBody(std::string const& content) {
-  this->_response += content;
-}
-
 /* generate response with specific status */
-Response::Response(int status) : _offset(0) {
-  /* status line */
-  this->addStatusLine(status);
-  this->addHeader("Content-Length", "0");
-  this->endHeader();
+Response::Response(int status) {
+  _header = Header(status);
+  _header["Content-Length"] = "0";
 }
 
 void Response::processCgi
@@ -76,10 +56,10 @@ bool Response::process
   /* find matching location */
   while (it != ite) {
     Location const& location = *it;
-    if (request.getTarget().find(location.getPath()) == 0) {
+    if (client.getRequest()->getTarget().find(location.getPath()) == 0) {
       std::vector<std::string> allowed = location.getAllowedMethod();
       /* Method Not Allowed */
-      if (std::find(allowed.begin(), allowed.end(), request.getMethod())
+      if (std::find(allowed.begin(), allowed.end(), client.getRequest()->getMethod())
           == allowed.end() && allowed.size() > 0) {
         *this = Response(405);
       } else if (!location.getCgiPath().empty()) {
@@ -121,12 +101,12 @@ void Response::processByMethod
 }
 
 void Response::processGetMethod
-(Request const& request, Location const& location) {
+(Client& client, Location const& location) {
   struct stat   buf;
   std::string   path;
   int           ret;
   
-  path = location.getRoot() + request.getTarget();
+  path = location.getRoot() + client.getRequest()->getTarget();
   ret = stat(path.c_str(), &buf);
   if (ret < 0) {
     if (errno == EACCES) {
@@ -146,9 +126,8 @@ void Response::processGetMethod
     /* Internal Server Error */
     *this = Response(500);
   } else {
-    this->addStatusLine(200);
-    this->addHeader("Content-Length", "0");
-    this->endHeader();
+  _header = Header(200);
+  _header["Content-Length"] = "0";
   }
 }
 
@@ -159,12 +138,12 @@ void Response::processGetMethod
  * there must be no content in HEAD's response
  */
 void Response::processHeadMethod
-(Request const& client, Location const& location) {
+(Client& client, Location const& location) {
   struct stat   buf;
   std::string   path;
   int           ret;
   
-  path = location.getRoot() + client->getRequest()->getHeader()->getTarget();
+  path = location.getRoot() + client.getRequest()->getHeader()->getTarget();
   ret = stat(path.c_str(), &buf);
   if (ret < 0) {
     if (errno == EACCES) {
@@ -179,14 +158,12 @@ void Response::processHeadMethod
     }
     return ;
   }
-
-  this->header->addStatusLine(200);
-  this->addHeader("Content-Length", "0");
-  this->endHeader();
+  _header = Header(200);
+  _header["Content-Length"] = "0";
 }
 
 void Response::processPostMethod
-(Request const& request, Location const& location) {
+(Client& client, Location const& location) {
   struct stat   buf;
   std::string   path;
   int           ret;
@@ -198,7 +175,7 @@ void Response::processPostMethod
     /* Method Not Allowed */
     *this = Response(405);
   } else {
-    path = location.getRoot() + request.getTarget();
+    path = location.getRoot() + client.getRequest()->getTarget();
     ret = stat(path.c_str(), &buf);
     if (ret < 0) {
       if (errno == EACCES) {
@@ -213,8 +190,7 @@ void Response::processPostMethod
       }
       return ;
     }
-    this->addStatusLine(200);
-    this->addHeader("Content-Length", "0");
-    this->endHeader();
+    _header = Header(200);
+    _header["Content-Length"] = "0";
   }
 }

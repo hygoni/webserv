@@ -90,3 +90,7 @@ int   Client::send() {
 int   Client::getFd() const {
   return _fd;
 }
+
+const std::vector<Location>&  Client::getLocations() const {
+  return _locations;
+}

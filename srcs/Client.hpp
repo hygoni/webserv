@@ -28,6 +28,7 @@ public:
   int         *getRequestPipe();
   int         *getResponsePipe();
   int         getFd() const;
+  const std::vector<Location>&  getLocations() const;
 };
 
 #endif  //  SRCS_CLIENT_HPP_

@@ -18,18 +18,18 @@ class Response {
   pid_t     _cgi_pid;
 
  public:
-        Response(Request const& request, std::vector<Location> const& locations);
+        Response(Client& client);
         Response(int status);
   int   recv(int fd);
   int   send(int fd);
 
   /* process request methods */
-  bool  process(Request const& request, std::vector<Location> const& locations);
-  void  processByMethod(Request const& request, Location const& location);
-  void  processGetMethod(Request const& request, Location const& location);
-  void  processHeadMethod(Request const& request, Location const& location);
-  void  processPostMethod(Request const& request, Location const& location);
-  void  processCgi(Request const& request, Location const& location);
+  bool  process(Client& client);
+  void  processByMethod(Client& client, Location const& location);
+  void  processGetMethod(Client& client, Location const& location);
+  void  processHeadMethod(Client& client, Location const& location);
+  void  processPostMethod(Client& client, Location const& location);
+  void  processCgi(Client& client, Location const& location);
 
 
   pid_t getCgiPid() const;
