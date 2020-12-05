@@ -1,17 +1,17 @@
 #ifndef REQUEST_HPP_
 #define REQUEST_HPP_
-#include "Header.hpp"
-#include "HttpException.hpp"
 #include <string>
 #include <iostream>
+#include "Header.hpp"
+#include "Body.hpp"
+#include "HttpException.hpp"
 #define MAX_BODY_SIZE 40000
 /* Copyright 2020 hyeyoo, hyekim */
 
 class Request {
 private:
-  std::string _body;
-
-  Header      _header;
+  Header      *_header;
+  Body        *_body;
   size_t      _content_length;
   bool        _chunked;
   bool        _is_closed;
@@ -31,12 +31,13 @@ public:
   void  debugOstream(std::ostream& os) const;
   std::string addBody(const std::string & str);
   bool  isClosed() const;
-
+  bool  hasBody() const;
   std::string getMethod() const;
   std::string getTarget() const;
   std::string getVersion() const;
-  std::string getBody() const;
-  Header getHeader() const;
+  Header *getHeader();
+  Body   *getBody();
+  void   setBody(Body *body);
 };
 
 std::ostream& operator<<(std::ostream& os, const Request& request);

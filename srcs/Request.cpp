@@ -29,7 +29,7 @@ void    Request::initStartLine(std::string raw) {
           throw HttpException(414);
         if (version != "HTTP/1.1")
           throw HttpException(400);
-        _header = Header(method, target, version);
+        _header = new Header(method, target, version);
         return ;
       }
       start = i + 1;
@@ -53,7 +53,7 @@ void    Request::addHeader(std::string header_field) {
       field_value = field_value.substr(1);
   }
   checkOverlapHeader(field_name, field_value);
-  _header[field_name] = field_value;
+  (*_header)[field_name] = field_value;
   return ;
 }
 
@@ -75,31 +75,31 @@ void    Request::initHeaders(std::string raw) {
 
 void  Request::checkOverlapHeader(const std::string & name, const std::string & value) const {
   std::map<std::string, std::string>::const_iterator it;
-  if (name == "Host" && _header.isExist("Host"))
+  if (name == "Host" && _header->isExist("Host"))
     throw HttpException(400);
 
-  if (_header.isExist("Transfer-Encoding"))
+  if (_header->isExist("Transfer-Encoding"))
     return ;
-  if (name == "Content-Length" && _header.isExist("Content-Length") 
-      && _header["Content-Length"] != value)
+  if (name == "Content-Length" && _header->isExist("Content-Length") 
+      && (*_header)["Content-Length"] != value)
     throw HttpException(400);
 }
 
 void  Request::checkHeaders() {
   size_t  i;
 
-  if (!_header.isExist("Host"))
+  if (!_header->isExist("Host"))
     throw HttpException(400);
-  if (_header.isExist("Transfer-Encoding")) {
-    if (_header["Transfer-Encoding"] == "chunked")
+  if (_header->isExist("Transfer-Encoding")) {
+    if ((*_header)["Transfer-Encoding"] == "chunked")
       throw HttpException(400); // TODO: abnf OWS ',' required
-    _header.erase("Content-Length");
+    _header->erase("Content-Length");
     _chunked = true;
-  } else if (_header.isExist("Content-Length")) {
-    for (i = 0; i < _header["Content-Length"].length() && ft_isdigit(_header["Content-Length"].at(i)); i++) {
-      _content_length = _content_length * 10 + _header["Content-Length"].at(i) - '0';
+  } else if (_header->isExist("Content-Length")) {
+    for (i = 0; i < (*_header)["Content-Length"].length() && ft_isdigit((*_header)["Content-Length"].at(i)); i++) {
+      _content_length = _content_length * 10 + (*_header)["Content-Length"].at(i) - '0';
     }
-    if (i == 0 || i != _header["Content-Length"].length())
+    if (i == 0 || i != (*_header)["Content-Length"].length())
       throw HttpException(400);
   }
 }
@@ -107,6 +107,7 @@ void  Request::checkHeaders() {
 Request::Request(std::string http_message) {
   _is_closed = false;
   _chunked = false;
+  _body = NULL;
   _content_length = 0;
   size_t  start_line_crlf = http_message.find("\r\n");
   if (start_line_crlf == std::string::npos)
@@ -117,27 +118,6 @@ Request::Request(std::string http_message) {
   checkHeaders();
   if (_chunked == false && _content_length == 0)
     _is_closed = true;
-  addBody(http_message.substr(header_end_crlf + 2));
-}
-
-std::string   Request::addBody(const std::string & str) {
-  std::string   extra;
-
-  if (_is_closed)
-    return "";
-  if (_chunked) {
-    extra = parseChunk(str);
-  } else {
-    extra = str;
-  }
-  if (extra.length() + _body.length() > MAX_BODY_SIZE)
-    throw HttpException(413);
-  _body += extra;
-  if (_body.length() >= _content_length) {
-    _body = _body.substr(0, _content_length);
-    _is_closed = true;
-  }
-  return extra;
 }
 
 void  Request::checkClosed() {
@@ -185,23 +165,35 @@ bool  Request::isClosed() const {
   return _is_closed;
 }
 
+bool Request::hasBody() const {
+  if (_chunked)
+    return true;
+  else if (_content_length > 0)
+    return true;
+  else
+    return false;
+}
+
 std::string Request::getMethod() const {
-  return _header.getMethod();
+  return _header->getMethod();
 }
 
 std::string Request::getTarget() const {
-  return _header.getTarget();
+  return _header->getTarget();
 }
 
 std::string Request::getVersion() const {
-  return _header.getVersion();
+  return _header->getVersion();
 }
 
-std::string Request::getBody() const {
+Body        *Request::getBody() {
   return _body;
 }
+void         Request::setBody(Body *body) {
+  _body = body;
+}
 
-Header      Request::getHeader() const {
+Header      *Request::getHeader() {
   return _header;
 }
 
@@ -212,7 +204,7 @@ void  Request::debugOstream(std::ostream& os) const {
   << "Version: \"" << getVersion() << "\"\n" \
   << "---------Header--------\n";
   std::map<std::string, std::string>::const_iterator it;
-  os << _header.toString();
+  os << _header->toString();
   os << "-----------------------\n";
 }
 
