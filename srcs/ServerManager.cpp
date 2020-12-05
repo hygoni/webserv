@@ -30,13 +30,29 @@ void  ServerManager::run() {
     for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {
       if (Fd::isSet(s_it->getFd(), ready_fds[0])) {
         client_fd = s_it->accept(all_fds[0]);
+        /* not setting read fd? */
         if (client_fd > max_fd)
           max_fd = client_fd;
       }
       std::vector<Client> &clients = s_it->getClients();
       for (c_it = clients.begin(); c_it != clients.end(); c_it = std::next(c_it)) {
+        /* put request to buffer */
         if (Fd::isSet(c_it->getFd(), ready_fds[0])) {
           c_it->recv();
+        }
+        /* flsuh buffer */
+        int body_write_fd = c_it->getRequestPipe[1];
+        if (Fd::isSet(bodyWriteFd, ready_fds[1])) {
+          c_it->send(body_write_fd);
+        }
+        /* put response to buffer */
+        int response_read_fd = c_it->getResponsePipe[0];
+        if (Fd::isSet(response_read_fd, ready_fds[0])) {
+          c_it->getResponse()->recv()
+        }
+        /* flush buffer */
+        if (Fd::isSet(c_it->getFd(), ready_fds[1])) {
+          c_it->getResponse()->send(c_it->getFd());
         }
       }
     }

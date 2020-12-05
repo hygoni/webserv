@@ -14,6 +14,8 @@ Client::Client(int server_fd, const std::vector<Location>& locations) : _locatio
   _raw_request = std::string();
   _request = NULL;
   _response = NULL;
+  _request_pipe[0] = _request_pipe[1] = -1;
+  _response_pipe[0] = _response_pipe[1] = -1;
 }
 
 Client::~Client() {
@@ -28,10 +30,6 @@ int  Client::recv() {
   int     n_read;
   size_t  header_end;
 
-  /* buffer is not empty yet */
-  if (_response != NULL && response->isBodyReady())
-    return 0;
-
   if ((n_read = ::recv(_fd, buf, BUFSIZE - 1, 0)) > 0) {
     buf[n_read] = '\0';
     std::cout << buf << std::endl;
@@ -42,45 +40,51 @@ int  Client::recv() {
         if (_raw_request.size() <= MAX_HEADER_SIZE) {
           return (0);
         }
-        std::cout << "header oversize" << std::end;
-        // header oversize
+        std::cout << "header oversize" << std::endl;
         return (1);
       } else {
         if (header_end <= MAX_HEADER_SIZE) {
           try {
-            _request = new Request(_raw_request);
-          } catch (HttpException & err) {
+            /* make request */
+            std::string req_header = _raw_request.substr(0, header_end + 2);
+            std::string req_body = _raw_request.substr(header_end + 2);
+
+            _request = new Request(req_header);
+            if (_request->hasBody()) {
+              _request->setBody(new Body(req_body.c_str(), req_body.size()));
+            }
+
+            /* make response */
+            _response = new Response(*this);
+
+         } catch (HttpException & err) {
             std::cout << "exception:" << err.getStatus() << std::endl;
             Response response(err.getStatus());
             response.send(_fd);
             return (1);
           }
 
-          /* make new response */
-          if (_response == NULL) {
-            _response = new Response(*_request, _locations);
-            _response->setBodyWriteFd(_fd);
-          }
-
-          /* save data to buffer */
-//          response->putBodybuffer(buf, n_read);
-
-          if (_request->isClosed()) {
-            //_response->closeBody(_fd);
-          }
         } else {
-          // header oversize
-          return (1);          
+          std::cout << "header oversize" << std::endl;
+          return (1);         
         }
       }
     } else {
-      // add body
-      
+      _request->getBody()->recv(_fd);
     }
   } else {
     throw std::exception();
   }
   return (1);
+}
+
+int   Client::send() {
+  int n_written = _request->getBody()->send(_request_pipe[1]);
+  _n_sent += n_written;
+  /* if all body data is sent, send EOF */
+  if (n_written == _request->getContentLength())
+    close(_request_pipe[1]);
+  return n_written;
 }
 
 int   Client::getFd() const {
