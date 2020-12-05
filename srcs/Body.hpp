@@ -10,6 +10,7 @@ class Body {
 
  public:
         Body(bool is_transfer_encoding);
+        Body(const char *buf, size_t size, bool is_transfer_encoding);
   int   recv(int fd);
   int   send(int fd);
 };
