@@ -17,7 +17,7 @@ class Buffer {
   bool  isEmpty();
   int   recv(int fd);
   int   send(int fd);
-  void  setBuffer(char *buf, size_t size);
+  void  setBuffer(const char *buf, size_t size);
 };
 
 #endif  // SRCS_BUFFER_HPP

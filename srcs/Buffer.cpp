@@ -50,7 +50,7 @@ bool Buffer::isEmpty() {
   return _len == 0;
 }
 
-void Buffer::setBuffer(char *buf, size_t size) {
+void Buffer::setBuffer(const char *buf, size_t size) {
   if (size > _size)
     throw std::exception();
   ft_memcpy(_buf, buf, size);
