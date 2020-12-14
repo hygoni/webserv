@@ -12,6 +12,7 @@
 #include "Message.hpp"
 #include "CGI.hpp"
 #include "Client.hpp"
+#include "Fd.hpp"
 
 Response::Response(Client& client) : _body(false) {
   if (process(client)) {
@@ -29,7 +30,11 @@ int Response::send(int fd) {
   if (_is_header_sent == false) {
     std::string header = _header.toString();
     _is_header_sent = true;
-    return ::send(fd,  header.c_str(), header.size(), 0);
+    std::string dummy = "HTTP/1.1 200 OK\r\n"
+                      "Date: Sat, 28 Nov 2009 04:36:25 GMT\r\n"
+                      "Server: LiteSpeed\r\n"
+                      "Content-Length: 15\r\n\r\n";
+    return ::send(fd,  dummy.c_str(), dummy.size(), 0);
   } else {
     return _body.send(fd);
   }
@@ -77,7 +82,7 @@ bool Response::process
   return false;
 }
 
-void Response::setCgiPid(int pid) {
+void Response::setCgiPid(pid_t pid) {
   _cgi_pid = pid;
 }
 

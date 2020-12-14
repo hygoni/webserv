@@ -2,7 +2,7 @@ default_error_page /
 directory_listing on
 allowed_method GET POST
 
-cgi_path /
+cgi_path ./test.cgi
 cgi_extension .php .bin .cgi
 
 path /

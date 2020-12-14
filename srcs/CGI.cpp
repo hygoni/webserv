@@ -7,6 +7,7 @@
 #include "Response.hpp"
 #include "libft.h"
 #include "Client.hpp"
+#include "Fd.hpp"
 
 #define BUFSIZE 4096
 
@@ -54,6 +55,7 @@ int body_read_fd) {
       throw std::exception();
     }
     pipe(client.getResponsePipe());
+    Fd::setRfd(client.getResponsePipe()[0]);
     pid = fork();
     if (pid == 0) {
         /* redirect body to stdin */
@@ -65,10 +67,11 @@ int body_read_fd) {
         close(client.getResponsePipe()[1]);
         if (execve(cgi_path, argv, env) < 0)
             throw std::exception();
+        exit(EXIT_SUCCESS);
     } else {
         free(dup);
         ft_free_null_terminated_array(reinterpret_cast<void**>(env));
         close(client.getResponsePipe()[1]);
-        client.getResponse()->setCgiPid(pid);
+        //client.getResponse()->setCgiPid(pid);
     }
 }

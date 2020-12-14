@@ -15,8 +15,8 @@ class Location {
     std::string                         _root;
     std::vector<std::string>            _index;
     std::vector<std::string>            _allowed_method;
-    std::string                         _Cgi_path;
-    std::vector<std::string>            _Cgi_extension;
+    std::string                         _cgi_path;
+    std::vector<std::string>            _cgi_extension;
     bool                                _directory_listing;
     std::string                         _default_error_page;
 

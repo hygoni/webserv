@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "Buffer.hpp"
 #include "libft.h"
+#include "Fd.hpp"
 
 /* Copyright 2020 hyeyoo */
 
@@ -21,8 +22,9 @@ int Buffer::recv(int fd) {
   int n_read;
 
   /* when buffer isn't empty, don't receive */
-  if (!isEmpty())
+  if (!isEmpty()) {
     return 0;
+  }
 
   if ((n_read = read(fd, _buf, _size)) < 0)
     throw std::exception();

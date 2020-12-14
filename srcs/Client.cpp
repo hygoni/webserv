@@ -83,7 +83,9 @@ int  Client::recv(fd_set& all_wfds) {
       _request->getBody()->recv(_fd);
     }
   } else {
-    throw std::exception();
+    std::string msg = "error: n_read is " + std::to_string(n_read);
+    std::cout << msg << std::endl;
+    throw "n_read exception";
   }
   return (1);
 }
@@ -92,8 +94,10 @@ int   Client::send() {
   int n_written = _request->getBody()->send(_request_pipe[1]);
   _n_sent += n_written;
   /* if all body data is sent, send EOF */
-  if (n_written == _request->getContentLength())
+  if (n_written == _request->getContentLength()) {
+    Fd::clearWfd(_request_pipe[1]);
     close(_request_pipe[1]);
+  }
   return n_written;
 }
 

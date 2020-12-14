@@ -35,8 +35,8 @@ void Location::validate() {
     this->_path = this->_attrs["path"];
     this->_root = this->_attrs["root"];
     
-    if (this->_attrs.find("Cgi_path") != this->_attrs.end())
-      this->_Cgi_path = this->_attrs["cgi_path"];
+    if (this->_attrs.find("cgi_path") != this->_attrs.end())
+      this->_cgi_path = this->_attrs["cgi_path"];
     if (this->_attrs.find("directory_listing") != this->_attrs.end()) {
       if (this->_attrs["directory_listing"].compare("on") == 0)
         this->_directory_listing = true;
@@ -61,7 +61,7 @@ void Location::parse() {
     std::string key = token[0];
     if (key.compare("path") == 0 ||
             key.compare("root") == 0 ||
-            key.compare("Cgi_path") == 0 ||
+            key.compare("cgi_path") == 0 ||
             key.compare("default_error_page") == 0 ||
             key.compare("directory_listing") == 0) {
         assert_token_size(token.size(), 2);
@@ -72,10 +72,10 @@ void Location::parse() {
         for (size_t i = 1; i < token.size(); i++) {
             this->_index.push_back(token[i]);
         }
-    } else if (key.compare("Cgi_extension") == 0) {
+    } else if (key.compare("cgi_extension") == 0) {
         assert_token_size(token.size(), 2);
         for (size_t i = 1; i < token.size(); i++) {
-            this->_Cgi_extension.push_back(token[i]);
+            this->_cgi_extension.push_back(token[i]);
         }
     } else if (key.compare("allowed_method") == 0) {
         assert_token_size(token.size(), 2);
@@ -115,11 +115,11 @@ std::vector<std::string> const& Location::getAllowedMethod() const {
 }
 
 std::string const& Location::getCgiPath() const {
-    return this->_Cgi_path;
+    return this->_cgi_path;
 }
 
 std::vector<std::string> const& Location::getCgiExtension() const {
-    return this->_Cgi_extension;
+    return this->_cgi_extension;
 }
 
 bool Location::getDirectoryListing() const {

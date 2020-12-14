@@ -4,9 +4,13 @@
 int main(void) {
   Config::createInstance("./config/config");
   Config* config = Config::getInstance();
-
-  ServerManager server_manager(*config);
-  server_manager.run();
+  
+  try {
+    ServerManager server_manager(*config);
+    server_manager.run();
+  } catch (const char* msg) {
+    std::cout << msg << std::endl;
+  }
   return (0);
 }
 
