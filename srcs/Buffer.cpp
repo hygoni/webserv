@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <exception>
 #include <sys/socket.h>
+#include <unistd.h>
 #include "Buffer.hpp"
 #include "libft.h"
 
@@ -23,7 +24,7 @@ int Buffer::recv(int fd) {
   if (!isEmpty())
     return 0;
 
-  if ((n_read = ::recv(fd, _buf, _size, 0)) < 0)
+  if ((n_read = read(fd, _buf, _size)) < 0)
     throw std::exception();
   _buf[n_read] = '\0';
   _len = n_read;
@@ -33,16 +34,14 @@ int Buffer::recv(int fd) {
 int Buffer::send(int fd) {
   int n_written;
   
-  if ((n_written = ::send(fd, _buf, _len, 0)) < 0)
+  if ((n_written = write(fd, _buf, _len)) < 0)
     throw std::exception();
-
   /* not all data of buffer was written */
   if (n_written < _len) {
     _len -= n_written;
     ft_memmove(_buf, _buf + n_written, _len);
     _buf[_len] = '\0';
   }
-
   return n_written;
 }
 

@@ -25,7 +25,13 @@ Client::~Client() {
     delete _response;
 }
 
-int  Client::recv() {
+/*
+return 0 : not closed header
+return num : new fd, must set to wfds
+return -1 : 
+*/
+
+int  Client::recv(fd_set& all_wfds) {
   char    buf[BUFSIZE];
   int     n_read;
   size_t  header_end;
@@ -50,9 +56,13 @@ int  Client::recv() {
             std::string req_body = _raw_request.substr(header_end + 4);
 
             _request = new Request(req_header);
-            if (_request->hasBody()) {
-              _request->setBody(new Body(req_body.c_str(), req_body.size(), false));
-            }
+            pipe(_request_pipe);
+            std::cout << "_request_pipe " << _request_pipe[0] << " " << _request_pipe[1] << std::endl;
+            Fd::set(_request_pipe[1], all_wfds);
+            _request->setBody(new Body(req_body.c_str(), req_body.size(), false));
+            // if (_request->hasBody()) {
+            //   _request->setBody(new Body(req_body.c_str(), req_body.size(), false));
+            // }
 
             /* make response */
             _response = new Response(*this);

@@ -21,7 +21,7 @@ public:
               Client
               (int server_fd, const std::vector<Location>& locations);
               ~Client();
-  int         recv();
+  int         recv(fd_set& all_wfds);
   int         send();
   Request     *getRequest();
   Response    *getResponse();

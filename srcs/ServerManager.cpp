@@ -25,7 +25,8 @@ void  ServerManager::run() {
     ready_fds[0] = all_fds[0];
     ready_fds[1] = all_fds[1];
     std::cout << "select? max_fd: " << max_fd << std::endl;
-    if (select(max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, NULL) < 0)
+    // if (select(max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, NULL) < 0)
+    if (select(1024, &ready_fds[0], &ready_fds[1], NULL, NULL) < 0)
       throw std::exception();
     std::cout << "select.." << std::endl;
     for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {
@@ -39,7 +40,7 @@ void  ServerManager::run() {
       for (c_it = clients.begin(); c_it != clients.end(); c_it = std::next(c_it)) {
         /* put request to buffer */
         if (Fd::isSet(c_it->getFd(), ready_fds[0])) {
-          c_it->recv();
+          c_it->recv(all_fds[1]);
         }
         /* flsuh buffer */
         int body_write_fd = c_it->getRequestPipe()[1];
