@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 
 class Response;
+class Server;
 class Client {
 private:
   int         _fd;
@@ -15,11 +16,11 @@ private:
   Request*    _request;
   Response*   _response;
   std::string _raw_request;
-  const std::vector<Location>& _locations;
+  Server const&                 _server;
 
+Client();
 public:
-              Client
-              (int server_fd, const std::vector<Location>& locations);
+              Client(const Server& server);
               ~Client();
   int         recv(fd_set& all_wfds);
   int         send();
@@ -29,6 +30,7 @@ public:
   int         *getResponsePipe();
   int         getFd() const;
   const std::vector<Location>&  getLocations() const;
+  const Server&                 getServer() const;
 };
 
 #endif  //  SRCS_CLIENT_HPP_

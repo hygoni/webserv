@@ -3,12 +3,12 @@
 #include "Fd.hpp"
 #define MAX_HEADER_SIZE 8192
 
-Client::Client(int server_fd, const std::vector<Location>& locations) : _locations(locations) {
+Client::Client(Server const& server) : _server(server) {
   socklen_t     addr_len;
   sockaddr_in   client_addr;
 
   addr_len = sizeof(client_addr);
-  _fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_len);
+  _fd = accept(server.getFd(), (struct sockaddr *)&client_addr, &addr_len);
   if (_fd < 0)
     throw std::exception();
   _raw_request = std::string();
@@ -85,7 +85,10 @@ int  Client::recv(fd_set& all_wfds) {
   } else {
     std::string msg = "error: n_read is " + std::to_string(n_read);
     std::cout << msg << std::endl;
+    std::cout << strerror(errno) << std::endl;
+    /* TODO: remove client */
     throw "n_read exception";
+
   }
   return (1);
 }
@@ -94,7 +97,9 @@ int   Client::send() {
   int n_written = _request->getBody()->send(_request_pipe[1]);
   _n_sent += n_written;
   /* if all body data is sent, send EOF */
-  if (n_written == _request->getContentLength()) {
+  std::cout << "_n_sent : " << _n_sent << " CL: " << _request->getContentLength() << std::endl;
+  if (_n_sent == _request->getContentLength()) {
+    std::cout << "_____________FULL____________" << std::endl;
     Fd::clearWfd(_request_pipe[1]);
     close(_request_pipe[1]);
   }
@@ -122,5 +127,9 @@ int *Client::getResponsePipe() {
 }
 
 const std::vector<Location>&  Client::getLocations() const {
-  return _locations;
+  return _server.getLocations();
+}
+
+const Server&                 Client::getServer() const {
+  return _server;
 }

@@ -135,7 +135,8 @@ int  Server::initSocket() {
 }
 
 int   Server::accept(fd_set& rfds) {
-  Client client(_fd, _locations);
+  Client client(*this);
+
   int client_fd = client.getFd();
   _clients.push_back(client);
   Fd::set(client_fd, rfds);
