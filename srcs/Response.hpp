@@ -13,13 +13,14 @@
 class Response {
  private:
   bool      _is_header_sent;
-  Header    _header;
-  Body      _body;
+  Header    *_header;
+  Body      *_body;
   pid_t     _cgi_pid;
 
  public:
         Response(Client& client);
         Response(int status);
+        ~Response();
   int   recv(int fd);
   int   send(int fd);
 
@@ -30,7 +31,6 @@ class Response {
   void  processHeadMethod(Client& client, Location const& location);
   void  processPostMethod(Client& client, Location const& location);
   void  processCgi(Client& client, Location const& location);
-
 
   pid_t getCgiPid() const;
   void  setCgiPid(pid_t pid);

@@ -27,7 +27,7 @@ int Buffer::recv(int fd) {
   }
 
   if ((n_read = read(fd, _buf, _size)) < 0)
-    throw std::exception();
+    throw "[Buffer::send]: read failed";
   _buf[n_read] = '\0';
   _len = n_read;
   return n_read;
@@ -35,9 +35,8 @@ int Buffer::recv(int fd) {
 
 int Buffer::send(int fd) {
   int n_written;
-  
   if ((n_written = write(fd, _buf, _len)) < 0)
-    throw std::exception();
+    throw "[Buffer::send]: write failed";
   /* not all data of buffer was written */
   if (n_written < _len) {
     _len -= n_written;
@@ -53,8 +52,10 @@ bool Buffer::isEmpty() {
 
 void Buffer::setBuffer(const char *buf, size_t size) {
   if (size > _size)
-    throw std::exception();
-  ft_memcpy(_buf, buf, size);
-  _buf[size] = '\0';
+    throw "[Buffer::setBuffer]: size too long";
+  _len = size;
+  ft_memcpy(_buf, buf, _len);
+  _buf[_len] = '\0';
+  
 }
 

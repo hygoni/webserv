@@ -13,8 +13,10 @@
 #include "CGI.hpp"
 #include "Client.hpp"
 #include "Fd.hpp"
+#include "CgiBuffer.hpp"
 
-Response::Response(Client& client) : _body(false) {
+Response::Response(Client& client) {
+  _header = NULL;
   if (process(client)) {
       return ;
   }
@@ -23,33 +25,51 @@ Response::Response(Client& client) : _body(false) {
 }
 
 int Response::recv(int fd) {
-  return _body.recv(fd);
+  return _body->recv(fd);
+}
+
+Response::~Response() {
+  if (_header != NULL)
+    delete _header;
+  if (_body != NULL)
+    delete _body;
 }
 
 int Response::send(int fd) {
-  if (_is_header_sent == false) {
-    std::string header = _header.toString();
+  /* CGI middleware here? or body type?
+    where to generate header?
+    CGI? non-CGI?
+    when CGI, header is created when all output of CGI is recieved.
+    when non-CGI, header is created when opening file.
+    where goes CGI middleware?
+
+    when CGI, header is created in Body
+    when non-CGI, header is immediately created
+   */
+  if (_header != NULL && _is_header_sent == false) {
+    std::string header = _header->toString();
     _is_header_sent = true;
-    std::string dummy = "HTTP/1.1 200 OK\r\n"
-                      "Date: Sat, 28 Nov 2009 04:36:25 GMT\r\n"
-                      "Server: LiteSpeed\r\n"
-                      "Content-Length: 15\r\n\r\n";
-    return ::send(fd,  dummy.c_str(), dummy.size(), 0);
+    /* why header isn't saved in buffer? */
+    return ::send(fd,  header.c_str(), header.size(), 0);
   } else {
-    return _body.send(fd);
+    if (_body == NULL)
+      return 0;
+    return _body->send(fd);
   }
 }
 
 /* generate response with specific status */
-Response::Response(int status) : _body(false) {
-  _header = Header(status);
-  _header["Content-Length"] = "0";
+Response::Response(int status) {
+  _body = NULL;
+  _header = new Header(status);
+  (*_header)["Content-Length"] = "0";
 }
 
 void Response::processCgi
 (Client& client, Location const& location) {
-  std::map<std::string, std::string> env_map;
-  run_cgi(client, location.getCgiPath().c_str(), env_map, client.getRequestPipe()[0]);
+  Cgi cgi(client.getServer(), *client.getRequest()->getHeader());
+
+  cgi.run(location.getCgiPath().c_str(), client.getRequestPipe(), client.getResponsePipe());
 }
 
 bool Response::process
@@ -70,9 +90,13 @@ bool Response::process
         *this = Response(405);
       } else if (!location.getCgiPath().empty()) {
         /* process CGI */
+        _body = new Body(new CgiBuffer(BUFSIZE), false);
         processCgi(client, location);
       } else {
         /* process non-CGI */
+        _body = new Body(false);
+        pipe(client.getResponsePipe());
+        Fd::setRfd(client.getResponsePipe()[0]);
         processByMethod(client, location);
       }
       return true;
@@ -132,8 +156,8 @@ void Response::processGetMethod
     /* Internal Server Error */
     *this = Response(500);
   } else {
-  _header = Header(200);
-  _header["Content-Length"] = "0";
+  _header = new Header(200);
+  (*_header)["Content-Length"] = "0";
   }
 }
 
@@ -164,8 +188,8 @@ void Response::processHeadMethod
     }
     return ;
   }
-  _header = Header(200);
-  _header["Content-Length"] = "0";
+  _header = new Header(200);
+  (*_header)["Content-Length"] = "0";
 }
 
 void Response::processPostMethod
@@ -196,7 +220,7 @@ void Response::processPostMethod
       }
       return ;
     }
-    _header = Header(200);
-    _header["Content-Length"] = "0";
+    _header = new Header(200);
+    (*_header)["Content-Length"] = "0";
   }
 }
