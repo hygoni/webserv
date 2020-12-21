@@ -8,12 +8,16 @@
 #include <string>
 #include "Response.hpp"
 
-void run_cgi
-(Client& client,
-const char* cgi_path,
-std::map<std::string, std::string> const& env_map,
-int body_read_fd);
+class Cgi {
+private:
+  char**  _env;
 
-char        **generate_env(std::map<std::string, std::string> const& env_map);
+  Cgi();
+  char**  generate_env(std::map<std::string, std::string> const& env_map);
+public:
+  Cgi(Server const& server, Header const& header);
+  ~Cgi();
 
+  void  run(const char* cgi_path, int* request_pipe, int* response_pipe);
+};
 #endif  // SRCS_CGI_HPP_
