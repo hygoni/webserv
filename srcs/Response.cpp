@@ -15,13 +15,20 @@
 #include "Fd.hpp"
 #include "CgiBuffer.hpp"
 
-Response::Response(Client& client) {
+Response::Response(Client& client) {  
+  std::cout << "[Response::Response(Client&)]" << std::endl;
   _header = NULL;
+  _body = NULL;
+  _is_header_sent = false;
+  _is_Cgi = false;
+  _file_fd = -1;
+
+  Fd::setWfd(client.getFd());
   if (process(client)) {
       return ;
   }
   /* no matching server found */
-  *this = Response(400);
+  setStatus(400);
 }
 
 int Response::recv(int fd) {
@@ -29,6 +36,7 @@ int Response::recv(int fd) {
 }
 
 Response::~Response() {
+  std::cout << "[Response::~Response]" << std::endl;
   if (_header != NULL)
     delete _header;
   if (_body != NULL)
@@ -54,15 +62,20 @@ int Response::send(int fd) {
   } else {
     if (_body == NULL)
       return 0;
-    return _body->send(fd);
+    if (_is_Cgi) {
+      return _body->send(fd);
+    } else {
+      _body->recv(_file_fd);
+      return _body->send(fd);
+    }
   }
 }
 
-/* generate response with specific status */
-Response::Response(int status) {
-  _body = NULL;
+void Response::setStatus(int status) {
+  std::cout << "[Response::Response(int)]" << std::endl;
+  if (_header != NULL)
+    delete _header;
   _header = new Header(status);
-  (*_header)["Content-Length"] = "0";
 }
 
 void Response::processCgi
@@ -87,16 +100,22 @@ bool Response::process
       /* Method Not Allowed */
       if (std::find(allowed.begin(), allowed.end(), client.getRequest()->getMethod())
           == allowed.end() && allowed.size() > 0) {
-        *this = Response(405);
+        setStatus(405);
       } else if (!location.getCgiPath().empty()) {
+        _is_Cgi = true;
         /* process CGI */
         _body = new Body(new CgiBuffer(BUFSIZE), false);
         processCgi(client, location);
       } else {
         /* process non-CGI */
-        _body = new Body(false);
-        pipe(client.getResponsePipe());
-        Fd::setRfd(client.getResponsePipe()[0]);
+        /* TODO: when body exists in non-CGI response
+        const Header* header = client.getRequest()->getHeader();
+        if ((*_header)["Content-Length"].length() || (*_header)["Transfer-Encoding"].length()) {
+          _body = new Body(false);
+          pipe(client.getResponsePipe());
+          Fd::setRfd(client.getResponsePipe()[0]);
+        }
+        */
         processByMethod(client, location);
       }
       return true;
@@ -121,12 +140,12 @@ void Response::processByMethod
   } else if (header.getMethod().compare("HEAD") == 0) {
     processHeadMethod(client, location);
   } else if (header.getMethod().compare("POST") == 0) {
-    processPostMethod(client, location);
+    processPostMethod();
   } else if (header.getMethod().compare("PUT") == 0) {
   } else if (header.getMethod().compare("DELETE") == 0) {
   } else {
     /* Not Implemented */
-    *this = Response(501);
+   setStatus(501);
   }
 }
 
@@ -141,23 +160,22 @@ void Response::processGetMethod
   if (ret < 0) {
     if (errno == EACCES) {
       /* Forbidden */
-      *this = Response(403);
+      setStatus(403);
     } else if (errno == ENOENT) {
       /* Not Found */
-      *this = Response(404);
+      setStatus(404);
     } else {
       /* Internal Server Error */
-      *this = Response(500);
+      setStatus(500);
     }
     return ;
   }
-
-  if (false) {
-    /* Internal Server Error */
-    *this = Response(500);
-  } else {
-  _header = new Header(200);
-  (*_header)["Content-Length"] = "0";
+  _body = new Body(false);
+  setStatus(200);
+  (*_header)["Content-Length"] = std::to_string(buf.st_size);
+  _file_fd = open(path.c_str(), O_RDONLY);
+  if (_file_fd < 0) {
+    throw "[Response::processGetMethod] File Exception";
   }
 }
 
@@ -178,49 +196,20 @@ void Response::processHeadMethod
   if (ret < 0) {
     if (errno == EACCES) {
       /* Forbidden */
-      *this = Response(403);
+      setStatus(403);
     } else if (errno == ENOENT) {
       /* Not Found */
-      *this = Response(404);
+      setStatus(404);
     } else {
       /* Internal Server Error */
-      *this = Response(500);
+      setStatus(500);
     }
     return ;
   }
-  _header = new Header(200);
-  (*_header)["Content-Length"] = "0";
+  setStatus(200);
 }
 
-void Response::processPostMethod
-(Client& client, Location const& location) {
-  struct stat   buf;
-  std::string   path;
-  int           ret;
-  
-  /* POST is allowed only for CGI requests
-   * TODO: add CGI
-   * */
-  if (location.getCgiPath().empty()) {
-    /* Method Not Allowed */
-    *this = Response(405);
-  } else {
-    path = location.getRoot() + client.getRequest()->getTarget();
-    ret = stat(path.c_str(), &buf);
-    if (ret < 0) {
-      if (errno == EACCES) {
-        /* Forbidden */
-        *this = Response(403);
-      } else if (errno == ENOENT) {
-        /* Not Found */
-        *this = Response(404);
-      } else {
-        /* Internal Server Error */
-        *this = Response(500);
-      }
-      return ;
-    }
-    _header = new Header(200);
-    (*_header)["Content-Length"] = "0";
-  }
+void Response::processPostMethod() {
+  /* non-CGI POST is Method Not Allowed */
+  setStatus(405);
 }

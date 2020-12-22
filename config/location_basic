@@ -1,6 +1,6 @@
 default_error_page /
 directory_listing on
-allowed_method GET POST
+allowed_method GET POST HEAD
 path /
-root /var/www/default
+root ./html
 index index.html index.htm

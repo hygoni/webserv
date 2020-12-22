@@ -58,7 +58,6 @@ void  ServerManager::run() {
         /* response write it */
         int response_read_fd = c_it->getResponsePipe()[0];
         if (Fd::isSet(response_read_fd, ready_fds[0])) {
-          Fd::setWfd(c_it->getFd());
           std::cout << "response read fd is set !" << std::endl;
           c_it->getResponse()->recv(response_read_fd);
         }

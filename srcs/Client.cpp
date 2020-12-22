@@ -56,20 +56,18 @@ int  Client::recv(fd_set& all_wfds) {
             std::string req_body = _raw_request.substr(header_end + 4);
 
             _request = new Request(req_header);
-            pipe(_request_pipe);
-            std::cout << "_request_pipe " << _request_pipe[0] << " " << _request_pipe[1] << std::endl;
-            Fd::set(_request_pipe[1], all_wfds);
-            _request->setBody(new Body(req_body.c_str(), req_body.size(), false));
-            // if (_request->hasBody()) {
-            //   _request->setBody(new Body(req_body.c_str(), req_body.size(), false));
-            // }
-
+            if (_request->hasBody()) {
+              pipe(_request_pipe);
+              Fd::setWfd(_request_pipe[1]);
+              _request->setBody(new Body(req_body.c_str(), req_body.size(), false));            
+            }
             /* make response */
             _response = new Response(*this);
 
          } catch (HttpException & err) {
             std::cout << "exception:" << err.getStatus() << std::endl;
-            Response response(err.getStatus());
+            Response response(*this);
+            response.setStatus(err.getStatus());
             response.send(_fd);
             return (1);
           }

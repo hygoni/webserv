@@ -2,6 +2,7 @@
 #include <exception>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <iostream>
 #include "Buffer.hpp"
 #include "libft.h"
 #include "Fd.hpp"
