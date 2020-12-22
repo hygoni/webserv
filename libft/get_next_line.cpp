@@ -56,8 +56,8 @@ static int	read_next_line(int fd, char **line, t_buf *list)
 		free(to_free);
 	}
 	free(tmp);
-	if (n_read < 0)
-		return (-1);
+	if (n_read <= 0)
+		return (n_read);
 	return (parse_next_line(line, list));
 }
 
