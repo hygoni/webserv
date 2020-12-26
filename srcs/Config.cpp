@@ -48,12 +48,12 @@ void Config::parse() {
       continue;
     std::string key = token[0];
     if (key.compare("server") == 0) {
-        assert_token_size(token.size(), 2);
-        Server server(token[1].c_str());
-        this->_servers.push_back(server);
+      assert_token_size(token.size(), 2);
+      Server server(token[1].c_str());
+      this->_servers.push_back(server);
     }
     token.clear();
-  }
+  } 
   /* validation */
   validate(); 
 }
