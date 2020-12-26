@@ -1,21 +1,30 @@
 #ifndef SRCS_BODY_HPP_
 #define SRCS_BODY_HPP_
 
-#include "Buffer.hpp"
+#include <string>
+#include <stdlib.h>
+#include <exception>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <iostream>
+#include "libft.h"
 
 class Body {
- private:
-  bool    _is_transfer_encoding;
-  /* Buffer can be normal buffer,  or CGI Buffer */
-  Buffer  *_buf;
+ protected:
+  size_t  _len;
+  size_t  _size;
+  char    *_buf;
 
  public:
-        Body(bool is_transfer_encoding);
-        Body(const char *buf, size_t size, bool is_transfer_encoding);
-        Body(Buffer *buf, bool is_transfer_encoding);
-        ~Body();
-  int   recv(int fd);
-  int   send(int fd);
+                  Body();
+                  Body(std::string const& s);
+  virtual         ~Body();
+  virtual int     recv(int fd);
+  virtual int     send(int fd);
+  virtual size_t  getChunkedContentLength() const;
+  virtual bool    isChunkedClosed() const;
+  bool            isEmpty() const;
+
 };
 
 #endif  // SRCS_BODY_HPP_

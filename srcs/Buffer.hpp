@@ -16,7 +16,7 @@ class Buffer {
   virtual       ~Buffer();
   virtual int   recv(int fd);
   virtual int   send(int fd);
-  bool          isEmpty();
+  virtual bool  isEmpty() const;
   void          setBuffer(const char *buf, size_t size);
 };
 

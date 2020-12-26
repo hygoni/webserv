@@ -47,7 +47,7 @@ int Buffer::send(int fd) {
   return n_written;
 }
 
-bool Buffer::isEmpty() {
+bool Buffer::isEmpty() const {
   return _len == 0;
 }
 
