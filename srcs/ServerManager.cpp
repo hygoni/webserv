@@ -60,6 +60,7 @@ void  ServerManager::run() {
         if (Fd::isSet(response_read_fd, ready_fds[0])) {
           std::cout << "response read fd is set !" << std::endl;
           c_it->getResponse()->recv(response_read_fd);
+          Fd::setWfd(c_it->getFd());
         }
         /* flush buffer */
         if (Fd::isSet(c_it->getFd(), ready_fds[1])) {

@@ -4,7 +4,6 @@
 int main(void) {
   Config::createInstance("./config/config");
   Config* config = Config::getInstance();
-  
   try {
     ServerManager server_manager(*config);
     server_manager.run();

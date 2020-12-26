@@ -123,26 +123,12 @@ Request::Request(std::string http_message) {
 void  Request::checkClosed() {
 
 }
-// chunked-body   = *chunk
-//                                last-chunk
-//                               trailer-part
-//                               CRLF
-// chunk           = chunk-size [ chunk-ext ] CRLF
-//                         chunk-data CRLF
-// chunk-size    = 1*HEXDIG
-// last-chunk    = 1*("0") [ chunk-ext ] CRLF
-// chunk-data     = 1*OCTET
-static bool  isHex(char c) {
-  if (('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F'))
-    return true;
-  return false;
-}
 
 std::string  Request::parseChunk(const std::string & str) {
   size_t  chunk_size = 0;
   size_t  i;
 
-  for (i = 0; i < str.length() && isHex(str.at(i)); i++) {
+  for (i = 0; i < str.length(); i++) {
     chunk_size *= 16;
     if (ft_isdigit(str.at(i)))
       chunk_size += str.at(i) - '0';

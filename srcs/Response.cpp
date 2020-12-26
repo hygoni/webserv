@@ -13,7 +13,7 @@
 #include "CGI.hpp"
 #include "Client.hpp"
 #include "Fd.hpp"
-#include "CgiBuffer.hpp"
+#include "CgiBody.hpp"
 
 Response::Response(Client& client) {  
   std::cout << "[Response::Response(Client&)]" << std::endl;
@@ -31,7 +31,9 @@ Response::Response(Client& client) {
   setStatus(400);
 }
 
+/* for chunked request, CGI process is forked here */
 int Response::recv(int fd) {
+  
   return _body->recv(fd);
 }
 
@@ -82,7 +84,7 @@ void Response::processCgi
 (Client& client, Location const& location) {
   Cgi cgi(client.getServer(), *client.getRequest()->getHeader());
 
-  cgi.run(location.getCgiPath().c_str(), client.getRequestPipe(), client.getResponsePipe());
+  cgi.run(client.getCgiPath().c_str(), client.getRequestPipe(), client.getResponsePipe());
 }
 
 bool Response::process
@@ -101,11 +103,14 @@ bool Response::process
       if (std::find(allowed.begin(), allowed.end(), client.getRequest()->getMethod())
           == allowed.end() && allowed.size() > 0) {
         setStatus(405);
-      } else if (!location.getCgiPath().empty()) {
+      } else if (!client.getCgiPath().empty()) {
         _is_Cgi = true;
         /* process CGI */
-        _body = new Body(new CgiBuffer(BUFSIZE), false);
-        processCgi(client, location);
+        bool is_transfer_encoding = client.getRequest()->isChunked();
+        _body = new CgiBody();
+        if (!is_transfer_encoding) {
+          processCgi(client, location);
+        }
       } else {
         /* process non-CGI */
         /* TODO: when body exists in non-CGI response
@@ -170,7 +175,7 @@ void Response::processGetMethod
     }
     return ;
   }
-  _body = new Body(false);
+  _body = new Body();
   setStatus(200);
   (*_header)["Content-Length"] = std::to_string(buf.st_size);
   _file_fd = open(path.c_str(), O_RDONLY);
@@ -212,4 +217,8 @@ void Response::processHeadMethod
 void Response::processPostMethod() {
   /* non-CGI POST is Method Not Allowed */
   setStatus(405);
+}
+
+bool Response::isCgi() const {
+  return _is_Cgi;
 }

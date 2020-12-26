@@ -15,6 +15,7 @@ private:
   size_t      _content_length;
   bool        _chunked;
   bool        _is_closed;
+  std::string _cgi_path;
 
   Request();
   void  initStartLine(std::string raw);

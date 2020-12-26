@@ -84,13 +84,14 @@ void Cgi::run(const char *cgi_path, int* request_pipe, int* response_pipe) {
     dup2(request_pipe[0], 0);
     close(request_pipe[0]);
     close(request_pipe[1]);
-
+    
     /* redirect stdout to response */
     dup2(response_pipe[1], 1);
     close(response_pipe[1]);
     close(response_pipe[0]);
+    
     if (execve(cgi_path, argv, _env) < 0)
-      throw "[Cgi::run]: execve failed";
+     throw "[Cgi::run]: execve failed";
     exit(EXIT_SUCCESS);
   } else {
     free(dup);

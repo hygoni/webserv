@@ -35,6 +35,7 @@ class Response {
   void setStatus(int status);
   pid_t getCgiPid() const;
   void  setCgiPid(pid_t pid);
+  bool  isCgi() const;
 };
 
 #endif  // SRCS_RESPONSE_HPP_
