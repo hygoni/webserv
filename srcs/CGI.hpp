@@ -18,6 +18,6 @@ public:
   Cgi(Server const& server, Header const& header);
   ~Cgi();
 
-  void  run(const char* cgi_path, int* request_pipe, int* response_pipe);
+  void  run(const char* cgi_path, const char* file_path, int* request_pipe, int* response_pipe);
 };
 #endif  // SRCS_CGI_HPP_

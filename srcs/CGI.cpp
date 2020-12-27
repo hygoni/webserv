@@ -71,10 +71,11 @@ char **Cgi::generate_env(std::map<std::string, std::string> const &env_map) {
   return env;
 }
 
-void Cgi::run(const char *cgi_path, int* request_pipe, int* response_pipe) {
+void Cgi::run(const char *cgi_path, const char* file_path, int* request_pipe, int* response_pipe) {
   pid_t pid;
-  char *dup;
-  char *argv[] = {(dup = ft_strdup(cgi_path)), NULL};
+  char *dup_cgi_path;
+  char *dup_file_path;
+  char* const argv[] = {dup_cgi_path = ft_strdup(cgi_path), dup_file_path = ft_strdup(dup_file_path), NULL};
 
   pipe(response_pipe);
   Fd::setRfd(response_pipe[0]);
@@ -94,8 +95,9 @@ void Cgi::run(const char *cgi_path, int* request_pipe, int* response_pipe) {
      throw "[Cgi::run]: execve failed";
     exit(EXIT_SUCCESS);
   } else {
-    free(dup);
     close(response_pipe[1]);
+    free(dup_cgi_path);
+    free(dup_file_path);
     //client.getResponse()->setCgiPid(pid);
   }
 }
