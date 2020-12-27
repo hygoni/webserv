@@ -83,8 +83,8 @@ void Response::setStatus(int status) {
 void Response::processCgi
 (Client& client, Location const& location) {
   Cgi cgi(client.getServer(), *client.getRequest()->getHeader());
-
-  cgi.run(client.getCgiPath().c_str(), client.getRequestPipe(), client.getResponsePipe());
+  cgi.run(client.getCgiPath().c_str(), client.getCgiFilePath().c_str(),
+  client.getRequestPipe(), client.getResponsePipe());
 }
 
 bool Response::process
@@ -162,6 +162,30 @@ void Response::processGetMethod
   
   path = location.getRoot() + client.getRequest()->getTarget();
   ret = stat(path.c_str(), &buf);
+  if (ret < 0) {
+    if (errno == EACCES) {
+      /* Forbidden */
+      setStatus(403);
+    } else if (errno == ENOENT) {
+      /* Not Found */
+      setStatus(404);
+    } else {
+      /* Internal Server Error */
+      setStatus(500);
+    }
+    return ;
+  } else if (S_ISDIR(buf.st_mode)) {
+    for (size_t i = 0; i < location.getIndex().size(); i++) {
+      ret = stat((path + "/" + location.getIndex()[i]).c_str(), &buf);
+      if (ret < 0 && errno == ENOENT)
+        continue;
+      else {
+        path = path + "/" + location.getIndex()[i];
+        break;
+      }
+    }
+  }
+
   if (ret < 0) {
     if (errno == EACCES) {
       /* Forbidden */

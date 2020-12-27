@@ -18,8 +18,11 @@ private:
   Response*   _response;
   std::string _raw_request;
   std::string _cgi_path;
+  std::string _cgi_file_path;
   Server const&                 _server;
+  const Location*               _location;
 
+  void        setLocation();
   void        setCgiPath();
 Client();
 public:
@@ -33,6 +36,7 @@ public:
   int         *getResponsePipe();
   int         getFd() const;
   const std::string&            getCgiPath() const;
+  const std::string&            getCgiFilePath() const;
   const std::vector<Location>&  getLocations() const;
   const Server&                 getServer() const;
 };

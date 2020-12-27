@@ -7,7 +7,8 @@
 #include "CgiBody.hpp"
 #define MAX_HEADER_SIZE 8192
 
-Client::Client(Server const& server) : _server(server) {
+Client::Client
+(Server const& server) : _server(server) {
   socklen_t     addr_len;
   sockaddr_in   client_addr;
 
@@ -60,6 +61,7 @@ int  Client::recv(fd_set& all_wfds) {
             std::string req_body = _raw_request.substr(header_end + 4);
 
             _request = new Request(req_header);
+            setLocation();
             setCgiPath();
             std::cout << "path: " << _cgi_path << std::endl;
             /* make response */
@@ -119,7 +121,7 @@ int   Client::send() {
         (*_request->getHeader())["Content-Length"] = std::to_string(content_length);
         Cgi cgi(_server, *_request->getHeader());
 
-        cgi.run(_cgi_path.c_str(), _request_pipe, _response_pipe);
+        cgi.run(_cgi_path.c_str(), _cgi_file_path.c_str(), _request_pipe, _response_pipe);
         _is_cgi_executed = true;
       }
     }
@@ -136,27 +138,33 @@ int   Client::send() {
   return 0;
 }
 
-void  Client::setCgiPath() {
+void  Client::setLocation() {
+  for (std::vector<Location>::const_iterator l_it = getLocations().begin();
+      l_it != getLocations().end(); l_it = std::next(l_it)) {
+    /* matching location found */
+    if (_request->getTarget().find(l_it->getPath()) == 0) {
+      _location = &(*l_it);
+      return ;
+    }
+  }
+  return throw HttpException(404);
+}
+
+void Client::setCgiPath() {
   size_t  idx;
 
   if ((idx = _request->getTarget().rfind('.')) != std::string::npos) {
     const std::string target_extension = _request->getTarget().substr(idx);
-
-    for (std::vector<Location>::const_iterator l_it = getLocations().begin();
-          _cgi_path == "" && l_it->getCgiPath() != "" && l_it != getLocations().end(); l_it = std::next(l_it)) {
-      /* matching location found */
-      if (_request->getTarget().find(l_it->getPath()) == 0) {
-        std::cout << "hello? : " << l_it->getCgiExtension().size() << std::endl;
-        for (std::vector<std::string>::const_iterator s_it = l_it->getCgiExtension().begin();
-              s_it != l_it->getCgiExtension().end(); s_it = std::next(s_it)) {
-          std::cout << "extension: " << *s_it << std::endl;
-          if (*s_it == target_extension) {
-            _cgi_path = l_it->getCgiPath();
-          }
-        }
+    /* set cgi path */
+    for (std::vector<std::string>::const_iterator s_it = _location->getCgiExtension().begin();
+          s_it != _location->getCgiExtension().end(); s_it = std::next(s_it)) {
+      if (*s_it == target_extension) {
+        _cgi_path = _location->getCgiPath();
       }
-    } 
+    }
   }
+
+  _cgi_file_path = (_location->getRoot() + _request->getTarget());
 }
 
 int   Client::getFd() const {
@@ -181,6 +189,10 @@ int *Client::getResponsePipe() {
 
 const std::string&            Client::getCgiPath() const {
   return _cgi_path;
+}
+
+const std::string&            Client::getCgiFilePath() const {
+  return _cgi_file_path;
 }
 
 const std::vector<Location>&  Client::getLocations() const {
