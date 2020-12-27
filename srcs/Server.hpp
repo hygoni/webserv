@@ -13,7 +13,7 @@
 
 class Server {
 private:
-  std::vector<Client>                 _clients;
+  std::vector<Client*>                 _clients;
   std::vector<std::string>            _text;
   std::map<std::string, std::string>  _attrs;
   std::vector<Location>               _locations;
@@ -44,7 +44,7 @@ public:
   int                                 getClientBodySizeLimit() const;
   int                                 getClientHeaderSizeLimit() const;
   int                                 getFd() const;
-  std::vector<Client>&                getClients();
+  std::vector<Client*>&               getClients();
 };
 
 #endif  // SRCS_SERVER_HPP_

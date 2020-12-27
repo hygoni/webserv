@@ -11,28 +11,26 @@
 #include "Fd.hpp"
 #include "Header.hpp"
 #include "CgiBody.hpp"
+#include "debug.hpp"
 
-CgiBody::CgiBody() : Body() {
+CgiBody::CgiBody(Header **header) : Body() {
   _is_header_closed = false;
   _is_body_closed = false;
   _is_header_sent = false;
-  _header = NULL;
+  _header = header;
   _n_sent = 0;
 }
 
-CgiBody::CgiBody(const std::string& s) : Body(s) {
+CgiBody::CgiBody(const std::string& s, Header **header) : Body(s) {
   _is_header_closed = false;
   _is_body_closed = false;
   _is_header_sent = false;
-  _header = NULL;
+  _header = header;
   _n_sent = 0;
 }
 
 CgiBody::~CgiBody() {
-  if (_header != NULL)
-    delete _header;
 }
-
 
 void CgiBody::parse
 (int& status, std::map<std::string, std::string>& parse_map) {
@@ -107,12 +105,14 @@ int CgiBody::recv(int fd) {
   _buf[n_read] = '\0';
   _len = n_read;
 
+  log("[CgiBody::recv] read : %s\n", _buf);
   /* body is closed */
   if (n_read == 0) {
     _is_body_closed = true;
-    if (_header == NULL)
+    if (*_header == NULL)
       throw "[CgiBody::recv] header is not created, but fd is closed";
-    (*_header)["Content-Length"] = std::to_string(_raw_body.size());
+    (**_header)["Content-Length"] = std::to_string(_raw_body.size());
+    log("[CgiBody::recv] Content-Length = %lu\n", _raw_body.size());
     return n_read;
   }
 
@@ -128,8 +128,9 @@ int CgiBody::recv(int fd) {
       *new_line = '\0';
       _raw_header += _buf;
       parse(status, parse_map);
-      _header = new Header(status);
-      saveMap(*_header, parse_map);
+      *_header = new Header(status);
+      log("[CgiBody::recv] make header\n");
+      saveMap(**_header, parse_map);
       _is_header_closed = true;
       _raw_body += (new_line + 4);
     }
@@ -143,13 +144,7 @@ int CgiBody::send(int fd) {
   if (!_is_body_closed)
     return 0;
   
- if (!_is_header_sent) {
-    /* TODO: Warning: is header always can be sent by writing once? */
-    if ((n_written = ::write(fd, _header->toString().c_str(), _header->toString().size())) < 0)
-      throw "[CgiBody::send]: write failed";
-    _is_header_sent = true;
-    std::cout << "Sent: " << _header->toString();
-  } else if (_n_sent < (size_t)ft_atoi((*_header)["Content-Length"].c_str())) {
+ if (_n_sent < (size_t)ft_atoi((**_header)["Content-Length"].c_str())) {
       size_t size = std::min(_size, _raw_body.size());
       if ((n_written = ::write(fd, _raw_body.c_str(), size)) < 0)
         throw "[CgiBody::send]: write failed";
@@ -157,6 +152,5 @@ int CgiBody::send(int fd) {
       _raw_body = _raw_body.substr(n_written);
       _n_sent += n_written;
   }
-  std::cout << "n_sent is : " << _n_sent << ", CL : " << (*_header)["Content-Length"] << std::endl;
   return n_written;
 }

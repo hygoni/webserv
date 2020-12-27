@@ -31,5 +31,6 @@ public:
   const std::string&  getVersion() const;
   int                 getStatus() const;
   const std::string&  getMessage() const;
+  int                 getContentLength();
 };
 #endif

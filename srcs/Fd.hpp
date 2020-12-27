@@ -2,6 +2,7 @@
 # define SRCS_FD_HPP_
 # include <sys/socket.h>
 # include <stdlib.h>
+# include "debug.hpp"
 
 class Fd {
 public:
@@ -15,5 +16,6 @@ public:
   static void    clear(int fd, fd_set& fds);
   static void    clearRfd(int fd);
   static void    clearWfd(int fd);
+  static void    displayFdSet(fd_set &fds);
 };
 #endif

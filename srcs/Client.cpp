@@ -5,6 +5,7 @@
 #include "CgiChunkedBody.hpp"
 #include "ChunkedBody.hpp"
 #include "CgiBody.hpp"
+#include "debug.hpp"
 #define MAX_HEADER_SIZE 8192
 
 Client::Client
@@ -22,14 +23,56 @@ Client::Client
   _request_pipe[0] = _request_pipe[1] = -1;
   _response_pipe[0] = _response_pipe[1] = -1;
   _n_sent = 0;
+  _is_cgi_executed = false;
   _cgi_path = "";
 }
 
+Client::Client(Client const& client) : _server(client._server) {
+  _fd = client._fd;
+  _raw_request = client._raw_request;
+  _request = client._request;
+  _response = client._response;
+  _request_pipe[0] = client._request_pipe[0];
+  _request_pipe[1] = client._request_pipe[1];
+  _response_pipe[0] = client._response_pipe[0];
+  _response_pipe[1] = client._response_pipe[1];
+  _n_sent = client._n_sent;
+  _is_cgi_executed = client._is_cgi_executed;
+  _cgi_path = client._cgi_path;
+  _cgi_file_path = client._cgi_file_path;
+  _location = client._location;
+}
+
+Client const& Client::operator=(Client const& client) {
+  _fd = client._fd;
+  _raw_request = client._raw_request;
+  _request = client._request;
+  _response = client._response;
+  _request_pipe[0] = client._request_pipe[0];
+  _request_pipe[1] = client._request_pipe[1];
+  _response_pipe[0] = client._response_pipe[0];
+  _response_pipe[1] = client._response_pipe[1];
+  _n_sent = client._n_sent;
+  _is_cgi_executed = client._is_cgi_executed;
+  _cgi_path = client._cgi_path;
+  _cgi_file_path = client._cgi_file_path;
+  _location = client._location;
+  return *this;
+}
+
 Client::~Client() {
+  log("[Client::~Client] destructor called\n");
   if (_request != NULL)
     delete _request;
   if (_response != NULL)
     delete _response;
+  
+  Fd::clearRfd(_request_pipe[0]);
+  Fd::clearWfd(_request_pipe[1]);
+  Fd::clearRfd(_response_pipe[0]);
+  Fd::clearWfd(_response_pipe[1]);
+  Fd::clearRfd(_fd);
+  Fd::clearWfd(_fd);
 }
 
 /*
@@ -43,45 +86,47 @@ int  Client::recv(fd_set& all_wfds) {
   int     n_read;
   size_t  header_end;
 
-  if ((n_read = ::recv(_fd, buf, BUFSIZE - 1, 0)) > 0) {
+  if (_request == NULL) {
+    /* Connection closed or Error occurred */
+    if ((n_read = ::recv(_fd, buf, BUFSIZE - 1, 0)) <= 0) {
+      return -1;
+    }
     buf[n_read] = '\0';
-    std::cout << buf << std::endl;
     _raw_request += buf;
-    if (_request == NULL) {
-      header_end = _raw_request.find("\r\n\r\n");
-      if (header_end == std::string::npos) {
-        if (_raw_request.size() <= MAX_HEADER_SIZE)
-          return (0);
-        return (1);
-      } else {
-        if (header_end <= MAX_HEADER_SIZE) {
-          try {
-            /* make request */
-            std::string req_header = _raw_request.substr(0, header_end + 4);
-            std::string req_body = _raw_request.substr(header_end + 4);
 
-            _request = new Request(req_header);
-            setLocation();
-            setCgiPath();
-            std::cout << "path: " << _cgi_path << std::endl;
-            /* make response */
-            if (_request->hasBody()) {
-              pipe(_request_pipe);
-              Fd::setWfd(_request_pipe[1]);
-              _response = new Response(*this);
-              if (_request->isChunked()) {
-                if (_response->isCgi()) {
-                  _request->setBody(new CgiChunkedBody(req_body));
-                } else {
-                  _request->setBody(new ChunkedBody(req_body));
-                }                                                                                    
+    header_end = _raw_request.find("\r\n\r\n");
+    if (header_end == std::string::npos) {
+      if (_raw_request.size() <= MAX_HEADER_SIZE)
+        return (0);
+      return (1);
+    } else {
+      if (header_end <= MAX_HEADER_SIZE) {
+        try {
+          /* make request */
+          std::string req_header = _raw_request.substr(0, header_end + 4);
+          std::string req_body = _raw_request.substr(header_end + 4);
+
+          _request = new Request(req_header);
+          setLocation();
+          setCgiPath();
+          std::cout << "path: " << _cgi_path << std::endl;
+          /* make response */
+          if (_request->hasBody()) {
+            pipe(_request_pipe);
+            Fd::setWfd(_request_pipe[1]);
+            _response = new Response(*this);
+            if (_request->isChunked()) {
+              if (_response->isCgi()) {
+                _request->setBody(new CgiChunkedBody(req_body));
               } else {
-                _request->setBody(new Body(req_body));
-              }           
+                _request->setBody(new ChunkedBody(req_body));
+              }                                                                                    
             } else {
-              _response = new Response(*this);
-            }
-
+              _request->setBody(new Body(req_body));
+            }           
+          } else {
+            _response = new Response(*this);
+          }
          } catch (HttpException & err) {
             std::cout << "exception:" << err.getStatus() << std::endl;
             Response response(*this);
@@ -89,23 +134,15 @@ int  Client::recv(fd_set& all_wfds) {
             response.send(_fd);
             return (1);
           }
-
         } else {
           std::cout << "header oversize" << std::endl;
           return (1);         
         }
-      }
+      } 
     } else {
-      _request->getBody()->recv(_fd);
+      if (_request->hasBody())
+        _request->getBody()->recv(_fd);
     }
-  } else {
-    std::string msg = "error: n_read is " + std::to_string(n_read);
-    std::cout << msg << std::endl;
-    std::cout << strerror(errno) << std::endl;
-    /* TODO: remove client */
-    throw "n_read exception";
-
-  }
   return (1);
 }
 
@@ -120,7 +157,6 @@ int   Client::send() {
         size_t content_length = _request->getBody()->getChunkedContentLength();
         (*_request->getHeader())["Content-Length"] = std::to_string(content_length);
         Cgi cgi(_server, *_request->getHeader());
-
         cgi.run(_cgi_path.c_str(), _cgi_file_path.c_str(), _request_pipe, _response_pipe);
         _is_cgi_executed = true;
       }
@@ -163,8 +199,8 @@ void Client::setCgiPath() {
       }
     }
   }
-
-  _cgi_file_path = (_location->getRoot() + _request->getTarget());
+  char buf[BUFSIZE];
+  _cgi_file_path = std::string(getcwd(buf, BUFSIZE)) + "/" + (_location->getRoot() + _request->getTarget());
 }
 
 int   Client::getFd() const {

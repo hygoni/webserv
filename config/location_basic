@@ -3,4 +3,6 @@ directory_listing on
 allowed_method GET POST HEAD
 path /
 root ./html
-index index.html index.htm
+index index.php index.html index.htm
+cgi_path /usr/bin/php-cgi
+cgi_extension .bin .cgi .php

@@ -18,6 +18,7 @@ class Response {
   Body      *_body;
   int       _file_fd;
   pid_t     _cgi_pid;
+  size_t    _n_sent;
 
  public:
         Response(Client& client);

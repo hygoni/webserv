@@ -91,7 +91,7 @@ void  Request::checkHeaders() {
   if (!_header->isExist("Host"))
     throw HttpException(400);
   if (_header->isExist("Transfer-Encoding")) {
-    if ((*_header)["Transfer-Encoding"] == "chunked")
+    if ((*_header)["Transfer-Encoding"] != "chunked")
       throw HttpException(400); // TODO: abnf OWS ',' required
     _header->erase("Content-Length");
     _chunked = true;

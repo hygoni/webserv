@@ -12,6 +12,7 @@ Body::Body() {
 
 Body::Body(std::string const& s) {
   _len = s.length();
+  _size = BUFSIZE;
   _buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
   ft_strlcpy(_buf, s.c_str(), _size);
 }
@@ -47,6 +48,8 @@ int Body::send(int fd) {
     _len -= n_written;
     ft_memmove(_buf, _buf + n_written, _len);
     _buf[_len] = '\0';
+  } else {
+    _len = 0;
   }
   return n_written;
 }

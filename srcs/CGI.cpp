@@ -32,6 +32,7 @@ Cgi::Cgi(Server const& server, Header const& header) {
   env_map["SERVER_NAME"] = server.getServerName();
   env_map["SERVER_PORT"] = server.getListen();
   env_map["SERVER_PROTOCOL"] = header.getVersion();
+  env_map["REDIRECT_STATUS"] = "0";
   // env_map["SERVER_SOFTWARE"]
 
   if ((_env = generate_env(env_map)) == NULL)
@@ -75,8 +76,9 @@ void Cgi::run(const char *cgi_path, const char* file_path, int* request_pipe, in
   pid_t pid;
   char *dup_cgi_path;
   char *dup_file_path;
-  char* const argv[] = {dup_cgi_path = ft_strdup(cgi_path), dup_file_path = ft_strdup(dup_file_path), NULL};
-
+  char* const argv[] = {dup_cgi_path = ft_strdup(cgi_path), dup_file_path = ft_strdup(file_path), NULL};
+  log("[Cgi::run] cgi executed. cgi_path = %s, cgi_file_path = %s\n", dup_cgi_path, dup_file_path);
+  log("[Cgi::run] argv[0] = %s, argv[1] = %s, cgi_path = %s", argv[0], argv[1], cgi_path);
   pipe(response_pipe);
   Fd::setRfd(response_pipe[0]);
   pid = fork();
@@ -90,7 +92,6 @@ void Cgi::run(const char *cgi_path, const char* file_path, int* request_pipe, in
     dup2(response_pipe[1], 1);
     close(response_pipe[1]);
     close(response_pipe[0]);
-    
     if (execve(cgi_path, argv, _env) < 0)
      throw "[Cgi::run]: execve failed";
     exit(EXIT_SUCCESS);

@@ -14,6 +14,7 @@
 #include "Client.hpp"
 #include "Fd.hpp"
 #include "CgiBody.hpp"
+#include "debug.hpp"
 
 Response::Response(Client& client) {  
   std::cout << "[Response::Response(Client&)]" << std::endl;
@@ -22,6 +23,7 @@ Response::Response(Client& client) {
   _is_header_sent = false;
   _is_Cgi = false;
   _file_fd = -1;
+  _n_sent = 0;
 
   Fd::setWfd(client.getFd());
   if (process(client)) {
@@ -33,7 +35,6 @@ Response::Response(Client& client) {
 
 /* for chunked request, CGI process is forked here */
 int Response::recv(int fd) {
-  
   return _body->recv(fd);
 }
 
@@ -56,6 +57,7 @@ int Response::send(int fd) {
     when CGI, header is created in Body
     when non-CGI, header is immediately created
    */
+
   if (_header != NULL && _is_header_sent == false) {
     std::string header = _header->toString();
     _is_header_sent = true;
@@ -64,12 +66,24 @@ int Response::send(int fd) {
   } else {
     if (_body == NULL)
       return 0;
+    int ret;
     if (_is_Cgi) {
-      return _body->send(fd);
+      ret = _body->send(fd);
     } else {
       _body->recv(_file_fd);
-      return _body->send(fd);
+      ret = _body->send(fd);
     }
+    _n_sent += ret;
+    if (_header != NULL && _n_sent == _header->getContentLength()) {
+      log("[Response::send] close, clear %d\n", fd);
+      close(fd);
+      return -1;
+    }
+    if (ret < 0) {
+      log("[Response::send] ret is %d\n", ret);
+      log("[Response::send] %s\n", strerror(errno));
+    }
+    return ret;
   }
 }
 
@@ -107,7 +121,7 @@ bool Response::process
         _is_Cgi = true;
         /* process CGI */
         bool is_transfer_encoding = client.getRequest()->isChunked();
-        _body = new CgiBody();
+        _body = new CgiBody(&_header);
         if (!is_transfer_encoding) {
           processCgi(client, location);
         }

@@ -1,4 +1,4 @@
-listen 8012
+listen 8051
 server_name _
 location ./config/location_basic
 client_body_size_limit 8000

@@ -135,9 +135,8 @@ int  Server::initSocket() {
 }
 
 int   Server::accept(fd_set& rfds) {
-  Client client(*this);
-
-  int client_fd = client.getFd();
+  Client* client = new Client(*this);
+  int client_fd = client->getFd();
   _clients.push_back(client);
   Fd::set(client_fd, rfds);
   return client_fd;
@@ -171,6 +170,6 @@ int Server::getFd() const {
   return this->_fd;
 }
 
-std::vector<Client>&  Server::getClients() {
+std::vector<Client*>&  Server::getClients() {
   return _clients;
 }

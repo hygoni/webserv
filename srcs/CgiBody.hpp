@@ -19,7 +19,7 @@
  */
 class CgiBody : public Body{
  private:
-  Header        *_header;
+  Header        **_header;
   std::string   _raw_header;
   std::string   _raw_body;
   bool          _is_header_sent;
@@ -28,8 +28,8 @@ class CgiBody : public Body{
   size_t        _n_sent;
 
  public:
-                        CgiBody();
-                        CgiBody(const std::string& s);
+                        CgiBody(Header **header);
+                        CgiBody(const std::string& s, Header **header);
                         ~CgiBody();
   int                   process(int fd, char *buf, int len);
   void                  parse(int& status, std::map<std::string, std::string>& parse_map);

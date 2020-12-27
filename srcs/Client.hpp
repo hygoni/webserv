@@ -4,6 +4,7 @@
 #include "Request.hpp"
 #include "Location.hpp"
 #include <netinet/in.h>
+#include <unistd.h>
 
 class Response;
 class Server;
@@ -27,6 +28,8 @@ private:
 Client();
 public:
               Client(const Server& server);
+              Client(Client const& client);
+  Client const&   operator=(Client const& client);
               ~Client();
   int         recv(fd_set& all_wfds);
   int         send();

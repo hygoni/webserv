@@ -1,5 +1,6 @@
 #include "Header.hpp"
 #include "Message.hpp"
+#include "libft.h"
 
 Header::Header() {
 }
@@ -69,4 +70,12 @@ int                 Header::getStatus() const {
 
 const std::string&  Header::getMessage() const {
   return _message;
+}
+
+int                 Header::getContentLength() {
+  if (_items.find("Content-Length") == _items.end()) {
+    return -1;
+  } else {
+    return ft_atoi(_items["Content-Length"].c_str());
+  }
 }
