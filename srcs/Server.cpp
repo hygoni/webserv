@@ -122,6 +122,7 @@ int  Server::initSocket() {
   // if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) < 0)
   //   throw std::exception();
   // why ??
+  // TODO: htons -> ft_htons, htonl -> ft_htonl
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(_listen);
   std::cout << _listen << std::endl;

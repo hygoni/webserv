@@ -1,5 +1,7 @@
-listen 8051
+listen 8017
 server_name _
+location ./config/location_cgi
 location ./config/location_basic
+location ./config/location_dlist
 client_body_size_limit 8000
 client_header_size_limit 8000

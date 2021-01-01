@@ -14,7 +14,7 @@ NAME = libft.a
 SRCS = $(shell ls . | grep '\.cpp')
 OBJS = $(SRCS:.cpp=.o)
 
-CC = clang++
+CC = c++
 CFLAGS = -Wall -Wextra -Werror
 RM = rm -f
 

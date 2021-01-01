@@ -17,8 +17,10 @@ class Location {
     std::vector<std::string>            _allowed_method;
     std::string                         _cgi_path;
     std::vector<std::string>            _cgi_extension;
+    std::string                         _authorization;
     bool                                _directory_listing;
     std::string                         _default_error_page;
+    bool                                _cgi;
 
  public:
                                     Location(const char *path);
@@ -35,6 +37,8 @@ class Location {
     std::vector<std::string> const& getCgiExtension() const;
     bool                            getDirectoryListing() const;
     std::string const&              getDefaultErrorPage() const;
+    std::string const&              getAuthorization() const;
+    bool                            isCgi() const;
 };
 
 #endif  // SRCS_LOCATION_HPP_

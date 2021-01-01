@@ -1,8 +1,9 @@
 default_error_page /
-directory_listing on
-allowed_method GET POST HEAD
-path /
+directory_listing off
+allowed_method GET POST HEAD PUT
+path /basic
 root ./html
 index index.php index.html index.htm
-cgi_path /usr/bin/php-cgi
-cgi_extension .bin .cgi .php
+cgi off
+cgi_extension .bin .cgi
+#authorization id:pass
