@@ -13,8 +13,10 @@ Body::Body() {
 Body::Body(std::string const& s) {
   _len = s.length();
   _size = BUFSIZE;
-  _buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
-  ft_strlcpy(_buf, s.c_str(), _size);
+  if (s.length() > BUFSIZE)
+    _size = s.length();
+  _buf = (char*)malloc(sizeof(char) * (_size + 1));
+  ft_strlcpy(_buf, s.c_str(), _size + 1);
 }
 
 Body::~Body() {
