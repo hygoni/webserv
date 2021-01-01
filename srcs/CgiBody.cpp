@@ -105,12 +105,14 @@ int CgiBody::recv(int fd) {
   _buf[n_read] = '\0';
   _len = n_read;
 
-  log("[CgiBody::recv] read : %s\n", _buf);
+  log("[CgiBody::recv] read (%d bytes) : %s\n", n_read, _buf);
   /* body is closed */
-  if (n_read == 0) {
+  if (n_read == 0 && !_is_body_closed) {
     _is_body_closed = true;
-    if (*_header == NULL)
-      throw "[CgiBody::recv] header is not created, but fd is closed";
+    parse(status, parse_map);
+    log("[CgiBody::recv] make header\n");
+    *_header = new Header(status);
+    saveMap(**_header, parse_map);
     (**_header)["Content-Length"] = std::to_string(_raw_body.size());
     log("[CgiBody::recv] Content-Length = %lu\n", _raw_body.size());
     return n_read;
@@ -127,10 +129,7 @@ int CgiBody::recv(int fd) {
       /* header is closed */
       *new_line = '\0';
       _raw_header += _buf;
-      parse(status, parse_map);
-      *_header = new Header(status);
-      log("[CgiBody::recv] make header\n");
-      saveMap(**_header, parse_map);
+
       _is_header_closed = true;
       _raw_body += (new_line + 4);
     }
@@ -140,7 +139,7 @@ int CgiBody::recv(int fd) {
 
 int CgiBody::send(int fd) {
   int n_written;
-
+  log("[CgiBody::send] n_sent = %d\n", _n_sent);
   if (!_is_body_closed)
     return 0;
   

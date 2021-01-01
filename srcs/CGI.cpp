@@ -11,35 +11,72 @@
 
 #define BUFSIZE 4096
 
-Cgi::Cgi(Server const& server, Header const& header) {
+std::string ip_to_string(int ip) {
+  std::string ip_string;
+
+  while (ip > 0) {
+    ip_string = std::to_string(ip % 256) + ip_string;
+    ip /= 256;
+    if (ip != 0) {
+      ip_string = "." + ip_string;
+    }
+  }
+  return ip_string;
+}
+
+Cgi::Cgi(Client& client) : _client(client) {
   std::map<std::string, std::string>  env_map;
-  size_t                              query_idx;
+  size_t                              idx;
+  Server const&                       server = client.getServer();
+  struct sockaddr_in                  client_addr;
+  socklen_t                           client_len;
+  Header&                             header = *(client.getRequest()->getHeader());
+  std::string                         cgi_path;
+  std::string                         cgi_file_path = "/";
+  std::string                         query;
+
+  client_len = sizeof(client_addr);
+  getsockname(client.getFd(), (struct sockaddr*)&client_addr, &client_len);
+  
+  /* get query */
+  idx = header.getTarget().find('?');
+  if (idx != std::string::npos)
+    query = header.getTarget().substr(idx + 1);
+  cgi_path = header.getTarget().substr(client.getLocation()->getPath().length());
+  idx = cgi_path.find('/');
+  if (idx != std::string::npos) {
+    cgi_file_path = cgi_path.substr(idx);
+    cgi_path = client.getLocation()->getRoot() + cgi_path.substr(0, idx);
+  }
+
   // env_map["AUTH_TYPE"] = 
   env_map["CONTENT_LENGTH"] =  header["Content-Length"];
   env_map["CONTENT_TYPE"] = header["Content-Type"];
   env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
-  env_map["PATH_INFO"] = "/";
-  // env_map["PATH_TRANSLATED"]
-  env_map["QUERY_STRING"] = "";
-  if (query_idx = header.getTarget().find('?') != std::string::npos && query_idx != header.getTarget().length())
-    env_map["QUERY_STRING"] = header.getTarget().substr(query_idx + 1);
-  // env_map["REMOTE_ADDR"]
-  // env_map["REMOTE_HOST"]
+  env_map["PATH_INFO"] = cgi_file_path ;
+  env_map["PATH_TRANSLATED"] = client.getLocation()->getRoot() + "/" + cgi_file_path;
+  env_map["QUERY_STRING"] = query;
+  env_map["REMOTE_ADDR"] = ip_to_string(client_addr.sin_addr.s_addr);
   // env_map["REMOTE_IDENT"]
   // env_map["REMOTE_USER"]
   env_map["REQUEST_METHOD"] = header.getMethod();
-  // env_map["SCRIPT_NAME"]
+  env_map["REQUEST_URI"] = header.getTarget();
+  env_map["SCRIPT_NAME"] = cgi_path;
   env_map["SERVER_NAME"] = server.getServerName();
-  env_map["SERVER_PORT"] = server.getListen();
+  env_map["SERVER_PORT"] = std::to_string(server.getListen());
   env_map["SERVER_PROTOCOL"] = header.getVersion();
   env_map["REDIRECT_STATUS"] = "0";
-  // env_map["SERVER_SOFTWARE"]
+  env_map["SERVER_SOFTWARE"] = "webserv/1.0";
+  env_map["SCRIPT_FILENAME"] = client.getLocation()->getRoot() + "/" + cgi_file_path;
 
   if ((_env = generate_env(env_map)) == NULL)
     throw "[Cgi::Cgi]: generating env_map failed due to memory";
+  _cgi_path = cgi_path;
+  _cgi_file_path = cgi_file_path;
 }
 
 Cgi::~Cgi() {
+  log("[Cgi::~Cgi]\n");
   if (_env != NULL)
     ft_free_null_terminated_array(reinterpret_cast<void **>(_env));
 }
@@ -72,33 +109,37 @@ char **Cgi::generate_env(std::map<std::string, std::string> const &env_map) {
   return env;
 }
 
-void Cgi::run(const char *cgi_path, const char* file_path, int* request_pipe, int* response_pipe) {
+void Cgi::run() {
   pid_t pid;
   char *dup_cgi_path;
   char *dup_file_path;
-  char* const argv[] = {dup_cgi_path = ft_strdup(cgi_path), dup_file_path = ft_strdup(file_path), NULL};
-  log("[Cgi::run] cgi executed. cgi_path = %s, cgi_file_path = %s\n", dup_cgi_path, dup_file_path);
-  log("[Cgi::run] argv[0] = %s, argv[1] = %s, cgi_path = %s", argv[0], argv[1], cgi_path);
-  pipe(response_pipe);
-  Fd::setRfd(response_pipe[0]);
+  char* const argv[] = {dup_cgi_path = ft_strdup(_cgi_path.c_str()),
+  dup_file_path = ft_strdup(_cgi_file_path.c_str()), NULL};
+  
+  pipe(_client.getResponsePipe());
+  Fd::setRfd(_client.getResponsePipe()[0]);
   pid = fork();
   if (pid == 0) {
+    log("[Cgi::run] argv[0] = %s, argv[1] = %s, argv[2] = %s", argv[0], argv[1], argv[2]);
+    std::cout << std::endl;
     /* redirect body to stdin */
-    dup2(request_pipe[0], 0);
-    close(request_pipe[0]);
-    close(request_pipe[1]);
+    dup2(_client.getRequestPipe()[0], 0);
+    close(_client.getRequestPipe()[0]);
+    close(_client.getRequestPipe()[1]);
     
     /* redirect stdout to response */
-    dup2(response_pipe[1], 1);
-    close(response_pipe[1]);
-    close(response_pipe[0]);
-    if (execve(cgi_path, argv, _env) < 0)
+    dup2(_client.getResponsePipe()[1], 1);
+    close(_client.getResponsePipe()[1]);
+    close(_client.getResponsePipe()[0]);
+    if (execve(_cgi_path.c_str(), argv, _env) < 0)
      throw "[Cgi::run]: execve failed";
-    exit(EXIT_SUCCESS);
-  } else {
-    close(response_pipe[1]);
     free(dup_cgi_path);
     free(dup_file_path);
-    //client.getResponse()->setCgiPid(pid);
+    exit(EXIT_SUCCESS);
+  } else {
+    close(_client.getResponsePipe()[1]);
+    free(dup_cgi_path);
+    free(dup_file_path);
+    //_client.getResponse()->setCgiPid(pid);
   }
 }

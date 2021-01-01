@@ -10,14 +10,16 @@
 
 class Cgi {
 private:
-  char**  _env;
-
+  char**          _env;
+  Client&          _client;
+  std::string     _cgi_path;
+  std::string     _cgi_file_path;
   Cgi();
   char**  generate_env(std::map<std::string, std::string> const& env_map);
 public:
-  Cgi(Server const& server, Header const& header);
+  Cgi(Client& client);
   ~Cgi();
 
-  void  run(const char* cgi_path, const char* file_path, int* request_pipe, int* response_pipe);
+  void  run();
 };
 #endif  // SRCS_CGI_HPP_
