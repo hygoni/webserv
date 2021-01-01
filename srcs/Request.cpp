@@ -180,6 +180,17 @@ bool Request::isChunked() const {
   return _chunked;
 }
 
+bool Request::auth(std::string const& user_str) const {
+  std::string token;
+  size_t      idx;
+
+  idx = (*_header)["Authorization"].find("Basic ");
+  if (idx == std::string::npos && idx != 0)
+    return false;
+  token = (*_header)["Authorization"].substr(idx + 6);
+  return user_str == Base64::Decode(token);
+}
+
 Body        *Request::getBody() {
   return _body;
 }

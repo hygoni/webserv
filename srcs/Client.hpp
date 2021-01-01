@@ -24,7 +24,6 @@ private:
   const Location*               _location;
 
   void        setLocation();
-  void        setCgiPath();
 Client();
 public:
               Client(const Server& server);
@@ -33,6 +32,7 @@ public:
               ~Client();
   int         recv(fd_set& all_wfds);
   int         send();
+  bool        auth();
   Request     *getRequest();
   Response    *getResponse();
   int         *getRequestPipe();
@@ -41,6 +41,7 @@ public:
   const std::string&            getCgiPath() const;
   const std::string&            getCgiFilePath() const;
   const std::vector<Location>&  getLocations() const;
+  const Location*               getLocation() const;
   const Server&                 getServer() const;
 };
 

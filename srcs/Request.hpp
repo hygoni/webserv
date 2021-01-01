@@ -4,7 +4,9 @@
 #include <iostream>
 #include "Header.hpp"
 #include "Body.hpp"
+#include "Auth.hpp"
 #include "HttpException.hpp"
+#include "Base64.hpp"
 #define MAX_BODY_SIZE 40000
 /* Copyright 2020 hyeyoo, hyekim */
 
@@ -41,6 +43,7 @@ public:
   Header *getHeader();
   Body   *getBody();
   void   setBody(Body *body);
+  bool   auth(std::string const& user_str) const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Request& request);

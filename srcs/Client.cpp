@@ -6,7 +6,10 @@
 #include "ChunkedBody.hpp"
 #include "CgiBody.hpp"
 #include "debug.hpp"
+#include "Base64.hpp"
 #define MAX_HEADER_SIZE 8192
+#include <arpa/inet.h>
+
 
 Client::Client
 (Server const& server) : _server(server) {
@@ -15,8 +18,9 @@ Client::Client
 
   addr_len = sizeof(client_addr);
   _fd = accept(server.getFd(), (struct sockaddr *)&client_addr, &addr_len);
+  std::cout << inet_ntoa(client_addr.sin_addr) << std::endl;
   if (_fd < 0)
-    throw std::exception();
+    throw "[Client::Client] bad file descriptor";
   _raw_request = std::string();
   _request = NULL;
   _response = NULL;
@@ -75,6 +79,18 @@ Client::~Client() {
   Fd::clearWfd(_fd);
 }
 
+// long     Client::ft_ntohl(long num) {
+//   long result = 1;
+
+//   if (((char *)&result)[0] == 0) {
+//     return num;
+//   }
+//   for (size_t i = 0; i < sizeof(long); i++) {
+//     ((char *)&result)[i] = ((char *)&num)[sizeof(long) - i];
+//   }
+//   return result;
+// }
+
 /*
 return 0 : not closed header
 return num : new fd, must set to wfds
@@ -108,13 +124,16 @@ int  Client::recv(fd_set& all_wfds) {
 
           _request = new Request(req_header);
           setLocation();
-          setCgiPath();
-          std::cout << "path: " << _cgi_path << std::endl;
+          /* authenticate */
+          if (_location->getAuthorization().find(':') != std::string::npos) {
+            if (!this->auth())
+              return (1);
+          }
           /* make response */
+          _response = new Response(*this);
           if (_request->hasBody()) {
             pipe(_request_pipe);
-            Fd::setWfd(_request_pipe[1]);
-            _response = new Response(*this);
+            Fd::setWfd(_request_pipe[1]);  
             if (_request->isChunked()) {
               if (_response->isCgi()) {
                 _request->setBody(new CgiChunkedBody(req_body));
@@ -124,14 +143,12 @@ int  Client::recv(fd_set& all_wfds) {
             } else {
               _request->setBody(new Body(req_body));
             }           
-          } else {
-            _response = new Response(*this);
           }
          } catch (HttpException & err) {
             std::cout << "exception:" << err.getStatus() << std::endl;
-            Response response(*this);
-            response.setStatus(err.getStatus());
-            response.send(_fd);
+            if (_response != NULL)
+              delete _response;
+            _response = new Response(*this, err.getStatus());
             return (1);
           }
         } else {
@@ -156,8 +173,8 @@ int   Client::send() {
       } else {
         size_t content_length = _request->getBody()->getChunkedContentLength();
         (*_request->getHeader())["Content-Length"] = std::to_string(content_length);
-        Cgi cgi(_server, *_request->getHeader());
-        cgi.run(_cgi_path.c_str(), _cgi_file_path.c_str(), _request_pipe, _response_pipe);
+        Cgi cgi(*this);
+        cgi.run();
         _is_cgi_executed = true;
       }
     }
@@ -178,6 +195,7 @@ void  Client::setLocation() {
   for (std::vector<Location>::const_iterator l_it = getLocations().begin();
       l_it != getLocations().end(); l_it = std::next(l_it)) {
     /* matching location found */
+    log("[Client::setLocation] locaation: %s\n", l_it->getPath().c_str());
     if (_request->getTarget().find(l_it->getPath()) == 0) {
       _location = &(*l_it);
       return ;
@@ -186,21 +204,14 @@ void  Client::setLocation() {
   return throw HttpException(404);
 }
 
-void Client::setCgiPath() {
-  size_t  idx;
+bool  Client::auth() {
+  bool is_authenticated;
 
-  if ((idx = _request->getTarget().rfind('.')) != std::string::npos) {
-    const std::string target_extension = _request->getTarget().substr(idx);
-    /* set cgi path */
-    for (std::vector<std::string>::const_iterator s_it = _location->getCgiExtension().begin();
-          s_it != _location->getCgiExtension().end(); s_it = std::next(s_it)) {
-      if (*s_it == target_extension) {
-        _cgi_path = _location->getCgiPath();
-      }
-    }
-  }
-  char buf[BUFSIZE];
-  _cgi_file_path = std::string(getcwd(buf, BUFSIZE)) + "/" + (_location->getRoot() + _request->getTarget());
+  if (_request->auth(_location->getAuthorization()))
+    return true;
+  _response = new Response(*this, 401);
+  (*_response->getHeader())["WWW-Authenticate"] = "Basic realm=\"Need Auth\"";
+  return is_authenticated;
 }
 
 int   Client::getFd() const {
@@ -233,6 +244,10 @@ const std::string&            Client::getCgiFilePath() const {
 
 const std::vector<Location>&  Client::getLocations() const {
   return _server.getLocations();
+}
+
+const Location*               Client::getLocation() const {
+  return _location;
 }
 
 const Server&                 Client::getServer() const {
