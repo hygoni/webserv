@@ -96,9 +96,8 @@ int Response::send(int fd) {
         ret = _body->send(fd);
       }
     }
-
     _n_sent += ret;
-    if ((_client.getRequest()->getMethod() == "PUT" && _n_sent == _client.getRequest()->getContentLength()) ||
+    if ((_client.getRequest() != NULL && _client.getRequest()->getMethod() == "PUT" && _n_sent == _client.getRequest()->getContentLength()) ||
     _n_sent == _header->getContentLength() ||
     _body == NULL) {
       log("[Response::send] close, clear %d\n", fd);

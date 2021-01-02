@@ -13,11 +13,13 @@ ServerManager::~ServerManager() {
 }
 
 void  ServerManager::run() {
-  std::vector<Server>::iterator s_it;
-  std::vector<Client*>::iterator c_it;
+  std::vector<Server>::iterator   s_it;
+  std::vector<Client*>::iterator  c_it;
+  struct timeval                  select_timeout;
   int       client_fd;
   fd_set    all_fds[2], ready_fds[2];
   
+  select_timeout.tv_sec = 3;
   Fd::rfds = &all_fds[0];
   Fd::wfds = &all_fds[1];
   ft_bzero(&all_fds, sizeof(fd_set) * 2);
@@ -35,21 +37,22 @@ void  ServerManager::run() {
     ready_fds[0] = all_fds[0];
     ready_fds[1] = all_fds[1];
     log("select...\n");
-    if (select(Fd::max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, NULL) < 0) {
+    if (select(Fd::max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, &select_timeout) < 0) {
       std::cout << (Fd::max_fd + 1) << std::endl;
       std::cout << strerror(errno) << std::endl;
       throw "select failed!";
     }
-    log("..?\n");
     for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {
       if (Fd::isSet(s_it->getFd(), ready_fds[0])) {
         client_fd = s_it->accept(all_fds[0]);
         /* not setting read fd? */
       }
       std::vector<Client*> &clients = s_it->getClients();
-      for (c_it = clients.begin(); c_it != clients.end(); ) {
-        /* put request to buffer */
-        if (Fd::isSet((*c_it)->getFd(), ready_fds[0])) {
+      for (c_it = clients.begin(); c_it != clients.end();) {
+        if ((*c_it)->isTimeout()) {
+          (*c_it)->timeout();
+          log("[Client::tiemout]\n");
+        } else if (Fd::isSet((*c_it)->getFd(), ready_fds[0])) {
           log("[Client::recv]\n");
           if ((*c_it)->recv(all_fds[1]) < 0) {
             Client *client = *c_it;

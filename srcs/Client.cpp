@@ -7,7 +7,6 @@
 #include "CgiBody.hpp"
 #include "debug.hpp"
 #include "Base64.hpp"
-#define MAX_HEADER_SIZE 8192
 #include <arpa/inet.h>
 
 
@@ -28,6 +27,7 @@ Client::Client
   _response_pipe[0] = _response_pipe[1] = -1;
   _n_sent = 0;
   _is_cgi_executed = false;
+  _is_timeout = false;
   _cgi_path = "";
 }
 
@@ -42,6 +42,7 @@ Client::Client(Client const& client) : _server(client._server) {
   _response_pipe[1] = client._response_pipe[1];
   _n_sent = client._n_sent;
   _is_cgi_executed = client._is_cgi_executed;
+  _is_timeout = client._is_timeout;
   _cgi_path = client._cgi_path;
   _cgi_file_path = client._cgi_file_path;
   _location = client._location;
@@ -71,12 +72,25 @@ Client::~Client() {
   if (_response != NULL)
     delete _response;
   
-  Fd::clearRfd(_request_pipe[0]);
-  Fd::clearWfd(_request_pipe[1]);
-  Fd::clearRfd(_response_pipe[0]);
-  Fd::clearWfd(_response_pipe[1]);
+  if (_request_pipe[0] != -1) {
+    Fd::clearRfd(_request_pipe[0]);
+    close(_request_pipe[0]);
+  }
+  if (_request_pipe[1] != -1) {
+    Fd::clearWfd(_request_pipe[1]);
+    close(_request_pipe[1]);
+  }
+  if (_response_pipe[0] != -1) {
+    Fd::clearRfd(_response_pipe[0]);
+    close(_response_pipe[0]);
+  }
+  if (_response_pipe[1] != -1) {
+    Fd::clearWfd(_response_pipe[1]);
+    close(_response_pipe[1]);
+  }
   Fd::clearRfd(_fd);
   Fd::clearWfd(_fd);
+  close(_fd);
 }
 
 // long     Client::ft_ntohl(long num) {
@@ -112,17 +126,19 @@ int  Client::recv(fd_set& all_wfds) {
 
     header_end = _raw_request.find("\r\n\r\n");
     if (header_end == std::string::npos) {
-      if (_raw_request.size() <= MAX_HEADER_SIZE)
+      if (_raw_request.size() <= _server.getClientHeaderSizeLimit())
         return (0);
       return (1);
     } else {
-      if (header_end <= MAX_HEADER_SIZE) {
-        try {
+      try {
+        if (header_end <= _server.getClientHeaderSizeLimit()) {
           /* make request */
           std::string req_header = _raw_request.substr(0, header_end + 4);
           std::string req_body = _raw_request.substr(header_end + 4);
 
           _request = new Request(req_header);
+          if (_request->getContentLength() > _server.getClientBodySizeLimit())
+            throw HttpException(413);
           setLocation();
           setCgiPath();
           /* authenticate */
@@ -131,10 +147,10 @@ int  Client::recv(fd_set& all_wfds) {
               return (1);
           }
           /* make response */
-          _response = new Response(*this);
           if (_request->hasBody()) {
             pipe(_request_pipe);
-            Fd::setWfd(_request_pipe[1]);  
+            Fd::setWfd(_request_pipe[1]);
+            _response = new Response(*this);
             if (_request->isChunked()) {
               if (_response->isCgi()) {
                 _request->setBody(new CgiChunkedBody(req_body));
@@ -144,23 +160,31 @@ int  Client::recv(fd_set& all_wfds) {
             } else {
               _request->setBody(new Body(req_body));
             }           
-          }
-         } catch (HttpException & err) {
-            std::cout << "exception:" << err.getStatus() << std::endl;
-            if (_response != NULL)
-              delete _response;
-            _response = new Response(*this, err.getStatus());
-            return (1);
+          } else {
+            _response = new Response(*this);
           }
         } else {
-          std::cout << "header oversize" << std::endl;
-          return (1);         
+          /* header too long */
+          throw HttpException(413);
         }
-      } 
-    } else {
-      if (_request->hasBody())
-        _request->getBody()->recv(_fd);
+      } catch (HttpException & err) {
+        log("[Client::recv] HttpException : %d\n", err.getStatus());
+        if (_response != NULL)
+          delete _response;
+        _response = new Response(*this, err.getStatus());
+        return (1);
+      } catch (const char* s) {
+        /* Internal Server Error */
+        log("[Client::recv] Internal Error : %s\n", s);
+        if (_response != NULL)
+          delete _response;
+        _response = new Response(*this, 500);
+      }
     }
+  } else {
+    if (_request->hasBody())
+      _request->getBody()->recv(_fd);
+  }
   return (1);
 }
 
@@ -225,22 +249,32 @@ void Client::setCgiPath() {
 }
 
 bool  Client::auth() {
-  bool is_authenticated;
-
   if (_request->auth(_location->getAuthorization()))
     return true;
   _response = new Response(*this, 401);
   (*_response->getHeader())["WWW-Authenticate"] = "Basic realm=\"Need Auth\"";
-  return is_authenticated;
+  return false;
 }
 
-bool  Client::checkAlive() const {
+bool  Client::isTimeout() {
   struct timeval now;
 
+  if (_is_timeout == true)
+    return true;
   gettimeofday(&now, NULL);
   if (now.tv_sec - _created.tv_sec < TIMEOUT_SEC)
-    return true;
-  return false;
+    return false;
+  _is_timeout = true;
+  return true;
+}
+
+void  Client::timeout() {
+  if (_response != NULL) {
+    if (_response->getHeader()->getStatus() == 408)
+      return;
+    delete _response;
+  }
+  _response = new Response(*this, 408);
 }
 
 int   Client::getFd() const {

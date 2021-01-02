@@ -4,6 +4,7 @@
 # include "Config.hpp"
 # include "libft.h"
 # include <sys/select.h>
+# include <sys/time.h>
 class ServerManager {
 private:
   std::vector<Server>&  _servers;

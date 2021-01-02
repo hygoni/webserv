@@ -17,9 +17,10 @@ private:
   int             _response_pipe[2];
   int             _n_sent; // request body sent;
   bool            _is_cgi_executed;
+  bool            _is_timeout;
   Request*        _request;
   Response*       _response;
-  std::string    _raw_request;
+  std::string     _raw_request;
   std::string     _cgi_path;
   std::string     _cgi_file_path;
   struct timeval  _created;
@@ -37,7 +38,8 @@ public:
   int         recv(fd_set& all_wfds);
   int         send();
   bool        auth();
-  bool        checkAlive() const;
+  void        timeout();
+  bool        isTimeout();
   bool        isCgi() const;
 
   Request*    getRequest();
