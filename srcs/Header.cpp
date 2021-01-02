@@ -42,7 +42,7 @@ std::string         Header::toString() const {
 
   result += _status / 100 + '0';
   result += _status / 10 % 10 + '0';
-  result += _status % 100 + '0';
+  result += _status % 10 + '0';
   result += ' ' + _message + "\r\n";
 
   for (it = _items.begin(); it != _items.end(); it = std::next(it)) {
