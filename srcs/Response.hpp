@@ -22,12 +22,7 @@ class Response {
   size_t    _n_sent;
   Client&   _client;
 
- public:
-        Response(Client& client);
-        Response(Client& client, int status);
-        ~Response();
-  int   recv(int fd);
-  int   send(int fd);
+  Header*   initHeader(int status) const;
 
   /* process request methods */
   void  process(Client& client);
@@ -39,14 +34,17 @@ class Response {
   void  processPostMethod();
   void  processCgi(Client& client, Location const& location);
   void  processDirectoryListing(Client& client, Location const& location, std::string const& path);
-  void setStatus(int status);
+ public:
+        Response(Client& client);
+        Response(Client& client, int status);
+        ~Response();
+  int   recv(int fd);
+  int   send(int fd);
+  void  setStatus(int status);
   pid_t getCgiPid() const;
   void  setCgiPid(pid_t pid);
   bool  isCgi() const;
   Header* getHeader();
-  Body*   getBody() {
-    return _body;
-  }
 };
 
 #endif  // SRCS_RESPONSE_HPP_

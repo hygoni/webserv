@@ -34,7 +34,8 @@ void Location::validate() {
     }
     this->_path = this->_attrs["path"];
     this->_root = this->_attrs["root"];
-    
+    this->_client_body_size_limit = -1;
+    this->_client_header_size_limit = -1;
     if (this->_attrs.find("cgi_path") != this->_attrs.end())
       this->_cgi_path = this->_attrs["cgi_path"];
     if (this->_attrs.find("directory_listing") != this->_attrs.end()) {
@@ -47,6 +48,14 @@ void Location::validate() {
       this->_default_error_page = this->_attrs["default_error_page"];
     if (this->_attrs.find("authorization") != this->_attrs.end())
       this->_authorization = this->_attrs["authorization"];
+    if (this->_attrs.find("client_body_size_limit") != this->_attrs.end()) {
+      this->_client_body_size_limit =
+        ft_atoi(this->_attrs["client_body_size_limit"].c_str());
+    }
+    if (this->_attrs.find("client_header_size_limit") != this->_attrs.end()) {
+      this->_client_header_size_limit =
+        ft_atoi(this->_attrs["client_header_size_limit"].c_str());
+    }
 }
 
 void Location::parse() {
@@ -66,7 +75,9 @@ void Location::parse() {
             key.compare("cgi_path") == 0 ||
             key.compare("default_error_page") == 0 ||
             key.compare("directory_listing") == 0 ||
-            key.compare("authorization") == 0) {
+            key.compare("authorization") == 0 |
+            key.compare("client_body_size_limit") == 0 ||
+            key.compare("client_header_size_limit") == 0) {
         assert_token_size(token.size(), 2);
         std::string value = token[1];
         this->_attrs[key] = value;
@@ -139,4 +150,12 @@ std::string const& Location::getAuthorization() const {
 
 bool Location::isCgi() const {
   return !_cgi_path.empty();
+}
+
+int Location::getClientBodySizeLimit() const {
+    return this->_client_body_size_limit;
+}
+
+int Location::getClientHeaderSizeLimit() const {
+    return this->_client_header_size_limit;
 }

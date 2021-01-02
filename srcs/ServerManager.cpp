@@ -32,14 +32,13 @@ void  ServerManager::run() {
   log("initSocket done\n");
   while (42) {
     #ifdef DEBUG
-      sleep(1);
+      usleep(1000 * 50);
     #endif
     ready_fds[0] = all_fds[0];
     ready_fds[1] = all_fds[1];
     log("select...\n");
     if (select(Fd::max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, &select_timeout) < 0) {
-      std::cout << (Fd::max_fd + 1) << std::endl;
-      std::cout << strerror(errno) << std::endl;
+      log("max_fd + 1 = %d, strerror(errno) = %s\n", Fd::max_fd + 1, strerror(errno));
       throw "select failed!";
     }
     for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {

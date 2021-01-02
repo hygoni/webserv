@@ -1,0 +1,8 @@
+default_error_page /
+directory_listing off
+allowed_method GET
+path /
+root ./html
+index index.php index.html index.htm
+cgi_path ./ubuntu_cgi_tester
+cgi_extension .bla

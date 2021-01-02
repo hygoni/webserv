@@ -13,8 +13,9 @@ ChunkedBody::ChunkedBody() : Body() {
   _chunk_size = -1;
 }
 
-ChunkedBody::ChunkedBody(std::string const& s) : Body(s) {
+ChunkedBody::ChunkedBody(std::string const& s) {
   _chunk_size = -1;
+  recvString(s.c_str());
 }
 
 ChunkedBody::~ChunkedBody() {
@@ -36,22 +37,10 @@ bool ChunkedBody::isChunkedClosed() const {
   return (_chunk_size == 0 && _chunked_write_buf.length() == 0);
 }
 
-int ChunkedBody::recv(int fd) {
-  int     n_read;
+void  ChunkedBody::recvString(const char* buf) {
   size_t  chunk_size = 0;
   size_t  i;
-
-  /* when buffer isn't empty, don't receive */
-  if (!isEmpty()) {
-    return 0;
-  }
-
-  if ((n_read = read(fd, _buf, _size)) < 0)
-    throw "[ChunkedBody::send]: read failed";
-  _buf[n_read] = '\0';
-  _chunked_read_buf += _buf;
-  _len = n_read;
-
+  _chunked_read_buf += buf;
   /* if there's no size, parse size */
   if (_chunk_size == -1) {
     for (i = 0; i < _chunked_read_buf.length() && isHex(_chunked_read_buf.at(i)); i++) {
@@ -77,6 +66,22 @@ int ChunkedBody::recv(int fd) {
       _chunked_read_buf = _chunked_read_buf.substr(_chunk_size + 2);
     }
   }
+}
+
+int ChunkedBody::recv(int fd) {
+  int     n_read;
+
+  /* when buffer isn't empty, don't receive */
+  if (!isEmpty()) {
+    return 0;
+  }
+
+  if ((n_read = read(fd, _buf, _size)) < 0)
+    throw "[ChunkedBody::send]: read failed";
+  _buf[n_read] = '\0';
+  _len = n_read;
+
+  recvString(_buf);
   return n_read;
 }
 

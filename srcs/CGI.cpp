@@ -46,24 +46,26 @@ Cgi::Cgi(Client& client) : _client(client) {
   cgi_file_path = client.getCgiFilePath();
 
   // env_map["AUTH_TYPE"] = 
-  env_map["CONTENT_LENGTH"] =  header["Content-Length"];
-  env_map["CONTENT_TYPE"] = header["Content-Type"];
+  // env_map["CONTENT_LENGTH"] =  header["Content-Length"];
+  // env_map["CONTENT_TYPE"] = header["Content-Type"];
   env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
-  env_map["PATH_INFO"] = client.getRequest()->getTarget(); /* TODO */
-  env_map["PATH_TRANSLATED"] = cgi_file_path;
-  env_map["QUERY_STRING"] = query;
-  env_map["REMOTE_ADDR"] = ip_to_string(client_addr.sin_addr.s_addr);
+  env_map["PATH_INFO"] = header.getTarget();
+  env_map["PATH_TRANSLATED"] = client.getLocation()->getRoot() + "/"
+  + header.getTarget().substr(client.getLocation()->getPath().length());
+  // env_map["QUERY_STRING"] = query;
+  // env_map["REMOTE_ADDR"] = ip_to_string(client_addr.sin_addr.s_addr);
   // env_map["REMOTE_IDENT"]
   // env_map["REMOTE_USER"]
   env_map["REQUEST_METHOD"] = header.getMethod();
   env_map["REQUEST_URI"] = header.getTarget();
-  env_map["SCRIPT_NAME"] = cgi_path;
-  env_map["SERVER_NAME"] = server.getServerName();
-  env_map["SERVER_PORT"] = std::to_string(server.getListen());
+  env_map["SCRIPT_NAME"] = env_map["PATH_TRANSLATED"];
+  // env_map["SERVER_NAME"] = server.getServerName();
+  // env_map["SERVER_PORT"] = std::to_string(server.getListen());
   env_map["SERVER_PROTOCOL"] = header.getVersion();
-  env_map["REDIRECT_STATUS"] = "0";
-  env_map["SERVER_SOFTWARE"] = "webserv/1.0";
-  env_map["SCRIPT_FILENAME"] = cgi_file_path;
+  // env_map["REDIRECT_STATUS"] = "0";
+  // env_map["SERVER_SOFTWARE"] = "webserv/1.0";
+  // env_map["SCRIPT_FILENAME"] = cgi_file_path;
+  env_map["SCRIPT_FILENAME"] = env_map["SCRIPT_NAME"];
 
   if ((_env = generate_env(env_map)) == NULL)
     throw "[Cgi::Cgi]: generating env_map failed due to memory";
@@ -99,6 +101,7 @@ char **Cgi::generate_env(std::map<std::string, std::string> const &env_map) {
       ft_free_null_terminated_array(reinterpret_cast<void **>(env));
       return NULL;
     }
+    std::cerr << line << "\n";
     it++;
     i++;
   }
@@ -116,13 +119,16 @@ void Cgi::run() {
   Fd::setRfd(_client.getResponsePipe()[0]);
   pid = fork();
   if (pid == 0) {
-    log("[Cgi::run] argv[0] = %s, argv[1] = %s, argv[2] = %s", argv[0], argv[1], argv[2]);
-    std::cout << std::endl;
+    log("[Cgi::run] argv[0] = %s, argv[1] = %s, argv[2] = %s\n", argv[0], argv[1], argv[2]);
     /* redirect body to stdin */
-    dup2(_client.getRequestPipe()[0], 0);
-    close(_client.getRequestPipe()[0]);
-    close(_client.getRequestPipe()[1]);
-    
+    if (_client.getRequestPipe()[0] == -1) {
+      close(0);
+    } else {
+      dup2(_client.getRequestPipe()[0], 0);
+      close(_client.getRequestPipe()[0]);
+      close(_client.getRequestPipe()[1]);
+    }
+
     /* redirect stdout to response */
     dup2(_client.getResponsePipe()[1], 1);
     close(_client.getResponsePipe()[1]);

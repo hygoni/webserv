@@ -17,7 +17,7 @@
 #include "debug.hpp"
 
 Response::Response(Client& client) : _client(client) {  
-  std::cout << "[Response::Response(Client&)]" << std::endl;
+  log("[Response::Response(Client&)]\n");
   _header = NULL;
   _body = NULL;
   _is_header_sent = false;
@@ -30,7 +30,7 @@ Response::Response(Client& client) : _client(client) {
 }
 
 Response::Response(Client& client, int status) : _client(client) {  
-  std::cout << "[Response::Response(Client&)]" << std::endl;
+  log("[Response::Response(Client&)]\n");
   _header = NULL;
   _body = NULL;
   _is_header_sent = false;
@@ -47,7 +47,7 @@ int Response::recv(int fd) {
 }
 
 Response::~Response() {
-  std::cout << "[Response::~Response]" << std::endl;
+  log("[Response::~Response]\n");
   if (_header != NULL)
     delete _header;
   if (_body != NULL)
@@ -112,8 +112,14 @@ int Response::send(int fd) {
   }
 }
 
+Header* Response::initHeader(int status) const {
+  Header* header = new Header(status);
+  (*header)["Date"] = "";
+  return header;
+}
+
 void Response::setStatus(int status) {
-  std::cout << "[Response::Response(int)]" << std::endl;
+  log("[Response::Response(int)]");
   if (_header != NULL)
     delete _header;
   _header = new Header(status);
@@ -184,7 +190,7 @@ void Response::processPutMethod
   std::string   path;
   int           ret;
 
-  path = location.getRoot() + client.getRequest()->getTarget();
+  path = location.getRoot() + "/" + client.getRequest()->getTarget().substr(location.getPath().length());
   ret = stat(path.c_str(), &buf);
 
   if (ret < 0) {

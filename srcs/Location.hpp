@@ -20,6 +20,8 @@ class Location {
     std::string                         _authorization;
     bool                                _directory_listing;
     std::string                         _default_error_page;
+    int                                 _client_body_size_limit;
+    int                                 _client_header_size_limit;
 
  public:
                                     Location(const char *path);
@@ -37,6 +39,8 @@ class Location {
     bool                            getDirectoryListing() const;
     std::string const&              getDefaultErrorPage() const;
     std::string const&              getAuthorization() const;
+    int                             getClientBodySizeLimit() const;
+    int                             getClientHeaderSizeLimit() const;
     bool                            isCgi() const;
 };
 

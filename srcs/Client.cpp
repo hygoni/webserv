@@ -8,7 +8,7 @@
 #include "debug.hpp"
 #include "Base64.hpp"
 #include <arpa/inet.h>
-
+#define MAX_HEADER_SIZE 8192
 
 Client::Client
 (Server const& server) : _server(server) {
@@ -126,21 +126,21 @@ int  Client::recv(fd_set& all_wfds) {
 
     header_end = _raw_request.find("\r\n\r\n");
     if (header_end == std::string::npos) {
-      if (_raw_request.size() <= _server.getClientHeaderSizeLimit())
+      if (_raw_request.size() <= MAX_HEADER_SIZE)
         return (0);
       return (1);
     } else {
       try {
-        if (header_end <= _server.getClientHeaderSizeLimit()) {
+        if (header_end <= MAX_HEADER_SIZE) {
           /* make request */
           std::string req_header = _raw_request.substr(0, header_end + 4);
           std::string req_body = _raw_request.substr(header_end + 4);
 
           _request = new Request(req_header);
-          if (_request->getContentLength() > _server.getClientBodySizeLimit())
-            throw HttpException(413);
           setLocation();
           setCgiPath();
+          if (_request->getContentLength() > _location->getClientBodySizeLimit())
+            throw HttpException(413);
           /* authenticate */
           if (_location->getAuthorization().find(':') != std::string::npos) {
             if (!this->auth())
@@ -206,9 +206,8 @@ int   Client::send() {
   } else {
     int n_written = _request->getBody()->send(_request_pipe[1]);
     _n_sent += n_written;
+    log("n_sent = %d, CL = %d\n", _n_sent, _request->getContentLength());
     if (_n_sent == _request->getContentLength()) {
-      std::cout << "_n_sent : " << _n_sent << " CL: " << _request->getContentLength() << std::endl;
-      std::cout << "_____________FULL____________" << std::endl;
       Fd::clearWfd(_request_pipe[1]);
       close(_request_pipe[1]);
     }
@@ -231,6 +230,9 @@ void  Client::setLocation() {
 
 void Client::setCgiPath() {
   size_t idx;
+
+  if (_request->getMethod() != "POST")
+    return ;
   if ((idx = _request->getTarget().rfind('.')) != std::string::npos) {
     const std::string target_extension = _request->getTarget().substr(idx);
     /* set cgi path */

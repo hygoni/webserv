@@ -1,9 +1,0 @@
-default_error_page /
-directory_listing on
-allowed_method GET POST HEAD PUT
-path /dlist
-root ./html
-index index.php index.html index.htm
-cgi off
-cgi_extension .bin .cgi
-#authorization id:pass

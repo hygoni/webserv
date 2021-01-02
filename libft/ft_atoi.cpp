@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "libft.h"
+#include <limits.h>
 
 int		ft_atoi(const char *str)
 {
@@ -31,6 +32,11 @@ int		ft_atoi(const char *str)
 	{
 		num = num * 10 + (*str - '0');
 		str++;
+		if (num > INT_MAX) {
+			throw "[libft::ft_atoi] number is bigger than INT_MAX, unsupported";
+		} else if (num < INT_MIN) {
+			throw "[libft::ft_atoi] number is smaller than INT_MIN, unsupported";
+		}
 	}
 	return ((int)num * sign);
 }

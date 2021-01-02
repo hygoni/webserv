@@ -81,7 +81,6 @@ static void saveMap
   it = parse_map.begin();
   while (it != parse_map.end()) {
     header[it->first] = it->second;
-    std::cout << "Key : " << it->first << " Value : " << it->second << std::endl;
     it++;
   }
 }
@@ -146,7 +145,7 @@ int CgiBody::send(int fd) {
       size_t size = std::min(_size, _raw_body.size());
       if ((n_written = ::write(fd, _raw_body.c_str(), size)) < 0)
         throw "[CgiBody::send]: write failed";
-      std::cout << "Sent: " << _raw_body.substr(0, n_written);
+      log("Send: %s\n", _raw_body.substr(0, n_written));
       _raw_body = _raw_body.substr(n_written);
       _n_sent += n_written;
   }

@@ -1,0 +1,9 @@
+default_error_page /
+allowed_method POST
+path /post_body
+root ./cgi-bin/
+index index.php index.html index.htm
+cgi_path ./ubuntu_cgi_tester
+cgi_extension .bla .php
+client_body_size_limit 10
+client_header_size_limit 8000

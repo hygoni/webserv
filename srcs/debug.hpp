@@ -2,6 +2,7 @@
 #define SRCS_DEBUG_HPP_
 
 #define DEBUG
+//#define DEBUG_SLEEP
 
 #ifdef DEBUG
  #include <cstdio>

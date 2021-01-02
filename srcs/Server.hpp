@@ -20,8 +20,6 @@ private:
 
   int                                 _listen;
   std::string                         _server_name;
-  int                                 _client_body_size_limit;
-  int                                 _client_header_size_limit;
   int                                 _fd;
 
   /* parsing */
@@ -41,8 +39,6 @@ public:
   std::vector<Location> const&        getLocations() const;
   int                                 getListen() const;
   std::string const&                  getServerName() const;
-  int                                 getClientBodySizeLimit() const;
-  int                                 getClientHeaderSizeLimit() const;
   int                                 getFd() const;
   std::vector<Client*>&               getClients();
 };

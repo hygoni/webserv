@@ -17,6 +17,7 @@ class ChunkedBody : public Body {
  public:
                 ChunkedBody();
                 ChunkedBody(std::string const& s);
+  void          recvString(const char* buf);
   virtual       ~ChunkedBody();
   virtual int   recv(int fd);
   virtual int   send(int fd);

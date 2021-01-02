@@ -1,0 +1,8 @@
+default_error_page /
+directory_listing off
+allowed_method GET POST HEAD PUT
+path /directory
+root ./YoupiBanane/
+index youpi.bad_extension
+cgi_path ./ubuntu_cgi_tester
+cgi_extension .bla
