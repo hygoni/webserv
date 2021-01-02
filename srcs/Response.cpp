@@ -134,7 +134,7 @@ void Response::process
   if (std::find(allowed.begin(), allowed.end(), client.getRequest()->getMethod())
       == allowed.end() && allowed.size() > 0) {
     setStatus(405);
-  } else if (location.isCgi()) {
+  } else if (client.isCgi()) {
     _is_Cgi = true;
     /* process CGI */
     bool is_transfer_encoding = client.getRequest()->isChunked();

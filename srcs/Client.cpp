@@ -18,9 +18,9 @@ Client::Client
 
   addr_len = sizeof(client_addr);
   _fd = accept(server.getFd(), (struct sockaddr *)&client_addr, &addr_len);
-  std::cout << inet_ntoa(client_addr.sin_addr) << std::endl;
   if (_fd < 0)
     throw "[Client::Client] bad file descriptor";
+  gettimeofday(&_created, NULL);
   _raw_request = std::string();
   _request = NULL;
   _response = NULL;
@@ -124,6 +124,7 @@ int  Client::recv(fd_set& all_wfds) {
 
           _request = new Request(req_header);
           setLocation();
+          setCgiPath();
           /* authenticate */
           if (_location->getAuthorization().find(':') != std::string::npos) {
             if (!this->auth())
@@ -204,6 +205,25 @@ void  Client::setLocation() {
   return throw HttpException(404);
 }
 
+void Client::setCgiPath() {
+  size_t idx;
+  if ((idx = _request->getTarget().rfind('.')) != std::string::npos) {
+    const std::string target_extension = _request->getTarget().substr(idx);
+    /* set cgi path */
+    for (std::vector<std::string>::const_iterator s_it = _location->getCgiExtension().begin();
+          s_it != _location->getCgiExtension().end(); s_it = std::next(s_it)) {
+      if (*s_it == target_extension) {
+        _cgi_path = _location->getCgiPath();
+      }
+    }
+  }
+
+  char buf[BUFSIZE];
+  if (getcwd(buf, BUFSIZE) < 0)
+    throw "[Client::setCgiPath] getcwd failed";
+  _cgi_file_path = std::string(buf) + "/" + (_location->getRoot() + _request->getTarget().substr(_location->getPath().length()));
+}
+
 bool  Client::auth() {
   bool is_authenticated;
 
@@ -212,6 +232,15 @@ bool  Client::auth() {
   _response = new Response(*this, 401);
   (*_response->getHeader())["WWW-Authenticate"] = "Basic realm=\"Need Auth\"";
   return is_authenticated;
+}
+
+bool  Client::checkAlive() const {
+  struct timeval now;
+
+  gettimeofday(&now, NULL);
+  if (now.tv_sec - _created.tv_sec < TIMEOUT_SEC)
+    return true;
+  return false;
 }
 
 int   Client::getFd() const {
@@ -232,6 +261,10 @@ int *Client::getRequestPipe() {
 
 int *Client::getResponsePipe() {
   return _response_pipe;
+}
+
+bool Client::isCgi() const {
+  return !_cgi_path.empty();
 }
 
 const std::string&            Client::getCgiPath() const {

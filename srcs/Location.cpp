@@ -35,11 +35,8 @@ void Location::validate() {
     this->_path = this->_attrs["path"];
     this->_root = this->_attrs["root"];
     
-    if (this->_attrs.find("cgi") != this->_attrs.end()
-    && this->_attrs["cgi"] == "on")
-      this->_cgi = true;
-    else
-      this->_cgi = false;
+    if (this->_attrs.find("cgi_path") != this->_attrs.end())
+      this->_cgi_path = this->_attrs["cgi_path"];
     if (this->_attrs.find("directory_listing") != this->_attrs.end()) {
       if (this->_attrs["directory_listing"].compare("on") == 0)
         this->_directory_listing = true;
@@ -66,7 +63,7 @@ void Location::parse() {
     std::string key = token[0];
     if (key.compare("path") == 0 ||
             key.compare("root") == 0 ||
-            key.compare("cgi") == 0 ||
+            key.compare("cgi_path") == 0 ||
             key.compare("default_error_page") == 0 ||
             key.compare("directory_listing") == 0 ||
             key.compare("authorization") == 0) {
@@ -141,5 +138,5 @@ std::string const& Location::getAuthorization() const {
 }
 
 bool Location::isCgi() const {
-  return _cgi;
+  return !_cgi_path.empty();
 }

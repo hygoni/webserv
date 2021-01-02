@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <vector>
 #include <iostream>
-#include "Buffer.hpp"
 #include "libft.h"
 #include "Fd.hpp"
 #include "Header.hpp"
@@ -94,7 +93,7 @@ static void saveMap
 
 int CgiBody::recv(int fd) {
   int     n_sent;
-  char    *new_line;
+  char*   new_line;
   int     status;
   int     n_read;
   std::map<std::string, std::string>  parse_map;

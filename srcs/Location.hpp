@@ -20,7 +20,6 @@ class Location {
     std::string                         _authorization;
     bool                                _directory_listing;
     std::string                         _default_error_page;
-    bool                                _cgi;
 
  public:
                                     Location(const char *path);

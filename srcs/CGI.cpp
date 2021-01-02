@@ -42,19 +42,15 @@ Cgi::Cgi(Client& client) : _client(client) {
   idx = header.getTarget().find('?');
   if (idx != std::string::npos)
     query = header.getTarget().substr(idx + 1);
-  cgi_path = header.getTarget().substr(client.getLocation()->getPath().length());
-  idx = cgi_path.find('/');
-  if (idx != std::string::npos) {
-    cgi_file_path = cgi_path.substr(idx);
-    cgi_path = client.getLocation()->getRoot() + cgi_path.substr(0, idx);
-  }
+  cgi_path = client.getCgiPath();
+  cgi_file_path = client.getCgiFilePath();
 
   // env_map["AUTH_TYPE"] = 
   env_map["CONTENT_LENGTH"] =  header["Content-Length"];
   env_map["CONTENT_TYPE"] = header["Content-Type"];
   env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
-  env_map["PATH_INFO"] = cgi_file_path ;
-  env_map["PATH_TRANSLATED"] = client.getLocation()->getRoot() + "/" + cgi_file_path;
+  env_map["PATH_INFO"] = client.getRequest()->getTarget(); /* TODO */
+  env_map["PATH_TRANSLATED"] = cgi_file_path;
   env_map["QUERY_STRING"] = query;
   env_map["REMOTE_ADDR"] = ip_to_string(client_addr.sin_addr.s_addr);
   // env_map["REMOTE_IDENT"]
@@ -67,7 +63,7 @@ Cgi::Cgi(Client& client) : _client(client) {
   env_map["SERVER_PROTOCOL"] = header.getVersion();
   env_map["REDIRECT_STATUS"] = "0";
   env_map["SERVER_SOFTWARE"] = "webserv/1.0";
-  env_map["SCRIPT_FILENAME"] = client.getLocation()->getRoot() + "/" + cgi_file_path;
+  env_map["SCRIPT_FILENAME"] = cgi_file_path;
 
   if ((_env = generate_env(env_map)) == NULL)
     throw "[Cgi::Cgi]: generating env_map failed due to memory";
