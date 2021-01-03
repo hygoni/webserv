@@ -11,8 +11,8 @@
 
 class Body {
  protected:
-  size_t  _len;
-  size_t  _size;
+  int     _len;
+  int     _size;
   char    *_buf;
 
  public:
@@ -21,7 +21,7 @@ class Body {
   virtual         ~Body();
   virtual int     recv(int fd);
   virtual int     send(int fd);
-  virtual size_t  getChunkedContentLength() const;
+  virtual int  getChunkedContentLength() const;
   virtual bool    isChunkedClosed() const;
   bool            isEmpty() const;
 

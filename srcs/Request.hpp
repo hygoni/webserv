@@ -4,7 +4,6 @@
 #include <iostream>
 #include "Header.hpp"
 #include "Body.hpp"
-#include "Auth.hpp"
 #include "HttpException.hpp"
 #include "Base64.hpp"
 #define MAX_BODY_SIZE 40000
@@ -16,6 +15,7 @@ private:
   Body        *_body;
   size_t      _content_length;
   bool        _chunked;
+  bool        _is_chunked_closed;
   bool        _is_closed;
   std::string _cgi_path;
 
@@ -40,6 +40,8 @@ public:
   std::string getVersion() const;
   size_t         getContentLength() const;
   bool           isChunked() const;
+  bool           isChunkedClosed() const;
+  void           setChunkedClosed();
   Header *getHeader();
   Body   *getBody();
   void   setBody(Body *body);

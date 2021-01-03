@@ -24,8 +24,9 @@ private:
   std::string     _cgi_path;
   std::string     _cgi_file_path;
   struct timeval  _created;
-  Server const&                 _server;
-  const Location*               _location;
+  Server const&   _server;
+  const Location* _location;
+  char            *_buf;
 
   void        setLocation();
   void        setCgiPath();
@@ -35,7 +36,7 @@ public:
               Client(Client const& client);
   Client const&   operator=(Client const& client);
               ~Client();
-  int         recv(fd_set& all_wfds);
+  int         recv();
   int         send();
   bool        auth();
   void        timeout();

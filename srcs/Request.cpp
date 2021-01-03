@@ -8,6 +8,10 @@
 // header-field = field-name ":" OWS field-value OWS
 
 Request::~Request() {
+  if (_header != NULL)
+    delete _header;
+  if (_body != NULL)
+    delete _body;
 }
 
 void    Request::initStartLine(std::string raw) {
@@ -105,6 +109,7 @@ void  Request::checkHeaders() {
 }
 
 Request::Request(std::string http_message) {
+  _is_chunked_closed = false;
   _is_closed = false;
   _chunked = false;
   _body = NULL;
@@ -211,6 +216,14 @@ void  Request::debugOstream(std::ostream& os) const {
   std::map<std::string, std::string>::const_iterator it;
   os << _header->toString();
   os << "-----------------------\n";
+}
+
+bool Request::isChunkedClosed() const {
+  return _is_chunked_closed;
+}
+
+void Request::setChunkedClosed() {
+  _is_chunked_closed = true;
 }
 
 std::ostream& operator<<(std::ostream& os, const Request& request) {

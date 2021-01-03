@@ -102,11 +102,9 @@ long     Server::ft_htonl(long num) {
 }
 
 int  Server::initSocket() {
-  int option;
   struct sockaddr_in server_addr;
   if ((_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     throw std::exception();
-  option = 1;
   // if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) < 0)
   //   throw std::exception();
   // why ??

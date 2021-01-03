@@ -9,7 +9,7 @@
 #include "Body.hpp"
 #include "Header.hpp"
 
-#define BUFSIZE 4096
+#define BUFSIZE 1048576
 
 class Response {
  private:
@@ -19,7 +19,7 @@ class Response {
   Body      *_body;
   int       _file_fd;
   pid_t     _cgi_pid;
-  size_t    _n_sent;
+  int    _n_sent;
   Client&   _client;
 
   Header*   initHeader(int status) const;
@@ -28,12 +28,12 @@ class Response {
   void  process(Client& client);
   void  processByMethod(Client& client, Location const& location, std::string const& path);
   void  processGetMethod(Client& client, Location const& location, std::string path);
-  void  processHeadMethod(Client& client, Location const& location, std::string const& path);
+  void  processHeadMethod(std::string const& path);
   void  processPutMethod(Client& client, Location const& location);
   void  processDeleteMethod(Client& client, Location const& location);
   void  processPostMethod();
-  void  processCgi(Client& client, Location const& location);
-  void  processDirectoryListing(Client& client, Location const& location, std::string const& path);
+  void  processCgi(Client& client);
+  void  processDirectoryListing(Client& client, std::string const& path);
  public:
         Response(Client& client);
         Response(Client& client, int status);

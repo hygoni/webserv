@@ -21,9 +21,8 @@ class CgiChunkedBody : public Body {
   virtual         ~CgiChunkedBody();
   virtual int     recv(int fd);
   virtual int     send(int fd);
-  virtual size_t  getChunkedContentLength() const;
+  virtual int     getChunkedContentLength() const;
   virtual bool    isChunkedClosed() const;
-  
 };
 
 #endif  // SRCS_CGI_CHUNKED_BUFFER_HPP

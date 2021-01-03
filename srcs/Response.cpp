@@ -97,9 +97,11 @@ int Response::send(int fd) {
       }
     }
     _n_sent += ret;
-    if ((_client.getRequest() != NULL && _client.getRequest()->getMethod() == "PUT" && _n_sent == _client.getRequest()->getContentLength()) ||
-    _n_sent == _header->getContentLength() ||
-    _body == NULL) {
+    if ((_client.getRequest() != NULL && _client.getRequest()->getMethod() == "PUT" 
+    && _n_sent == (int)_client.getRequest()->getContentLength()) ||
+    _n_sent == (int)_header->getContentLength() ||
+    _body == NULL ||
+    (_client.getRequest()->isChunkedClosed())) {
       log("[Response::send] close, clear %d\n", fd);
       close(fd);
       return -1;
@@ -126,7 +128,7 @@ void Response::setStatus(int status) {
 }
 
 void Response::processCgi
-(Client& client, Location const& location) {
+(Client& client) {
   Cgi cgi(client);
   cgi.run();
 }
@@ -145,7 +147,7 @@ void Response::process
     bool is_transfer_encoding = client.getRequest()->isChunked();
     _body = new CgiBody(&_header);
     if (!is_transfer_encoding) {
-      processCgi(client, location);
+      processCgi(client);
     }
   } else {
     /* process non-CGI */
@@ -172,7 +174,7 @@ void Response::processByMethod
   if (header.getMethod().compare("GET") == 0) {
     processGetMethod(client, location, path);
   } else if (header.getMethod().compare("HEAD") == 0) {
-    processHeadMethod(client, location, path);
+    processHeadMethod(path);
   } else if (header.getMethod().compare("POST") == 0) {
     processPostMethod();
   } else if (header.getMethod().compare("PUT") == 0) {
@@ -219,7 +221,7 @@ void Response::processPutMethod
 }
 
 void Response::processDirectoryListing
-(Client& client, Location const& location, std::string const& path) {
+(Client& client, std::string const& path) {
   DIR *dir;
   struct dirent *ent;
   std::string html;
@@ -271,7 +273,7 @@ void Response::processGetMethod
     return ;
   } else if (S_ISDIR(buf.st_mode)) {
     if (location.getDirectoryListing()) {
-      return processDirectoryListing(client, location, path);
+      return processDirectoryListing(client, path);
     }
     for (size_t i = 0; i < location.getIndex().size(); i++) {
       ret = stat((path + "/" + location.getIndex()[i]).c_str(), &buf);
@@ -313,7 +315,7 @@ void Response::processGetMethod
  * there must be no content in HEAD's response
  */
 void Response::processHeadMethod
-(Client& client, Location const& location, std::string const& path) {
+(std::string const& path) {
   struct stat   buf;
   int           ret;
   

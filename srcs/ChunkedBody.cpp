@@ -38,9 +38,16 @@ bool ChunkedBody::isChunkedClosed() const {
 }
 
 void  ChunkedBody::recvString(const char* buf) {
-  size_t  chunk_size = 0;
+  int  chunk_size = 0;
   size_t  i;
-  _chunked_read_buf += buf;
+  
+  if (buf != NULL)
+    _chunked_read_buf += buf;
+  //log("_chunked_read_buf += %s\n", buf);
+  if (_chunked_read_buf.length() == 0)
+    return;
+  else if (_chunked_read_buf.find("\r\n") == std::string::npos)
+    return;
   /* if there's no size, parse size */
   if (_chunk_size == -1) {
     for (i = 0; i < _chunked_read_buf.length() && isHex(_chunked_read_buf.at(i)); i++) {
@@ -48,21 +55,26 @@ void  ChunkedBody::recvString(const char* buf) {
       if (ft_isdigit(_chunked_read_buf.at(i)))
         chunk_size += _chunked_read_buf.at(i) - '0';
       else
-        chunk_size += ft_tolower(_chunked_read_buf.at(i)) - 'a' + 16;
+        chunk_size += ft_tolower(_chunked_read_buf.at(i)) - 'a' + 10;
     }
-
     /* if no \r\n after size */
-    if (i == 0 || (_chunked_read_buf.at(i) != '\r' && _chunked_read_buf.at(i + 1) != '\n'))
-      throw "[ChunkedBody::recv] Invalid Chunked Body";
+    if (i == 0 || (_chunked_read_buf.at(i) != '\r' && _chunked_read_buf.at(i + 1) != '\n')) {
+      log("===== invalid chunked body1 =====\n");
+      log("chunked_read_buf = %s\n", _chunked_read_buf.c_str());
+      log("_chunk_size = %d\n", chunk_size);
+      throw "[ChunkedBody::recv] Invalid Chunked Body1";
+    }
     _chunked_read_buf = _chunked_read_buf.substr(i + 2);
     _chunk_size = chunk_size;
-
     /* parsed size, but not read chunk-data yet */
-  } else if (_chunked_write_buf.length() == 0) {
-    if (_chunked_read_buf.length() >= _chunk_size + 2) {
+  }
+  log("[ChunkedBody::recvString] _chunk_size = %d\n", _chunk_size);
+
+  if (_chunk_size != -1 && _chunked_write_buf.length() == 0) {
+    if ((int)_chunked_read_buf.length() >= _chunk_size + 2) {
       _chunked_write_buf = _chunked_read_buf.substr(0, _chunk_size);
       if (_chunked_read_buf.substr(_chunk_size, 2).compare("\r\n") != 0)
-        throw "[ChunkedBody::recv] Invalid Chunked Body";
+        throw "[ChunkedBody::recv] Invalid Chunked Body2";
       _chunked_read_buf = _chunked_read_buf.substr(_chunk_size + 2);
     }
   }
@@ -79,19 +91,20 @@ int ChunkedBody::recv(int fd) {
   if ((n_read = read(fd, _buf, _size)) < 0)
     throw "[ChunkedBody::send]: read failed";
   _buf[n_read] = '\0';
-  _len = n_read;
-
   recvString(_buf);
+  
   return n_read;
 }
 
 int ChunkedBody::send(int fd) {
   int n_written;
 
-  if (_len == 0) {
-    int n_buffer = std::min(_size, _chunked_write_buf.length());
-    ft_strlcpy(_buf, _chunked_write_buf.c_str(), n_buffer);
+  recvString(NULL);
+  if (_len == 0 && _chunked_write_buf.length() > 0) {
+    int n_buffer = std::min(_size, (int)_chunked_write_buf.length());
+    ft_strlcpy(_buf, _chunked_write_buf.c_str(), n_buffer +  1);
     _chunked_write_buf = _chunked_write_buf.substr(n_buffer);
+    _len = n_buffer;
     /* all data of current chunk is written */
     if (_chunked_write_buf.length() == 0 && _chunk_size != 0) {
       _chunk_size = -1;
@@ -105,6 +118,11 @@ int ChunkedBody::send(int fd) {
     _len -= n_written;
     ft_memmove(_buf, _buf + n_written, _len);
     _buf[_len] = '\0';
+  } else {
+    _len = 0;
   }
+
+  if (isChunkedClosed())
+    return -1;
   return n_written;
 }

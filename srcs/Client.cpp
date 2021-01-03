@@ -7,6 +7,7 @@
 #include "CgiBody.hpp"
 #include "debug.hpp"
 #include "Base64.hpp"
+#include <stdlib.h>
 #include <arpa/inet.h>
 #define MAX_HEADER_SIZE 8192
 
@@ -29,6 +30,7 @@ Client::Client
   _is_cgi_executed = false;
   _is_timeout = false;
   _cgi_path = "";
+  _buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
 }
 
 Client::Client(Client const& client) : _server(client._server) {
@@ -71,6 +73,8 @@ Client::~Client() {
     delete _request;
   if (_response != NULL)
     delete _response;
+  if (_buf != NULL)
+    free(_buf);
   
   if (_request_pipe[0] != -1) {
     Fd::clearRfd(_request_pipe[0]);
@@ -111,18 +115,17 @@ return num : new fd, must set to wfds
 return -1 : 
 */
 
-int  Client::recv(fd_set& all_wfds) {
-  char    buf[BUFSIZE];
+int  Client::recv() {
   int     n_read;
   size_t  header_end;
 
   if (_request == NULL) {
     /* Connection closed or Error occurred */
-    if ((n_read = ::recv(_fd, buf, BUFSIZE - 1, 0)) <= 0) {
+    if ((n_read = ::recv(_fd, _buf, BUFSIZE - 1, 0)) <= 0) {
       return -1;
     }
-    buf[n_read] = '\0';
-    _raw_request += buf;
+    _buf[n_read] = '\0';
+    _raw_request.append(_buf);
 
     header_end = _raw_request.find("\r\n\r\n");
     if (header_end == std::string::npos) {
@@ -139,7 +142,7 @@ int  Client::recv(fd_set& all_wfds) {
           _request = new Request(req_header);
           setLocation();
           setCgiPath();
-          if (_request->getContentLength() > _location->getClientBodySizeLimit())
+          if ((int)_request->getContentLength() > _location->getClientBodySizeLimit())
             throw HttpException(413);
           /* authenticate */
           if (_location->getAuthorization().find(':') != std::string::npos) {
@@ -189,12 +192,10 @@ int  Client::recv(fd_set& all_wfds) {
 }
 
 int   Client::send() {
-  size_t      idx;
-
   if (_request->isChunked() && _cgi_path != "") {
     if (_request->getBody()->isChunkedClosed()) {
       if (_is_cgi_executed) {
-        int n_written = _request->getBody()->send(_request_pipe[1]);
+        _request->getBody()->send(_request_pipe[1]);
       } else {
         size_t content_length = _request->getBody()->getChunkedContentLength();
         (*_request->getHeader())["Content-Length"] = std::to_string(content_length);
@@ -205,11 +206,19 @@ int   Client::send() {
     }
   } else {
     int n_written = _request->getBody()->send(_request_pipe[1]);
-    _n_sent += n_written;
-    log("n_sent = %d, CL = %d\n", _n_sent, _request->getContentLength());
-    if (_n_sent == _request->getContentLength()) {
+    log("[Client::send] : n_written is %d\n", n_written);
+    if (n_written < 0) {
+      log("[Client::send] n_written < 0, closing...");
+      _request->setChunkedClosed();
       Fd::clearWfd(_request_pipe[1]);
       close(_request_pipe[1]);
+    } else {
+      _n_sent += n_written;
+      log("n_sent = %d, CL = %d\n", _n_sent, _request->getContentLength());
+      if (!_request->isChunked() && _n_sent == (int) _request->getContentLength()) {
+        Fd::clearWfd(_request_pipe[1]);
+        close(_request_pipe[1]);
+      }
     }
   }  
   return 0;
@@ -244,8 +253,8 @@ void Client::setCgiPath() {
     }
   }
 
-  char buf[BUFSIZE];
-  if (getcwd(buf, BUFSIZE) < 0)
+  char buf[4096];
+  if (getcwd(buf, 4096) == NULL)
     throw "[Client::setCgiPath] getcwd failed";
   _cgi_file_path = std::string(buf) + "/" + (_location->getRoot() + _request->getTarget().substr(_location->getPath().length()));
 }

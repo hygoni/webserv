@@ -91,7 +91,6 @@ static void saveMap
  */
 
 int CgiBody::recv(int fd) {
-  int     n_sent;
   char*   new_line;
   int     status;
   int     n_read;
@@ -99,11 +98,11 @@ int CgiBody::recv(int fd) {
 
   /* read from pipe */
   if ((n_read = read(fd, _buf, _size)) < 0)
-    throw "[CgiBody::send]: read failed";
+    throw "[CgiBody::recv]: read failed";
   _buf[n_read] = '\0';
   _len = n_read;
 
-  log("[CgiBody::recv] read (%d bytes) : %s\n", n_read, _buf);
+  log("[CgiBody::recv] read (%d bytes, total %d)\n", n_read, (int)_raw_body.length());
   /* body is closed */
   if (n_read == 0 && !_is_body_closed) {
     _is_body_closed = true;
@@ -111,41 +110,40 @@ int CgiBody::recv(int fd) {
     log("[CgiBody::recv] make header\n");
     *_header = new Header(status);
     saveMap(**_header, parse_map);
-    (**_header)["Content-Length"] = std::to_string(_raw_body.size());
-    log("[CgiBody::recv] Content-Length = %lu\n", _raw_body.size());
+    (**_header)["Content-Length"] = std::to_string(_raw_body.length());
+    log("[CgiBody::recv] Content-Length = %lu\n", _raw_body.length());
     return n_read;
   }
 
   /* if header is closed, just add body */
   if (_is_header_closed) {
-    _raw_body += _buf;
+    _raw_body += std::string(_buf, _len);
   } else {
     /* TODO: loigical error - can't properly detect empty new line */
     if ((new_line = ft_strnstr(_buf, "\r\n\r\n", _len)) == NULL) {
-      _raw_header += _buf;
+      _raw_header += std::string(_buf, _len);
     } else {
       /* header is closed */
       *new_line = '\0';
       _raw_header += _buf;
 
       _is_header_closed = true;
-      _raw_body += (new_line + 4);
+      _raw_body += std::string(new_line + 4, _len - (new_line + 4 - _buf));
     }
   }
-  return n_sent;
+  return n_read;
 }
 
 int CgiBody::send(int fd) {
-  int n_written;
+  int n_written = 0;
   log("[CgiBody::send] n_sent = %d\n", _n_sent);
   if (!_is_body_closed)
     return 0;
-  
+
  if (_n_sent < (size_t)ft_atoi((**_header)["Content-Length"].c_str())) {
-      size_t size = std::min(_size, _raw_body.size());
+      int size = std::min(_size, (int)_raw_body.size());
       if ((n_written = ::write(fd, _raw_body.c_str(), size)) < 0)
         throw "[CgiBody::send]: write failed";
-      log("Send: %s\n", _raw_body.substr(0, n_written));
       _raw_body = _raw_body.substr(n_written);
       _n_sent += n_written;
   }

@@ -1,7 +1,7 @@
 #include "Body.hpp"
 
 #ifndef BUFSIZE
-# define BUFSIZE 8192
+# define BUFSIZE 1048576
 #endif
 
 Body::Body() {
@@ -56,7 +56,7 @@ int Body::send(int fd) {
   return n_written;
 }
 
-size_t  Body::getChunkedContentLength() const {
+int  Body::getChunkedContentLength() const {
   return 0;
 }
 

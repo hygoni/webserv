@@ -7,6 +7,7 @@
 #include <utility>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 
 Location::Location(const char *path) {
   int ret;
@@ -34,8 +35,8 @@ void Location::validate() {
     }
     this->_path = this->_attrs["path"];
     this->_root = this->_attrs["root"];
-    this->_client_body_size_limit = -1;
-    this->_client_header_size_limit = -1;
+    this->_client_body_size_limit = INT_MAX;
+    this->_client_header_size_limit = INT_MAX;
     if (this->_attrs.find("cgi_path") != this->_attrs.end())
       this->_cgi_path = this->_attrs["cgi_path"];
     if (this->_attrs.find("directory_listing") != this->_attrs.end()) {
@@ -75,7 +76,7 @@ void Location::parse() {
             key.compare("cgi_path") == 0 ||
             key.compare("default_error_page") == 0 ||
             key.compare("directory_listing") == 0 ||
-            key.compare("authorization") == 0 |
+            key.compare("authorization") == 0 ||
             key.compare("client_body_size_limit") == 0 ||
             key.compare("client_header_size_limit") == 0) {
         assert_token_size(token.size(), 2);
