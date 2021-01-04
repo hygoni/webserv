@@ -32,5 +32,7 @@ public:
   int                 getStatus() const;
   const std::string&  getMessage() const;
   int                 getContentLength();
+  std::map<std::string, std::string>::const_iterator  getBegin() const;
+  std::map<std::string, std::string>::const_iterator  getEnd() const;
 };
 #endif

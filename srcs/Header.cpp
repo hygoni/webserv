@@ -79,3 +79,11 @@ int                 Header::getContentLength() {
     return ft_atoi(_items["Content-Length"].c_str());
   }
 }
+
+std::map<std::string, std::string>::const_iterator  Header::getBegin() const {
+  return _items.begin();
+}
+
+std::map<std::string, std::string>::const_iterator  Header::getEnd() const {
+  return _items.end();
+}

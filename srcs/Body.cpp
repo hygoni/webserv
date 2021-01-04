@@ -4,6 +4,8 @@
 # define BUFSIZE 1048576
 #endif
 
+#include <algorithm>
+
 Body::Body() {
   _len  = 0;
   _size = BUFSIZE;
@@ -14,9 +16,9 @@ Body::Body(std::string const& s) {
   _len = s.length();
   _size = BUFSIZE;
   if (s.length() > BUFSIZE)
-    _size = s.length();
+    _size = s.length() + 1;
   _buf = (char*)malloc(sizeof(char) * (_size + 1));
-  ft_strlcpy(_buf, s.c_str(), _size + 1);
+  ft_memcpy(_buf, s.c_str(), std::min(_size, (int)s.length() + 1));
 }
 
 Body::~Body() {
@@ -25,7 +27,6 @@ Body::~Body() {
 }
 
 /* TODO: process transfer encoding */
-
 int Body::recv(int fd) {
   int n_read;
 
@@ -33,9 +34,8 @@ int Body::recv(int fd) {
   if (!isEmpty()) {
     return 0;
   }
-
   if ((n_read = read(fd, _buf, _size)) < 0)
-    throw "[Body::send]: read failed";
+    throw "[Body::recv]: read failed";
   _buf[n_read] = '\0';
   _len = n_read;
   return n_read;

@@ -1,4 +1,5 @@
 #include <string.h>
+#include <iostream>
 #include <errno.h>
 #include "ServerManager.hpp"
 #include "Response.hpp"
@@ -18,6 +19,9 @@ void  ServerManager::run() {
   struct timeval                  select_timeout;
   fd_set    all_fds[2], ready_fds[2];
   
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(NULL);
+  std::cout.tie(NULL);
   select_timeout.tv_sec = 3;
   Fd::rfds = &all_fds[0];
   Fd::wfds = &all_fds[1];
@@ -30,9 +34,7 @@ void  ServerManager::run() {
   }
   log("initSocket done\n");
   while (42) {
-    #ifdef DEBUG
-      usleep(1000 * 50);
-    #endif
+    usleep(10000);
     ready_fds[0] = all_fds[0];
     ready_fds[1] = all_fds[1];
     /* display rfds before select */
@@ -45,28 +47,9 @@ void  ServerManager::run() {
       if (Fd::isSet(s_it->getFd(), ready_fds[0])) {
         s_it->accept(all_fds[0]);
         /* not setting read fd? */
-      }
+      } 
       std::vector<Client*> &clients = s_it->getClients();
       for (c_it = clients.begin(); c_it != clients.end();) {
-        /* put response to buffer */
-        /* response write it */
-        int response_read_fd = (*c_it)->getResponsePipe()[0];
-        if (Fd::isSet(response_read_fd, ready_fds[0])) {
-          log("[Response::recv]\n");
-          (*c_it)->getResponse()->recv(response_read_fd);
-          Fd::setWfd((*c_it)->getFd());
-        }
-        /* flush buffer */
-        if (Fd::isSet((*c_it)->getFd(), ready_fds[1])) {
-          log("[Response::send]\n");
-          if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {
-            Client *client = *c_it;
-            c_it = clients.erase(c_it);
-            delete client;
-            continue;
-          }
-        }
-
         if ((*c_it)->isTimeout()) {
           (*c_it)->timeout();
           log("[Client::tiemout]\n");
@@ -85,6 +68,24 @@ void  ServerManager::run() {
         if (Fd::isSet(body_write_fd, ready_fds[1])) {
           log("[Client::send]\n");
           (*c_it)->send();
+        }
+        /* put response to buffer */
+        /* response write it */
+        int response_read_fd = (*c_it)->getResponsePipe()[0];
+        if (Fd::isSet(response_read_fd, ready_fds[0])) {
+          log("[Response::recv]\n");
+          (*c_it)->getResponse()->recv(response_read_fd);
+          Fd::setWfd((*c_it)->getFd());
+        }
+        /* flush buffer */
+        if (Fd::isSet((*c_it)->getFd(), ready_fds[1])) {
+          log("[Response::send]\n");
+          if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {
+            Client *client = *c_it;
+            c_it = clients.erase(c_it);
+            delete client;
+            continue;
+          }
         }
         c_it = std::next(c_it);
       }

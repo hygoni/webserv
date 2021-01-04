@@ -66,6 +66,15 @@ Cgi::Cgi(Client& client) : _client(client) {
   // env_map["SCRIPT_FILENAME"] = cgi_file_path;
   env_map["SCRIPT_FILENAME"] = env_map["SCRIPT_NAME"];
 
+  std::map<std::string, std::string>::const_iterator it = header.getBegin();
+  while (it != header.getEnd()) {
+    std::string key = ("HTTP_" + it->first);
+    std::transform(key.begin(), key.end(), key.begin(), ::toupper);
+    log("key : %s, value : %s\n", key.c_str(), it->second.c_str());
+    env_map[key] = it->second;
+    it++;
+  }
+
   if ((_env = generate_env(env_map)) == NULL)
     throw "[Cgi::Cgi]: generating env_map failed due to memory";
   _cgi_path = cgi_path;
@@ -100,7 +109,6 @@ char **Cgi::generate_env(std::map<std::string, std::string> const &env_map) {
       ft_free_null_terminated_array(reinterpret_cast<void **>(env));
       return NULL;
     }
-    std::cerr << line << "\n";
     it++;
     i++;
   }

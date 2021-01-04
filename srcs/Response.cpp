@@ -97,11 +97,12 @@ int Response::send(int fd) {
       }
     }
     _n_sent += ret;
+   if (_client.getRequest()->isChunked() && !_client.getRequest()->isChunkedClosed())
+     return ret;
     if ((_client.getRequest() != NULL && _client.getRequest()->getMethod() == "PUT" 
-    && _n_sent == (int)_client.getRequest()->getContentLength()) ||
+    &&  (_n_sent == (int)_client.getRequest()->getContentLength() || _client.getRequest()->isChunkedClosed())) ||
     _n_sent == (int)_header->getContentLength() ||
-    _body == NULL ||
-    (_client.getRequest()->isChunkedClosed())) {
+    _body == NULL) {
       log("[Response::send] close, clear %d\n", fd);
       close(fd);
       return -1;
@@ -117,6 +118,7 @@ int Response::send(int fd) {
 Header* Response::initHeader(int status) const {
   Header* header = new Header(status);
   (*header)["Date"] = "";
+  (*header)["Connection"] = "close";
   return header;
 }
 
@@ -124,7 +126,7 @@ void Response::setStatus(int status) {
   log("[Response::Response(int)]");
   if (_header != NULL)
     delete _header;
-  _header = new Header(status);
+  _header = initHeader(status);
 }
 
 void Response::processCgi
@@ -176,7 +178,7 @@ void Response::processByMethod
   } else if (header.getMethod().compare("HEAD") == 0) {
     processHeadMethod(path);
   } else if (header.getMethod().compare("POST") == 0) {
-    processPostMethod();
+    processGetMethod(client, location, path);
   } else if (header.getMethod().compare("PUT") == 0) {
     processPutMethod(client, location);
   } else if (header.getMethod().compare("DELETE") == 0) {

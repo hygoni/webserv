@@ -1,4 +1,4 @@
-listen 8020
+listen 8055
 server_name _
 location ./config/location_directory
 location ./config/location_post_body

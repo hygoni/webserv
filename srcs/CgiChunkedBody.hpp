@@ -21,6 +21,7 @@ class CgiChunkedBody : public Body {
   virtual         ~CgiChunkedBody();
   virtual int     recv(int fd);
   virtual int     send(int fd);
+  void            recvString(std::string s);
   virtual int     getChunkedContentLength() const;
   virtual bool    isChunkedClosed() const;
 };

@@ -37,12 +37,11 @@ bool ChunkedBody::isChunkedClosed() const {
   return (_chunk_size == 0 && _chunked_write_buf.length() == 0);
 }
 
-void  ChunkedBody::recvString(const char* buf) {
+void  ChunkedBody::recvString(std::string buf) {
   int  chunk_size = 0;
   size_t  i;
   
-  if (buf != NULL)
-    _chunked_read_buf += buf;
+  _chunked_read_buf += buf;
   //log("_chunked_read_buf += %s\n", buf);
   if (_chunked_read_buf.length() == 0)
     return;
@@ -91,7 +90,7 @@ int ChunkedBody::recv(int fd) {
   if ((n_read = read(fd, _buf, _size)) < 0)
     throw "[ChunkedBody::send]: read failed";
   _buf[n_read] = '\0';
-  recvString(_buf);
+  recvString(std::string(_buf, n_read));
   
   return n_read;
 }
@@ -99,11 +98,11 @@ int ChunkedBody::recv(int fd) {
 int ChunkedBody::send(int fd) {
   int n_written;
 
-  recvString(NULL);
+  recvString("");
   if (_len == 0 && _chunked_write_buf.length() > 0) {
     int n_buffer = std::min(_size, (int)_chunked_write_buf.length());
-    ft_strlcpy(_buf, _chunked_write_buf.c_str(), n_buffer +  1);
-    _chunked_write_buf = _chunked_write_buf.substr(n_buffer);
+    ft_memcpy(_buf, _chunked_write_buf.c_str(), n_buffer +  1);
+    _chunked_write_buf = _chunked_write_buf.erase(0, n_buffer);
     _len = n_buffer;
     /* all data of current chunk is written */
     if (_chunked_write_buf.length() == 0 && _chunk_size != 0) {

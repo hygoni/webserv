@@ -29,6 +29,7 @@ int main(void) {
     server_manager.run();
   } catch (const char* msg) {
     std::cout << msg << std::endl;
+    std::cout << strerror(errno) << std::endl;
   } catch (std::exception const& e) {
     std::cout << e.what() << std::endl;
   }

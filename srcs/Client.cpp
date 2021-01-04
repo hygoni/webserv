@@ -124,6 +124,8 @@ int  Client::recv() {
     if ((n_read = ::recv(_fd, _buf, BUFSIZE - 1, 0)) <= 0) {
       return -1;
     }
+    std::cerr << std::string(_buf, n_read) << "|";
+
     _buf[n_read] = '\0';
     _raw_request.append(_buf);
 
@@ -140,6 +142,7 @@ int  Client::recv() {
           std::string req_body = _raw_request.substr(header_end + 4);
 
           _request = new Request(req_header);
+          // std::cerr << _request->getTarget() << "\n" << _request->getHeader()->toString() << "\n";
           setLocation();
           setCgiPath();
           if ((int)_request->getContentLength() > _location->getClientBodySizeLimit())
@@ -192,10 +195,18 @@ int  Client::recv() {
 }
 
 int   Client::send() {
+  int n_written;
   if (_request->isChunked() && _cgi_path != "") {
     if (_request->getBody()->isChunkedClosed()) {
       if (_is_cgi_executed) {
-        _request->getBody()->send(_request_pipe[1]);
+        n_written = _request->getBody()->send(_request_pipe[1]);
+        if (n_written < 0) {
+          log("[Client::send] n_written < 0, closing...");
+          _request->setChunkedClosed();
+          Fd::clearWfd(_request_pipe[1]);
+          close(_request_pipe[1]);
+          _request_pipe[1] = -1;
+        }
       } else {
         size_t content_length = _request->getBody()->getChunkedContentLength();
         (*_request->getHeader())["Content-Length"] = std::to_string(content_length);
@@ -203,21 +214,23 @@ int   Client::send() {
         cgi.run();
         _is_cgi_executed = true;
       }
-    }
+    } // else?
   } else {
-    int n_written = _request->getBody()->send(_request_pipe[1]);
+    n_written = _request->getBody()->send(_request_pipe[1]);
     log("[Client::send] : n_written is %d\n", n_written);
     if (n_written < 0) {
       log("[Client::send] n_written < 0, closing...");
       _request->setChunkedClosed();
       Fd::clearWfd(_request_pipe[1]);
       close(_request_pipe[1]);
+      _request_pipe[1] = -1;
     } else {
       _n_sent += n_written;
       log("n_sent = %d, CL = %d\n", _n_sent, _request->getContentLength());
       if (!_request->isChunked() && _n_sent == (int) _request->getContentLength()) {
         Fd::clearWfd(_request_pipe[1]);
         close(_request_pipe[1]);
+        _request_pipe[1] = -1;
       }
     }
   }  

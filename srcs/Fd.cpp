@@ -25,7 +25,7 @@ void  Fd::set(int fd, fd_set & fds) {
   if (fd < 0) 
     return;
   displayFdSet(fds);
-  /// fcntl(fd, F_SETFL, O_NONBLOCK);
+  fcntl(fd, F_SETFL, O_NONBLOCK);
   fds.fds_bits[fd / 32] |= (1 << (fd % 32));
   if (fd > max_fd)
     max_fd = fd;

@@ -17,8 +17,8 @@ CgiChunkedBody::CgiChunkedBody() {
 
 CgiChunkedBody::CgiChunkedBody(std::string const& s) {
   _chunk_size = -1;
-  _chunked_read_buf += s;
   _n_sent = 0;
+  recvString(s);
 }
 
 CgiChunkedBody::~CgiChunkedBody() {
@@ -42,13 +42,19 @@ bool CgiChunkedBody::isChunkedClosed() const {
 
 int CgiChunkedBody::recv(int fd) {
   int     n_read;
-  size_t  i;
-
+  
   if ((n_read = read(fd, _buf, _size)) < 0)
     throw "[CgiChunkedBody::send]: read failed";
   _buf[n_read] = '\0';
-  _chunked_read_buf.append(_buf);
-  
+  recvString(std::string(_buf, n_read));
+  log("[CgiChunkedBody::recv] current size : %d\n", (int)_chunked_write_buf.length());
+  return n_read;
+}
+
+void CgiChunkedBody::recvString(std::string s) {
+  size_t i;
+
+  _chunked_read_buf += s;
   while (42) {
     int  chunk_size = 0;
     /* if no crlf, there isn't size. so wait for next recv */
@@ -85,18 +91,16 @@ int CgiChunkedBody::recv(int fd) {
       break;
     }
   }
-  log("[CgiChunkedBody::recv] current size : %d\n", (int)_chunked_write_buf.length());
-  return n_read;
 }
 
 int CgiChunkedBody::send(int fd) {
   int n_written;
-  if (isChunkedClosed())
-   {
-      if (_len == 0) {
+
+  if (isChunkedClosed()) {
+    if (_len == 0) {
       _len = std::min(_size - 1, (int)_chunked_write_buf.length());
-      ft_strlcpy(_buf, _chunked_write_buf.c_str(), _len + 1);
-      _chunked_write_buf = _chunked_write_buf.substr(_len);
+      ft_memcpy(_buf, _chunked_write_buf.substr(0, _len).c_str(), _len + 1);
+      _chunked_write_buf = _chunked_write_buf.erase(0, _len);
     }
     if ((n_written = write(fd, _buf, _len)) < 0)
       throw "[CgiChunkedBody::send]: write failed";
@@ -111,14 +115,15 @@ int CgiChunkedBody::send(int fd) {
 
     _n_sent += n_written;
     log("[CgiChunkedBody::send] n_sent = %d\n", _n_sent);
-    if (_chunked_write_buf.length() == 0) {
+    log("[CgiChunkedBody::send] _n_sent + _len + write_buf.length() = %d\n", _n_sent + _len + _chunked_write_buf.length());
+    if (_len == 0 && _chunked_write_buf.length()  == 0) {
       log("[CgiChunkedBody::send] all chunked body is sent, closing.\n");
       close(fd);
       Fd::clearWfd(fd);
+      return -1;
     }
     return n_written;
   }
-
   return 0;
 }
 
