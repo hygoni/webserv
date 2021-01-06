@@ -52,7 +52,7 @@ void  ServerManager::run() {
       for (c_it = clients.begin(); c_it != clients.end();) {
         if ((*c_it)->isTimeout()) {
           (*c_it)->timeout();
-          log("[Client::tiemout]\n");
+          log("[Client::timeout]\n");
         } else if (Fd::isSet((*c_it)->getFd(), ready_fds[0])) {
           log("[Client::recv]\n");
           if ((*c_it)->recv() < 0) {
@@ -75,7 +75,6 @@ void  ServerManager::run() {
         if (Fd::isSet(response_read_fd, ready_fds[0])) {
           log("[Response::recv]\n");
           (*c_it)->getResponse()->recv(response_read_fd);
-          Fd::setWfd((*c_it)->getFd());
         }
         /* flush buffer */
         if (Fd::isSet((*c_it)->getFd(), ready_fds[1])) {
@@ -84,7 +83,7 @@ void  ServerManager::run() {
             Client *client = *c_it;
             c_it = clients.erase(c_it);
             delete client;
-            continue;
+            continue ;
           }
         }
         c_it = std::next(c_it);

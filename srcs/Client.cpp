@@ -168,6 +168,8 @@ int  Client::recv() {
             }           
           } else {
             _response = new Response(*this);
+            /* when client has no body, setWfd must be here */
+            Fd::setWfd(_fd);
           }
         } else {
           /* header too long */
@@ -199,6 +201,7 @@ int   Client::send() {
   if (_request->isChunked() && _cgi_path != "") {
     if (_request->getBody()->isChunkedClosed()) {
       if (_is_cgi_executed) {
+        /* all input sent (cgi, chunked) */
         n_written = _request->getBody()->send(_request_pipe[1]);
         if (n_written < 0) {
           log("[Client::send] n_written < 0, closing...");
@@ -206,16 +209,18 @@ int   Client::send() {
           Fd::clearWfd(_request_pipe[1]);
           close(_request_pipe[1]);
           _request_pipe[1] = -1;
+          Fd::setWfd(_fd);
         }
       } else {
+        /* creating cgi */
         size_t content_length = _request->getBody()->getChunkedContentLength();
         (*_request->getHeader())["Content-Length"] = std::to_string(content_length);
         Cgi cgi(*this);
         cgi.run();
         _is_cgi_executed = true;
       }
-    } // else?
-  } else {
+    } 
+  } else { /* non-cgi-chunked */
     n_written = _request->getBody()->send(_request_pipe[1]);
     log("[Client::send] : n_written is %d\n", n_written);
     if (n_written < 0) {
@@ -223,6 +228,7 @@ int   Client::send() {
       _request->setChunkedClosed();
       Fd::clearWfd(_request_pipe[1]);
       close(_request_pipe[1]);
+      Fd::setWfd(_fd);
       _request_pipe[1] = -1;
     } else {
       _n_sent += n_written;
@@ -230,6 +236,7 @@ int   Client::send() {
       if (!_request->isChunked() && _n_sent == (int) _request->getContentLength()) {
         Fd::clearWfd(_request_pipe[1]);
         close(_request_pipe[1]);
+        Fd::setWfd(_fd);
         _request_pipe[1] = -1;
       }
     }

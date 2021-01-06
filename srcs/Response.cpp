@@ -25,7 +25,7 @@ Response::Response(Client& client) : _client(client) {
   _file_fd = -1;
   _n_sent = 0;
 
-  Fd::setWfd(client.getFd());
+  // Fd::setWfd(client.getFd());
   process(client);
 }
 
@@ -38,7 +38,7 @@ Response::Response(Client& client, int status) : _client(client) {
   _file_fd = -1;
   _n_sent = 0;
 
-  Fd::setWfd(client.getFd());
+  // Fd::setWfd(client.getFd());
   setStatus(status);
 }
 
@@ -57,18 +57,12 @@ Response::~Response() {
 }
 
 int Response::send(int fd) {
-  /* CGI middleware here? or body type?
-    where to generate header?
-    CGI? non-CGI?
-    when CGI, header is created when all output of CGI is recieved.
-    when non-CGI, header is created when opening file.
-    where goes CGI middleware?
+  /* for chunked request, delay response until request is closed */
+  // if (_client.getRequest()->isChunked() && !_client.getRequest()->isChunkedClosed()) {
+  //   return 0;
+  // }
 
-    when CGI, header is created in Body
-    when non-CGI, header is immediately created
-   */
   int ret = 0;
-
   if (_is_header_sent == false) {
     if (_header != NULL) {
       std::string header = _header->toString();
