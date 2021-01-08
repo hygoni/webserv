@@ -13,11 +13,22 @@ ServerManager::ServerManager(Config& config) : _servers(config.getServers()) {
 ServerManager::~ServerManager() {
 }
 
+void displayClients(std::vector<Client*> &clients) {
+  std::vector<Client*>::iterator  c_it;
+
+  log("clients: ");
+  for (c_it = clients.begin(); c_it != clients.end(); c_it++) {
+    log("%d, ", (*c_it)->id);
+  }
+  log("\n");
+}
+
 void  ServerManager::run() {
   std::vector<Server>::iterator   s_it;
   std::vector<Client*>::iterator  c_it;
   struct timeval                  select_timeout;
-  fd_set    all_fds[2], ready_fds[2];
+  fd_set                          all_fds[2], ready_fds[2];
+  int                             body_write_fd;
   
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(NULL);
@@ -34,11 +45,11 @@ void  ServerManager::run() {
   }
   log("initSocket done\n");
   while (42) {
-    usleep(10000);
+    // usleep(10000);
     ready_fds[0] = all_fds[0];
     ready_fds[1] = all_fds[1];
     /* display rfds before select */
-    Fd::displayFdSet(*Fd::rfds);
+    // Fd::displayFdSet(*Fd::rfds);
     if (select(Fd::max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, &select_timeout) < 0) {
       log("max_fd + 1 = %d, strerror(errno) = %s\n", Fd::max_fd + 1, strerror(errno));
       throw "select failed!";
@@ -49,36 +60,40 @@ void  ServerManager::run() {
         /* not setting read fd? */
       } 
       std::vector<Client*> &clients = s_it->getClients();
+      displayClients(clients);
       for (c_it = clients.begin(); c_it != clients.end();) {
+
+        /* Request closed -> Create Resonse -> Process Response */
+
         if ((*c_it)->isTimeout()) {
           (*c_it)->timeout();
-          log("[Client::timeout]\n");
+       //   log("[Client::timeout]\n");
         } else if (Fd::isSet((*c_it)->getFd(), ready_fds[0])) {
-          log("[Client::recv]\n");
-          if ((*c_it)->recv() < 0) {
-            Client *client = *c_it;
-            c_it = clients.erase(c_it);
-            delete client;
-            continue;
-          }
+       //   log("[Client::recv]\n");
+          (*c_it)->recv();
         }
+
         /* flsuh buffer */
         /* response read it */
-        int body_write_fd = (*c_it)->getRequestPipe()[1];
+        if ((*c_it)->getRequest() != NULL && (*c_it)->getRequest()->getMethod() == "PUT")
+          body_write_fd = (*c_it)->getResponse()->getFileFd();
+        else
+          body_write_fd = (*c_it)->getRequestPipe()[1];
         if (Fd::isSet(body_write_fd, ready_fds[1])) {
-          log("[Client::send]\n");
-          (*c_it)->send();
+        //  log("[Client::send]\n");
+          (*c_it)->send(body_write_fd);
         }
+
         /* put response to buffer */
         /* response write it */
         int response_read_fd = (*c_it)->getResponsePipe()[0];
         if (Fd::isSet(response_read_fd, ready_fds[0])) {
-          log("[Response::recv]\n");
+          //log("[Response::recv]\n");
           (*c_it)->getResponse()->recv(response_read_fd);
         }
         /* flush buffer */
         if (Fd::isSet((*c_it)->getFd(), ready_fds[1])) {
-          log("[Response::send]\n");
+          //log("[Response::send]\n");
           if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {
             Client *client = *c_it;
             c_it = clients.erase(c_it);

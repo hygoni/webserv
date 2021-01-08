@@ -21,7 +21,7 @@ class Body {
   virtual         ~Body();
   virtual int     recv(int fd);
   virtual int     send(int fd);
-  virtual int  getChunkedContentLength() const;
+  virtual int     getChunkedContentLength() const;
   virtual bool    isChunkedClosed() const;
   bool            isEmpty() const;
 

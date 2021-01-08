@@ -52,17 +52,15 @@ Response::~Response() {
     delete _header;
   if (_body != NULL)
     delete _body;
-  if (_file_fd != -1)
+  if (_file_fd != -1) {
+    Fd::clearWfd(_file_fd);
     close(_file_fd);
+  }
 }
 
 int Response::send(int fd) {
-  /* for chunked request, delay response until request is closed */
-  // if (_client.getRequest()->isChunked() && !_client.getRequest()->isChunkedClosed()) {
-  //   return 0;
-  // }
-
   int ret = 0;
+
   if (_is_header_sent == false) {
     if (_header != NULL) {
       std::string header = _header->toString();
@@ -76,16 +74,8 @@ int Response::send(int fd) {
       if (_is_Cgi) {
         ret = _body->send(fd);
         /* for PUT request, request body (saved in body) is written to _file_fd */
-      } else if (_client.getRequest()->getMethod() == "PUT") {
-        int client_read_fd = _client.getRequestPipe()[0];
-        Fd::setRfd(client_read_fd);
-        /* read from read end of request pipe */
-        if (Fd::isSet(client_read_fd, *Fd::rfds)) {
-          _body->recv(client_read_fd);
-        }
-        ret = _body->send(_file_fd);
       } else {
-        if (_file_fd != -1)
+        if (_file_fd != -1 && _client.getRequest()->getMethod() != "PUT")
           _body->recv(_file_fd);
         ret = _body->send(fd);
       }
@@ -93,8 +83,7 @@ int Response::send(int fd) {
     _n_sent += ret;
    if (_client.getRequest()->isChunked() && !_client.getRequest()->isChunkedClosed())
      return ret;
-    if ((_client.getRequest() != NULL && _client.getRequest()->getMethod() == "PUT" 
-    &&  (_n_sent == (int)_client.getRequest()->getContentLength() || _client.getRequest()->isChunkedClosed())) ||
+    if ((_client.getRequest() != NULL && _client.getRequest()->getMethod() == "PUT") ||
     _n_sent == (int)_header->getContentLength() ||
     _body == NULL) {
       log("[Response::send] close, clear %d\n", fd);
@@ -201,6 +190,7 @@ void Response::processPutMethod
       _file_fd = open(path.c_str(), O_RDWR | O_CREAT, 0644);
       if (_file_fd < 0)
         throw "[Response::processPutMethod] open failed";
+      Fd::setWfd(_file_fd);
       _body = new Body();
     } else {
       /* Internal Server Error */
@@ -211,6 +201,7 @@ void Response::processPutMethod
     _file_fd = open(path.c_str(), O_RDWR | O_CREAT, 0644);
     if (_file_fd < 0)
       throw "[Response::processPutMethod] open failed";
+    Fd::setWfd(_file_fd);
     _body = new Body();
     setStatus(200);
   }
@@ -343,4 +334,8 @@ bool Response::isCgi() const {
 
 Header* Response::getHeader() {
   return _header;
+}
+
+int     Response::getFileFd() const {
+  return _file_fd;
 }

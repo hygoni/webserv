@@ -45,6 +45,7 @@ class Response {
   void  setCgiPid(pid_t pid);
   bool  isCgi() const;
   Header* getHeader();
+  int     getFileFd() const;
 };
 
 #endif  // SRCS_RESPONSE_HPP_
