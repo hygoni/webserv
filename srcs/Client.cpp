@@ -10,12 +10,13 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #define MAX_HEADER_SIZE 8192
-
+int Client::num = 0;
 Client::Client
 (Server const& server) : _server(server) {
   socklen_t     addr_len;
   sockaddr_in   client_addr;
 
+  id = (++Client::num);
   addr_len = sizeof(client_addr);
   _fd = accept(server.getFd(), (struct sockaddr *)&client_addr, &addr_len);
   if (_fd < 0)
@@ -162,13 +163,14 @@ int  Client::recv() {
                 _request->setBody(new CgiChunkedBody(req_body));
               } else {
                 _request->setBody(new ChunkedBody(req_body));
-              }                                                                                    
+              }
             } else {
               _request->setBody(new Body(req_body));
-            }           
+            }
           } else {
             _response = new Response(*this);
             /* when client has no body, setWfd must be here */
+            /* request is closed here */
             Fd::setWfd(_fd);
           }
         } else {
@@ -190,24 +192,26 @@ int  Client::recv() {
       }
     }
   } else {
-    if (_request->hasBody())
+    /* check if request is closed */
+    if (_request->hasBody()) {
       _request->getBody()->recv(_fd);
+    }
   }
   return (1);
 }
 
-int   Client::send() {
+int   Client::send(int fd) {
   int n_written;
   if (_request->isChunked() && _cgi_path != "") {
     if (_request->getBody()->isChunkedClosed()) {
       if (_is_cgi_executed) {
         /* all input sent (cgi, chunked) */
-        n_written = _request->getBody()->send(_request_pipe[1]);
+        n_written = _request->getBody()->send(fd);
         if (n_written < 0) {
           log("[Client::send] n_written < 0, closing...");
           _request->setChunkedClosed();
-          Fd::clearWfd(_request_pipe[1]);
-          close(_request_pipe[1]);
+          Fd::clearWfd(fd);
+          close(fd);
           _request_pipe[1] = -1;
           Fd::setWfd(_fd);
         }
@@ -221,26 +225,32 @@ int   Client::send() {
       }
     } 
   } else { /* non-cgi-chunked */
-    n_written = _request->getBody()->send(_request_pipe[1]);
+    n_written = _request->getBody()->send(fd);
     log("[Client::send] : n_written is %d\n", n_written);
     if (n_written < 0) {
       log("[Client::send] n_written < 0, closing...");
       _request->setChunkedClosed();
-      Fd::clearWfd(_request_pipe[1]);
-      close(_request_pipe[1]);
+      Fd::clearWfd(fd);
+      close(fd);
       Fd::setWfd(_fd);
       _request_pipe[1] = -1;
     } else {
-      _n_sent += n_written;
       log("n_sent = %d, CL = %d\n", _n_sent, _request->getContentLength());
       if (!_request->isChunked() && _n_sent == (int) _request->getContentLength()) {
-        Fd::clearWfd(_request_pipe[1]);
-        close(_request_pipe[1]);
+        Fd::clearWfd(fd);
+        close(fd);
         Fd::setWfd(_fd);
         _request_pipe[1] = -1;
       }
     }
-  }  
+  }
+  _n_sent += n_written;
+  if (_n_sent > _location->getClientBodySizeLimit()) {
+    if (_response != NULL) {
+      delete _response;
+    }
+    _response = new Response(*this, 413);
+  }
   return 0;
 }
 

@@ -6,12 +6,13 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <sys/time.h>
-#define TIMEOUT_SEC 3000
+#define TIMEOUT_SEC 30
 
 class Response;
 class Server;
 class Client {
 private:
+  int             _id;
   int             _fd;
   int             _request_pipe[2];
   int             _response_pipe[2];
@@ -27,17 +28,18 @@ private:
   Server const&   _server;
   const Location* _location;
   char            *_buf;
-
   void        setLocation();
   void        setCgiPath();
               Client();
 public:
+  static int      num;
+  int             id;
               Client(const Server& server);
               Client(Client const& client);
   Client const&   operator=(Client const& client);
               ~Client();
   int         recv();
-  int         send();
+  int         send(int fd);
   bool        auth();
   void        timeout();
   bool        isTimeout();
