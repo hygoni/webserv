@@ -11,9 +11,8 @@
 
 class Body {
  protected:
-  int     _len;
-  int     _size;
-  char    *_buf;
+  static char     *_read_buf;
+  std::string     _buf;
 
  public:
                   Body();
@@ -22,9 +21,8 @@ class Body {
   virtual int     recv(int fd);
   virtual int     send(int fd);
   virtual int     getChunkedContentLength() const;
-  virtual bool    isChunkedClosed() const;
-  bool            isEmpty() const;
-
+  virtual bool    isChunkedReceived() const; /* all input is received */
+  virtual bool    isChunkedSent() const; /* all write buffer is flushed */
 };
 
 #endif  // SRCS_BODY_HPP_

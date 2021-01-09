@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <iostream>
+#include <algorithm>
 #include "ChunkedBody.hpp"
 #include "libft.h"
 #include "Fd.hpp"
@@ -22,18 +23,17 @@ ChunkedBody::~ChunkedBody() {
   
 }
 
-/*
- * save size,
- * when size bytes are saved, flsuh by send()
- */
-
 bool  ChunkedBody::isHex(char c) {
   if (('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F'))
     return true;
   return false;
 }
 
-bool ChunkedBody::isChunkedClosed() const {
+bool ChunkedBody::isChunkedReceived() const {
+  return (_chunk_size == 0);
+}
+
+bool ChunkedBody::isChunkedSent() const {
   return (_chunk_size == 0 && _chunked_write_buf.length() == 0);
 }
 
@@ -41,7 +41,7 @@ void  ChunkedBody::recvString(std::string buf) {
   int  chunk_size = 0;
   size_t  i;
   
-  _chunked_read_buf += buf;
+  _chunked_read_buf.append(buf);
   //log("_chunked_read_buf += %s\n", buf);
   if (_chunked_read_buf.length() == 0)
     return;
@@ -67,7 +67,7 @@ void  ChunkedBody::recvString(std::string buf) {
     _chunk_size = chunk_size;
     /* parsed size, but not read chunk-data yet */
   }
-  log("[ChunkedBody::recvString] _chunk_size = %d\n", _chunk_size);
+  log("[ChunkedBody::recvString] _chunk_size = %d, chunked_read_buf.length(%d)\n", _chunk_size, _chunked_read_buf.length());
 
   if (_chunk_size != -1 && _chunked_write_buf.length() == 0) {
     if ((int)_chunked_read_buf.length() >= _chunk_size + 2) {
@@ -76,52 +76,36 @@ void  ChunkedBody::recvString(std::string buf) {
         throw "[ChunkedBody::recv] Invalid Chunked Body2";
       _chunked_read_buf = _chunked_read_buf.substr(_chunk_size + 2);
     }
+    log("[ChunkedBody::recvString] make write_buf.length = %u\n", _chunked_write_buf.length());
   }
 }
 
 int ChunkedBody::recv(int fd) {
   int     n_read;
 
-  /* when buffer isn't empty, don't receive */
-  if (!isEmpty()) {
-    return 0;
+  if ((n_read = read(fd, _read_buf, BUFSIZE)) < 0) {
+    log("[ChunkedBody::recv]: read failed");
+    return -1;
   }
+  _read_buf[n_read] = '\0';
+  log("[ChunkedBody:recv] received(%d), current chunk_size(%d)\n", n_read, _chunk_size);
+  recvString(std::string(_read_buf, n_read));
 
-  if ((n_read = read(fd, _buf, _size)) < 0)
-    throw "[ChunkedBody::send]: read failed";
-  _buf[n_read] = '\0';
-  recvString(std::string(_buf, n_read));
-  
   return n_read;
 }
 
 int ChunkedBody::send(int fd) {
   int n_written;
 
-  recvString("");
-  if (_len == 0 && _chunked_write_buf.length() > 0) {
-    int n_buffer = std::min(_size, (int)_chunked_write_buf.length());
-    ft_memcpy(_buf, _chunked_write_buf.c_str(), n_buffer +  1);
-    _chunked_write_buf = _chunked_write_buf.erase(0, n_buffer);
-    _len = n_buffer;
-    /* all data of current chunk is written */
-    if (_chunked_write_buf.length() == 0 && _chunk_size != 0) {
-      _chunk_size = -1;
-    }
-  }
-
-  if ((n_written = write(fd, _buf, _len)) < 0)
-    throw "[ChunkedBody::send]: write failed";
-  /* not all data of buffer was written */
-  if (n_written < _len) {
-    _len -= n_written;
-    ft_memmove(_buf, _buf + n_written, _len);
-    _buf[_len] = '\0';
-  } else {
-    _len = 0;
-  }
-
-  if (isChunkedClosed())
+  recvString(""); /* data in buffer should be processed */
+  int len = std::min(BUFSIZE, (int)_chunked_write_buf.length());
+  if ((n_written = write(fd, _chunked_write_buf.c_str(), len)) < 0) {
+    log("[ChunkedBody::send]: write failed");
     return -1;
+  }
+  _chunked_write_buf.erase(0, n_written);
+  if (n_written > 0 && _chunked_write_buf.length() == 0 && _chunk_size != 0) {
+    _chunk_size = -1;
+  }
   return n_written;
 }

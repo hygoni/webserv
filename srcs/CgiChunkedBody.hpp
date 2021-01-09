@@ -11,6 +11,7 @@ class CgiChunkedBody : public Body {
  private:
   int           _chunk_size;
   int           _n_sent;
+  int           _pos;
   std::string   _chunked_read_buf;
   std::string   _chunked_write_buf;
   bool          isHex(char c);
@@ -23,7 +24,9 @@ class CgiChunkedBody : public Body {
   virtual int     send(int fd);
   void            recvString(std::string s);
   virtual int     getChunkedContentLength() const;
-  virtual bool    isChunkedClosed() const;
+  virtual bool    isChunkedReceived() const;
+  virtual bool    isChunkedSent() const;
+
 };
 
 #endif  // SRCS_CGI_CHUNKED_BUFFER_HPP

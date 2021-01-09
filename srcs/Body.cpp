@@ -1,58 +1,43 @@
 #include "Body.hpp"
-
-#ifndef BUFSIZE
-# define BUFSIZE 1048576
-#endif
-
+#include "debug.hpp"
 #include <algorithm>
 
+char *Body::_read_buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
+
 Body::Body() {
-  _len  = 0;
-  _size = BUFSIZE;
-  _buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
+
 }
 
 Body::Body(std::string const& s) {
-  _len = s.length();
-  _size = BUFSIZE;
-  if (s.length() > BUFSIZE)
-    _size = s.length() + 1;
-  _buf = (char*)malloc(sizeof(char) * (_size + 1));
-  ft_memcpy(_buf, s.c_str(), std::min(_size, (int)s.length() + 1));
+  _buf.append(s);
 }
 
 Body::~Body() {
-  if (_buf != NULL)
-    free(_buf);
+
 }
 
 /* TODO: process transfer encoding */
 int Body::recv(int fd) {
   int n_read;
-
   /* when buffer isn't empty, don't receive */
-  if (!isEmpty()) {
-    return 0;
+  if ((n_read = read(fd, _read_buf, BUFSIZE)) < 0) {
+    log("[Body::redv] read failed");
+    return -1;
   }
-  if ((n_read = read(fd, _buf, _size)) < 0)
-    throw "[Body::recv]: read failed";
-  _buf[n_read] = '\0';
-  _len = n_read;
+  _read_buf[n_read] = '\0';
+  _buf.append(_read_buf);
   return n_read;
 }
 
 int Body::send(int fd) {
   int n_written;
-  if ((n_written = write(fd, _buf, _len)) < 0)
-    throw "[Body::send]: write failed";
-  /* not all data of buffer was written */
-  if (n_written < _len) {
-    _len -= n_written;
-    ft_memmove(_buf, _buf + n_written, _len);
-    _buf[_len] = '\0';
-  } else {
-    _len = 0;
+  int len = std::min(BUFSIZE, (int)_buf.length());
+  if ((n_written = write(fd, _buf.c_str(), len)) < 0) {
+    log("[Body::send] read failed");
+    return -1;
   }
+  /* not all data of buffer was written */
+  _buf.erase(0, n_written);
   return n_written;
 }
 
@@ -60,10 +45,10 @@ int  Body::getChunkedContentLength() const {
   return 0;
 }
 
-bool    Body::isChunkedClosed() const {
+bool    Body::isChunkedReceived() const {
   return false;
 }
 
-bool Body::isEmpty() const {
-  return _len == 0;
+bool    Body::isChunkedSent() const {
+  return false;
 }

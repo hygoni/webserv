@@ -81,14 +81,12 @@ int Response::send(int fd) {
       }
     }
     _n_sent += ret;
-   if (_client.getRequest()->isChunked() && !_client.getRequest()->isChunkedClosed())
-     return ret;
+    if (!_client.getRequest()->getBody()->isChunkedSent())
+      return ret;
     if ((_client.getRequest() != NULL && _client.getRequest()->getMethod() == "PUT") ||
-    _n_sent == (int)_header->getContentLength() ||
-    _body == NULL) {
+      _n_sent == (int)_header->getContentLength() || _body == NULL) {
       log("[Response::send] close, clear %d\n", fd);
-      close(fd);
-      return -1;
+      return 0;
     }
     if (ret < 0) {
       log("[Response::send] ret is %d\n", ret);
@@ -100,8 +98,7 @@ int Response::send(int fd) {
 
 Header* Response::initHeader(int status) const {
   Header* header = new Header(status);
-  (*header)["Date"] = "";
-  (*header)["Connection"] = "close";
+  (*header)["Content-Length"] = "0";
   return header;
 }
 

@@ -13,4 +13,6 @@
  #define log(x, ...)
 #endif
 
+#define BUFSIZE 1048576
+
 #endif  // SRCS_DEBUG_HPP_

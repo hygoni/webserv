@@ -8,8 +8,7 @@
 #include "Request.hpp"
 #include "Body.hpp"
 #include "Header.hpp"
-
-#define BUFSIZE 1048576
+#include "debug.hpp"
 
 class Response {
  private:

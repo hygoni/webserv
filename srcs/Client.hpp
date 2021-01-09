@@ -6,7 +6,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <sys/time.h>
-#define TIMEOUT_SEC 30
+#define TIMEOUT_SEC 3000
 
 class Response;
 class Server;
@@ -27,7 +27,7 @@ private:
   struct timeval  _created;
   Server const&   _server;
   const Location* _location;
-  char            *_buf;
+  static char     *_buf;
   void        setLocation();
   void        setCgiPath();
               Client();
@@ -38,6 +38,7 @@ public:
               Client(Client const& client);
   Client const&   operator=(Client const& client);
               ~Client();
+  void        clear();
   int         recv();
   int         send(int fd);
   bool        auth();

@@ -17,7 +17,7 @@ CgiBody::CgiBody(Header **header) : Body() {
   _is_body_closed = false;
   _is_header_sent = false;
   _header = header;
-  _n_sent = 0;
+  _pos = 0;
 }
 
 CgiBody::CgiBody(const std::string& s, Header **header) : Body(s) {
@@ -25,7 +25,7 @@ CgiBody::CgiBody(const std::string& s, Header **header) : Body(s) {
   _is_body_closed = false;
   _is_header_sent = false;
   _header = header;
-  _n_sent = 0;
+  _pos = 0;
 }
 
 CgiBody::~CgiBody() {
@@ -97,11 +97,12 @@ int CgiBody::recv(int fd) {
   std::map<std::string, std::string>  parse_map;
 
   /* read from pipe */
-  if ((n_read = read(fd, _buf, _size)) < 0)
-    throw "[CgiBody::recv]: read failed";
-  _buf[n_read] = '\0';
-  _len = n_read;
-
+  if ((n_read = read(fd, _read_buf, BUFSIZE)) < 0) {
+    log("[CgiBody::recv]: read failed");
+    return -1;
+  }
+  _read_buf[n_read] = '\0';
+  
   log("[CgiBody::recv] read (%d bytes, total %d)\n", n_read, (int)_raw_body.length());
   /* body is closed */
   if (n_read == 0 && !_is_body_closed) {
@@ -117,18 +118,17 @@ int CgiBody::recv(int fd) {
 
   /* if header is closed, just add body */
   if (_is_header_closed) {
-    _raw_body += std::string(_buf, _len);
+    _raw_body += std::string(_read_buf, n_read);
   } else {
     /* TODO: loigical error - can't properly detect empty new line */
-    if ((new_line = ft_strnstr(_buf, "\r\n\r\n", _len)) == NULL) {
-      _raw_header += std::string(_buf, _len);
+    if ((new_line = ft_strnstr(_read_buf, "\r\n\r\n", n_read)) == NULL) {
+      _raw_header += std::string(_buf, n_read);
     } else {
       /* header is closed */
       *new_line = '\0';
-      _raw_header += _buf;
-
+      _raw_header += _read_buf;
       _is_header_closed = true;
-      _raw_body += std::string(new_line + 4, _len - (new_line + 4 - _buf));
+      _raw_body += std::string(new_line + 4, n_read - (new_line + 4 - _read_buf));
     }
   }
   return n_read;
@@ -136,16 +136,16 @@ int CgiBody::recv(int fd) {
 
 int CgiBody::send(int fd) {
   int n_written = 0;
-  log("[CgiBody::send] n_sent = %d\n", _n_sent);
+  log("[CgiBody::send] n_sent = %d\n", _pos);
   if (!_is_body_closed)
     return 0;
 
- if (_n_sent < (size_t)ft_atoi((**_header)["Content-Length"].c_str())) {
-      int size = std::min(_size, (int)_raw_body.size());
-      if ((n_written = ::write(fd, _raw_body.c_str(), size)) < 0)
-        throw "[CgiBody::send]: write failed";
-      _raw_body = _raw_body.substr(n_written);
-      _n_sent += n_written;
+ if (_pos < (size_t)ft_atoi((**_header)["Content-Length"].c_str())) {
+      int size = std::min(BUFSIZE, (int)_raw_body.size());
+      if ((n_written = ::write(fd, _raw_body.c_str() + _pos, size)) < 0) {
+        log("[CgiBody::send]: write failed");
+      }
+      _pos += n_written;
   }
   return n_written;
 }

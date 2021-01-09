@@ -25,7 +25,7 @@ class CgiBody : public Body{
   bool          _is_header_sent;
   bool          _is_header_closed;
   bool          _is_body_closed;
-  size_t        _n_sent;
+  int           _pos;
 
  public:
                         CgiBody(Header **header);

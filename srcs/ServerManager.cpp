@@ -58,32 +58,10 @@ void  ServerManager::run() {
       if (Fd::isSet(s_it->getFd(), ready_fds[0])) {
         s_it->accept(all_fds[0]);
         /* not setting read fd? */
-      } 
+      }
       std::vector<Client*> &clients = s_it->getClients();
-      displayClients(clients);
+      // displayClients(clients);
       for (c_it = clients.begin(); c_it != clients.end();) {
-
-        /* Request closed -> Create Resonse -> Process Response */
-
-        if ((*c_it)->isTimeout()) {
-          (*c_it)->timeout();
-       //   log("[Client::timeout]\n");
-        } else if (Fd::isSet((*c_it)->getFd(), ready_fds[0])) {
-       //   log("[Client::recv]\n");
-          (*c_it)->recv();
-        }
-
-        /* flsuh buffer */
-        /* response read it */
-        if ((*c_it)->getRequest() != NULL && (*c_it)->getRequest()->getMethod() == "PUT")
-          body_write_fd = (*c_it)->getResponse()->getFileFd();
-        else
-          body_write_fd = (*c_it)->getRequestPipe()[1];
-        if (Fd::isSet(body_write_fd, ready_fds[1])) {
-        //  log("[Client::send]\n");
-          (*c_it)->send(body_write_fd);
-        }
-
         /* put response to buffer */
         /* response write it */
         int response_read_fd = (*c_it)->getResponsePipe()[0];
@@ -94,13 +72,39 @@ void  ServerManager::run() {
         /* flush buffer */
         if (Fd::isSet((*c_it)->getFd(), ready_fds[1])) {
           //log("[Response::send]\n");
-          if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {
+          if ((*c_it)->getResponse()->send((*c_it)->getFd()) <= 0) {
+            (*c_it)->clear();
+            c_it = std::next(c_it);
+            continue ;
+          }
+        }
+
+        /* Request closed -> Create Resonse -> Process Response */
+        if ((*c_it)->isTimeout()) {
+          (*c_it)->timeout();
+       //   log("[Client::timeout]\n");
+        } else if (Fd::isSet((*c_it)->getFd(), ready_fds[0])) {
+       //   log("[Client::recv]\n");
+          if ((*c_it)->recv() <= 0) {
             Client *client = *c_it;
             c_it = clients.erase(c_it);
             delete client;
             continue ;
           }
         }
+
+        /* flsuh buffer */
+        /* response read it */
+
+        if ((*c_it)->getRequest() != NULL && (*c_it)->getRequest()->getMethod() == "PUT")
+          body_write_fd = (*c_it)->getResponse()->getFileFd();
+        else
+          body_write_fd = (*c_it)->getRequestPipe()[1];
+        if (Fd::isSet(body_write_fd, ready_fds[1])) {
+        //  log("[Client::send]\n");
+          (*c_it)->send(body_write_fd);
+        }
+
         c_it = std::next(c_it);
       }
     }

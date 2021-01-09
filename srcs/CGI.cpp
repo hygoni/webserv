@@ -8,8 +8,7 @@
 #include "libft.h"
 #include "Client.hpp"
 #include "Fd.hpp"
-
-#define BUFSIZE 1048576
+#include "debug.hpp"
 
 std::string ip_to_string(int ip) {
   std::string ip_string;

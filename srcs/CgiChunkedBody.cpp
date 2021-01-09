@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <iostream>
+#include <algorithm>
 #include "CgiChunkedBody.hpp"
 #include "libft.h"
 #include "Fd.hpp"
@@ -12,12 +13,12 @@
 
 CgiChunkedBody::CgiChunkedBody() {
   _chunk_size = -1;
-  _n_sent = 0;
+  _pos = 0;
 }
 
 CgiChunkedBody::CgiChunkedBody(std::string const& s) {
   _chunk_size = -1;
-  _n_sent = 0;
+  _pos = 0;
   recvString(s);
 }
 
@@ -36,17 +37,21 @@ bool  CgiChunkedBody::isHex(char c) {
   return false;
 }
 
-bool CgiChunkedBody::isChunkedClosed() const {
+bool CgiChunkedBody::isChunkedReceived() const {
   return (_chunk_size == 0);
+}
+
+bool CgiChunkedBody::isChunkedSent() const {
+  return (isChunkedReceived() && _chunked_write_buf.length() == _pos);
 }
 
 int CgiChunkedBody::recv(int fd) {
   int     n_read;
   
-  if ((n_read = read(fd, _buf, _size)) < 0)
-    throw "[CgiChunkedBody::send]: read failed";
-  _buf[n_read] = '\0';
-  recvString(std::string(_buf, n_read));
+  if ((n_read = read(fd, _read_buf, BUFSIZE)) < 0)
+    return -1;
+  _read_buf[n_read] = '\0';
+  recvString(std::string(_read_buf, n_read));
   log("[CgiChunkedBody::recv] current size : %d\n", (int)_chunked_write_buf.length());
   return n_read;
 }
@@ -54,7 +59,7 @@ int CgiChunkedBody::recv(int fd) {
 void CgiChunkedBody::recvString(std::string s) {
   size_t i;
 
-  _chunked_read_buf += s;
+  _chunked_read_buf.append(s);
   while (42) {
     int  chunk_size = 0;
     /* if no crlf, there isn't size. so wait for next recv */
@@ -96,31 +101,19 @@ void CgiChunkedBody::recvString(std::string s) {
 int CgiChunkedBody::send(int fd) {
   int n_written;
 
-  if (isChunkedClosed()) {
-    if (_len == 0) {
-      _len = std::min(_size - 1, (int)_chunked_write_buf.length());
-      ft_memcpy(_buf, _chunked_write_buf.substr(0, _len).c_str(), _len + 1);
-      _chunked_write_buf = _chunked_write_buf.erase(0, _len);
-    }
-    if ((n_written = write(fd, _buf, _len)) < 0)
-      throw "[CgiChunkedBody::send]: write failed";
-    /* not all data of buffer was written */
-    if (n_written < _len) {
-      _len -= n_written;
-      ft_memmove(_buf, _buf + n_written, _len);
-      _buf[_len] = '\0';
-    } else {
-      _len = 0;
-    }
-
-    _n_sent += n_written;
-    log("[CgiChunkedBody::send] n_sent = %d\n", _n_sent);
-    log("[CgiChunkedBody::send] _n_sent + _len + write_buf.length() = %d\n", _n_sent + _len + _chunked_write_buf.length());
-    if (_len == 0 && _chunked_write_buf.length()  == 0) {
+  /* all data is received */
+  if (_chunk_size == 0) {
+    int len = std::min(BUFSIZE, (int)_chunked_write_buf.length() - _pos);
+    if ((n_written = write(fd, _chunked_write_buf.c_str() + _pos, len)) < 0)
+      return -1;
+    _pos += n_written;
+    log("[CgiChunkedBody::send] _pos / _chunked_write_buf.length() = %d / %d\n", _pos, _chunked_write_buf.length());
+    if (_pos == (int)_chunked_write_buf.length()) {
       log("[CgiChunkedBody::send] all chunked body is sent, closing.\n");
+      /* close _request_pipe[1] (request->cgi) */
       close(fd);
       Fd::clearWfd(fd);
-      return -1;
+      return 0;
     }
     return n_written;
   }

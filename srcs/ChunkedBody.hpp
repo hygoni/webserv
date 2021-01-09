@@ -21,7 +21,8 @@ class ChunkedBody : public Body {
   virtual       ~ChunkedBody();
   virtual int   recv(int fd);
   virtual int   send(int fd);
-  virtual bool  isChunkedClosed() const;
+  virtual bool  isChunkedReceived() const;
+  virtual bool  isChunkedSent() const;
 };
 
 #endif  // SRCS_CHUNKED_BUFFER_HPP
