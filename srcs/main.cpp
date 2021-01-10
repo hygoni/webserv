@@ -18,7 +18,7 @@ handler()
     }
     free( stack_syms );
     exit(1);
-}   
+}
 
 int main(void) {
   Config::createInstance("./config/config");

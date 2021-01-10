@@ -15,4 +15,11 @@
 
 #define BUFSIZE 1048576
 
+#include <stdexcept>
+#include <cstdlib>
+#include <execinfo.h>
+#include <iostream>
+
+void handler();
+
 #endif  // SRCS_DEBUG_HPP_
