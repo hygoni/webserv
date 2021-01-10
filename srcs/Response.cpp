@@ -67,7 +67,7 @@ int Response::send(int fd) {
       _is_header_sent = true;
       return ::send(fd,  header.c_str(), header.size(), 0);
     } else {
-      return 0;
+      return 1;
     }
   } else {
     if (_body != NULL) {
@@ -81,10 +81,16 @@ int Response::send(int fd) {
       }
     }
     _n_sent += ret;
-    if (!_client.getRequest()->getBody()->isChunkedSent())
+
+    /* when chunked isn't ended yet, wait it */
+    if (_client.getRequest() && !_client.getRequest()->getBody()->isChunkedSent())
       return ret;
-    if ((_client.getRequest() != NULL && _client.getRequest()->getMethod() == "PUT") ||
-      _n_sent == (int)_header->getContentLength() || _body == NULL) {
+
+    /* clear current client */
+    if (/* (_client.getRequest() && _client.getRequest()->getMethod() == "PUT") || */
+      _n_sent == (int)_header->getContentLength() || /* all content is sent */ 
+      _body == NULL || /* response has no body */
+      _client.getRequest() == NULL /* exception response has no request */) {
       log("[Response::send] close, clear %d\n", fd);
       return 0;
     }
