@@ -100,7 +100,13 @@ void Client::clear() {
   }
   Fd::clearWfd(_fd);
   _raw_request.clear();
+  _cgi_path.clear();
+  _cgi_file_path.clear();
+  _is_cgi_executed = false;
   _n_sent = 0;
+  _location = NULL;
+  _is_timeout = false;
+  gettimeofday(&_created, NULL);
 }
 
 Client::~Client() {
@@ -138,9 +144,7 @@ int  Client::recv() {
       return n_read;
     }
     std::cerr << std::string(_buf, n_read) << "|";
-
-    _buf[n_read] = '\0';
-    _raw_request.append(_buf);
+    _raw_request.append(std::string(_buf, n_read));
 
     header_end = _raw_request.find("\r\n\r\n");
     if (header_end == std::string::npos) {
