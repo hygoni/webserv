@@ -8,22 +8,17 @@
 #include "Body.hpp"
 
 class ChunkedBody : public Body {
- private:
+ protected:
+  std::string   _buf;
+  int           _pos;
   int           _chunk_size;
-  int           _n_sent;
-  std::string   _chunked_read_buf;
-  std::string   _chunked_write_buf;
   bool          isHex(char c);
  public:
-                ChunkedBody();
-                ChunkedBody(std::string const& s);
-  void          recvString(std::string);
-  virtual       ~ChunkedBody();
-  virtual int   recv(int fd);
-  virtual int   send(int fd);
-  virtual bool  isChunkedReceived() const;
-  virtual bool  isChunkedSent() const;
+                              ChunkedBody();
+  virtual                     ~ChunkedBody();
+  virtual bool                isFinished() const;
+  virtual std::string         getRemain() const;
+  virtual void                addBody(std::string const& s);
 };
-
 #endif  // SRCS_CHUNKED_BUFFER_HPP
 

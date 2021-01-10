@@ -12,14 +12,16 @@
 
 class Response {
  private:
-  bool      _is_header_sent;
-  bool      _is_Cgi;
-  Header    *_header;
-  Body      *_body;
-  int       _file_fd;
-  pid_t     _cgi_pid;
-  int    _n_sent;
-  Client&   _client;
+  static char* _buf;
+  bool         _is_header_sent;
+  bool         _is_cgi;
+  Header       *_header;
+  Body         *_body;
+  int           _file_fd;
+  pid_t        _cgi_pid;
+  int          _pos_cgi;
+  int          _pos;
+  Client&      _client;
 
   Header*   initHeader(int status) const;
 
@@ -37,7 +39,7 @@ class Response {
         Response(Client& client);
         Response(Client& client, int status);
         ~Response();
-  int   recv(int fd);
+  int   recv(fd_set const& rfds, fd_set const& wfds);
   int   send(int fd);
   void  setStatus(int status);
   pid_t getCgiPid() const;

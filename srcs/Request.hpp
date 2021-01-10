@@ -3,10 +3,9 @@
 #include <string>
 #include <iostream>
 #include "Header.hpp"
-#include "Body.hpp"
+#include "ChunkedBody.hpp"
 #include "HttpException.hpp"
 #include "Base64.hpp"
-#define MAX_BODY_SIZE 40000
 /* Copyright 2020 hyeyoo, hyekim */
 
 class Request {
@@ -30,20 +29,20 @@ private:
 public:
   ~Request();
   Request(std::string raw);
-  void  debugOstream(std::ostream& os) const;
-  std::string addBody(const std::string & str);
-  bool  isClosed() const;
-  bool  hasBody() const;
+  bool        isClosed() const;
+  bool        hasBody() const;
   std::string getMethod() const;
   std::string getTarget() const;
   std::string getVersion() const;
-  size_t         getContentLength() const;
-  bool           isChunked() const;
-  Header *getHeader();
-  Body   *getBody();
-  void   setBody(Body *body);
-  bool   auth(std::string const& user_str) const;
+  size_t      getContentLength() const;
+  bool        isChunked() const;
+  void        addBody(std::string const &s);
+  bool        isBodyFinished() const;
+  std::string getBodyRemain() const;
+  Header*     getHeader();
+  Body*       getBody();
+  void        setBody();
+  bool        auth(std::string const& user_str) const;
 };
 
-std::ostream& operator<<(std::ostream& os, const Request& request);
 #endif

@@ -2,7 +2,6 @@
 #include "Response.hpp"
 #include "Fd.hpp"
 #include "CGI.hpp"
-#include "CgiChunkedBody.hpp"
 #include "ChunkedBody.hpp"
 #include "CgiBody.hpp"
 #include "debug.hpp"
@@ -99,7 +98,6 @@ void Client::clear() {
     _response_pipe[1] = -1;
   }
   Fd::clearWfd(_fd);
-  _raw_request.clear();
   _cgi_path.clear();
   _cgi_file_path.clear();
   _is_cgi_executed = false;
@@ -137,139 +135,95 @@ return -1 :
 int  Client::recv() {
   int     n_read;
   size_t  header_end;
+  
+  if ((n_read = ::recv(_fd, _buf, BUFSIZE - 1, 0)) <= 0) {
+    return n_read;
+  }
+  
+  // std::cerr << "============ raw_request start ============" << "\n";
+  // std::cerr << _raw_request << "\n";
+  // std::cerr << "============ raw_request end ============" << "\n";
+  // std::cerr << std::string(_buf, n_read) << "|";
 
   if (_request == NULL) {
-    /* Connection closed or Error occurred */
-    if ((n_read = ::recv(_fd, _buf, BUFSIZE - 1, 0)) <= 0) {
-      return n_read;
-    }
-    std::cerr << std::string(_buf, n_read) << "|";
     _raw_request.append(std::string(_buf, n_read));
-
     header_end = _raw_request.find("\r\n\r\n");
-    if (header_end == std::string::npos) {
-      if (_raw_request.size() <= MAX_HEADER_SIZE)
-        return (1);
-      throw HttpException(413);
-    } else {
-      try {
+    try {
+      if (header_end == std::string::npos) {
+        if (_raw_request.size() <= MAX_HEADER_SIZE)
+          return (1);
+        log("_raw_request.size(%d) > MAX_HEADER_SIZE, remain size : %d\n", _raw_request.length());
+        throw HttpException(413);
+      } else {
         if (header_end <= MAX_HEADER_SIZE) {
           /* make request */
-          std::string req_header = _raw_request.substr(0, header_end + 4);
-          std::string req_body = _raw_request.substr(header_end + 4);
+          std::string raw_header = _raw_request.substr(0, header_end + 4);
+          std::string raw_body = _raw_request.substr(header_end + 4);
+          _raw_request.clear();
 
-          _request = new Request(req_header);
-          // std::cerr << _request->getTarget() << "\n" << _request->getHeader()->toString() << "\n";
+          _request = new Request(raw_header);
           setLocation();
           setCgiPath();
-          if ((int)_request->getContentLength() > _location->getClientBodySizeLimit())
+          if ((int)_request->getContentLength() > _location->getClientBodySizeLimit()) {
+            log("[Client::recv] content length is over\n");
             throw HttpException(413);
-          /* authenticate */
-          if (_location->getAuthorization().find(':') != std::string::npos) {
-            if (!this->auth())
-              return (1);
           }
-          /* make response */
-          if (_request->hasBody()) {
-            pipe(_request_pipe);
-            Fd::setWfd(_request_pipe[1]);
+          // std::cerr << _request->getTarget() << "\n" << _request->getHeader()->toString() << "\n";
+
+          /* authenticate */
+          if (_location->getAuthorization().find(':') != std::string::npos && !this->auth()) {
+            return (1);
+          }
+
+          /* make request body */
+          _request->setBody();
+          _request->addBody(raw_body);
+          if (_request->isBodyFinished()) {
             _response = new Response(*this);
-            if (_request->isChunked()) {
-              if (_response->isCgi()) {
-                _request->setBody(new CgiChunkedBody(req_body));
-              } else {
-                _request->setBody(new ChunkedBody(req_body));
-              }
-            } else {
-              _request->setBody(new Body(req_body));
-            }
-          } else {
-            _response = new Response(*this);
-            _request->setBody(new Body(req_body));
-            /* when client has no body, setWfd must be here */
-            /* request is closed here */
+            /* body remained is next header */
+            _raw_request = _request->getBodyRemain();
+            log("[Client:recv] body remain len: %d\n", _request->getBodyRemain().length());
             Fd::setWfd(_fd);
+            return 0;
           }
         } else {
           /* header too long */
+          log("[Client::recv] header too long!! raw_request = |%s|\n", _raw_request.length());
           throw HttpException(413);
         }
         return 1;
-      } catch (HttpException & err) {
-        log("[Client::recv] HttpException : %d\n", err.getStatus());
-        if (_response != NULL)
-          delete _response;
-        _response = new Response(*this, err.getStatus());
-        Fd::setWfd(_fd);
-        return 1;
-      } catch (const char* s) {
-        /* Internal Server Error */
-        log("[Client::recv] Internal Error : %s\n", s);
-        if (_response != NULL)
-          delete _response;
-        _response = new Response(*this, 500);
-        return 1;
       }
-    }
-  } else {
-    return _request->getBody()->recv(_fd);
-  }
-}
-
-int   Client::send(int fd) {
-  int n_written;
-
-  n_written = 0;
-  if (_request->isChunked() && _cgi_path != "") {
-    /* content length is calculated after chunk is closed */
-    if (_request->getBody()->isChunkedReceived()) {
-      if (_is_cgi_executed) {
-        /* all input sent (cgi, chunked) */
-        n_written = _request->getBody()->send(fd);
-        if (_request->getBody()->isChunkedSent()) {
-          log("[Client::send] chunked closed, closing...\n");
-          Fd::clearWfd(fd);
-          close(fd);
-          _request_pipe[1] = -1;
-          Fd::setWfd(_fd);
-        }
-      } else {
-        /* creating cgi */
-        size_t content_length = _request->getBody()->getChunkedContentLength();
-        (*_request->getHeader())["Content-Length"] = std::to_string(content_length);
-        Cgi cgi(*this);
-        cgi.run();
-        _is_cgi_executed = true;
-      }
-    }
-  } else { /* non-cgi-chunked */
-    n_written = _request->getBody()->send(fd);
-    log("[Client::send] n_written = %d\n", n_written);
-    if (_request->getBody()->isChunkedSent()) {
-      log("[Client::send] chunked closed, closing...\n");
-      Fd::clearWfd(fd);
-      close(fd);
+    } catch (HttpException & err) {
+      log("[Client::recv] HttpException : %d\n", err.getStatus());
+      if (_response != NULL)
+        delete _response;
+      _response = new Response(*this, err.getStatus());
+      _raw_request.clear();
       Fd::setWfd(_fd);
-      _request_pipe[1] = -1;
-    } else {
-      log("n_sent = %d, CL = %d\n", _n_sent, _request->getContentLength());
-      if ((!_request->isChunked() && _n_sent == (int) _request->getContentLength())
-      || _request->getBody()->isChunkedSent()) {
-        Fd::clearWfd(fd);
-        close(fd);
-        Fd::setWfd(_fd);
-        _request_pipe[1] = -1;
-      }
+      return 1;
+    } catch (const char* s) {
+      /* Internal Server Error */
+      log("[Client::recv] Internal Error : %s\n", s);
+      if (_response != NULL)
+        delete _response;
+      _response = new Response(*this, 500);
+      _raw_request.clear();
+      return 1;
     }
-  }
-  _n_sent += n_written;
-  if (_n_sent > _location->getClientBodySizeLimit()) {
-    if (_response != NULL) {
-      delete _response;
+  } else if (_response == NULL) {
+    /* Caution: raw body can have next header... how to do it? */
+    _request->addBody(std::string(_buf, n_read));
+    /* make response when recv is end */
+    if (_request->isBodyFinished()) {
+      _response = new Response(*this);
+      /* body remained is next header */
+      _raw_request = _request->getBodyRemain();
+      log("[Client::recv] body remain size : %d\n", _request->getBodyRemain().length());
+      Fd::setWfd(_fd);
+      return 0;
     }
-    _response = new Response(*this, 413);
+    return 1;
   }
-  return 0;
 }
 
 void  Client::setLocation() {

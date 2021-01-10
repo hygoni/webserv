@@ -120,7 +120,9 @@ void Cgi::run() {
   char *dup_file_path;
   char* const argv[] = {dup_cgi_path = ft_strdup(_cgi_path.c_str()),
   dup_file_path = ft_strdup(_cgi_file_path.c_str()), NULL};
-  
+
+  pipe(_client.getRequestPipe());
+  Fd::setWfd(_client.getRequestPipe()[1]);
   pipe(_client.getResponsePipe());
   Fd::setRfd(_client.getResponsePipe()[0]);
   pid = fork();

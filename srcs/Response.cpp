@@ -16,15 +16,17 @@
 #include "CgiBody.hpp"
 #include "debug.hpp"
 
+char *Response::_buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
+
 Response::Response(Client& client) : _client(client) {  
   log("[Response::Response(Client&)]\n");
   _header = NULL;
   _body = NULL;
   _is_header_sent = false;
-  _is_Cgi = false;
+  _is_cgi = false;
   _file_fd = -1;
-  _n_sent = 0;
-
+  _pos = 0;
+  _pos_cgi = 0;
   // Fd::setWfd(client.getFd());
   process(client);
 }
@@ -34,16 +36,11 @@ Response::Response(Client& client, int status) : _client(client) {
   _header = NULL;
   _body = NULL;
   _is_header_sent = false;
-  _is_Cgi = false;
+  _is_cgi = false;
   _file_fd = -1;
-  _n_sent = 0;
 
   // Fd::setWfd(client.getFd());
   setStatus(status);
-}
-
-int Response::recv(int fd) {
-  return _body->recv(fd);
 }
 
 Response::~Response() {
@@ -54,52 +51,82 @@ Response::~Response() {
     delete _body;
   if (_file_fd != -1) {
     Fd::clearWfd(_file_fd);
+    Fd::clearRfd(_file_fd);
     close(_file_fd);
   }
 }
 
+// fd: file fd or 
+int Response::recv(fd_set const& rfds, fd_set const& wfds) {
+  int           n_read;
+  int           n_write;
+
+  if (_file_fd != -1) {
+    if (Fd::isSet(_file_fd, rfds)) {
+      if ((n_read = read(_file_fd, _buf, BUFSIZE)) < 0)
+        return n_read;
+      _body->addBody(std::string(_buf, n_read));
+      /* for PUT request, add request body to response body */
+    } else if (_client.getRequest()->getMethod() == "PUT" &&
+              _client.getRequest()->getBody()->toString().length() > _body->toString().length()) {
+      _body->addBody(_client.getRequest()->getBody()->toString());
+    }
+  } else if (_is_cgi) {
+    if (Fd::isSet(_client.getResponsePipe()[0], rfds)) {
+      if ((n_read = read(_client.getResponsePipe()[0], _buf, BUFSIZE)) < 0)
+        return n_read;
+      _body->addBody(std::string(_buf, n_read));
+    }
+    if (Fd::isSet(_client.getRequestPipe()[1], wfds)) {
+      std::string const& req_body = _client.getRequest()->getBody()->toString();
+      int len = std::min((int)req_body.length() - _pos_cgi, BUFSIZE);
+      if ((n_write = write(_client.getRequestPipe()[1], req_body.c_str() + _pos_cgi, len)) < 0)
+        return n_write;
+      _pos_cgi += n_write;
+      /* sent all request body */
+      if (_pos_cgi == (int)req_body.length()) {
+        close(_client.getRequestPipe()[1]);
+        _client.getRequestPipe()[1] = -1;
+      }
+      return n_write;
+    }
+  }
+  return 0;
+}
+
 int Response::send(int fd) {
   int ret = 0;
+  /* write body to _file_fd when PUT response, what about PUT && CGI? */
 
   if (_is_header_sent == false) {
     if (_header != NULL) {
-      std::string header = _header->toString();
-      _is_header_sent = true;
-      return ::send(fd,  header.c_str(), header.size(), 0);
+      std::string const& header = _header->toString();
+      if ((ret = write(fd,  header.c_str() + _pos, header.size() - _pos)) < 0)
+        return ret;
+      _pos += ret;
+      if (_pos == (int)header.length()) {
+        _pos = 0;
+        _is_header_sent = true;
+      }
     } else {
+      /* header isn't generated yet */
       return 1;
     }
   } else {
+    int body_fd = (_client.getRequest()->getMethod() == "PUT" && !_is_cgi) ? _file_fd : fd;
     if (_body != NULL) {
-      if (_is_Cgi) {
-        ret = _body->send(fd);
-        /* for PUT request, request body (saved in body) is written to _file_fd */
-      } else {
-        if (_file_fd != -1 && _client.getRequest()->getMethod() != "PUT")
-          _body->recv(_file_fd);
-        ret = _body->send(fd);
-      }
+      int len = std::min((int)_body->toString().length() - _pos, BUFSIZE);
+      if ((ret = ::write(body_fd, _body->toString().c_str() + _pos, len)) < 0)
+        return ret;
+      _pos += ret;
+      /* all body is sent */
+      if (!_body->isFinished())
+        return 1;
+      else if (_pos == (int)_body->toString().length())
+        return 0;
     }
-    _n_sent += ret;
-
-    /* when chunked isn't ended yet, wait it */
-    if (_client.getRequest() && !_client.getRequest()->getBody()->isChunkedSent())
-      return ret;
-
-    /* clear current client */
-    if (/* (_client.getRequest() && _client.getRequest()->getMethod() == "PUT") || */
-      _n_sent == (int)_header->getContentLength() || /* all content is sent */ 
-      _body == NULL || /* response has no body */
-      _client.getRequest() == NULL /* exception response has no request */) {
-      log("[Response::send] close, clear %d\n", fd);
-      return 0;
-    }
-    if (ret < 0) {
-      log("[Response::send] ret is %d\n", ret);
-      log("[Response::send] %s\n", strerror(errno));
-    }
-    return ret;
   }
+  return ret;
 }
 
 Header* Response::initHeader(int status) const {
@@ -130,13 +157,10 @@ void Response::process
       == allowed.end() && allowed.size() > 0) {
     setStatus(405);
   } else if (client.isCgi()) {
-    _is_Cgi = true;
+    _is_cgi = true;
     /* process CGI */
-    bool is_transfer_encoding = client.getRequest()->isChunked();
     _body = new CgiBody(&_header);
-    if (!is_transfer_encoding) {
-      processCgi(client);
-    }
+    processCgi(client);
   } else {
     /* process non-CGI */
     /* TODO: when body exists in non-CGI response
@@ -194,7 +218,7 @@ void Response::processPutMethod
       if (_file_fd < 0)
         throw "[Response::processPutMethod] open failed";
       Fd::setWfd(_file_fd);
-      _body = new Body();
+      _body = new Body(0);
     } else {
       /* Internal Server Error */
       setStatus(500);
@@ -205,7 +229,7 @@ void Response::processPutMethod
     if (_file_fd < 0)
       throw "[Response::processPutMethod] open failed";
     Fd::setWfd(_file_fd);
-    _body = new Body();
+    _body = new Body(0);
     setStatus(200);
   }
 }
@@ -240,7 +264,8 @@ void Response::processDirectoryListing
   setStatus(200);
   log("[Response::processDListing] %s\n", html.c_str());
   (*_header)["Content-Length"] = std::to_string(html.length());
-  _body = new Body(html);
+  _body = new Body(html.length());
+  _body->addBody(html);
 }
 
 void Response::processGetMethod
@@ -289,13 +314,14 @@ void Response::processGetMethod
     }
     return ;
   }
-  _body = new Body();
+  _body = new Body(buf.st_size);
   setStatus(200);
   (*_header)["Content-Length"] = std::to_string(buf.st_size);
   _file_fd = open(path.c_str(), O_RDONLY);
   if (_file_fd < 0) {
     throw "[Response::processGetMethod] File Exception";
   }
+  Fd::setRfd(_file_fd);
 }
 
 /*
@@ -332,7 +358,7 @@ void Response::processPostMethod() {
 }
 
 bool Response::isCgi() const {
-  return _is_Cgi;
+  return _is_cgi;
 }
 
 Header* Response::getHeader() {

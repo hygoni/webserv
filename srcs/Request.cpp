@@ -77,6 +77,14 @@ void    Request::initHeaders(std::string raw) {
   throw HttpException(400);
 }
 
+void  Request::setBody() {
+  if (_chunked) {
+    _body = new ChunkedBody();
+  } else {
+    _body = new Body(_content_length);
+  }
+}
+
 void  Request::checkOverlapHeader(const std::string & name, const std::string & value) const {
   std::map<std::string, std::string>::const_iterator it;
   if (name == "Host" && _header->isExist("Host"))
@@ -124,10 +132,6 @@ Request::Request(std::string http_message) {
     _is_closed = true;
 }
 
-void  Request::checkClosed() {
-
-}
-
 std::string  Request::parseChunk(const std::string & str) {
   size_t  chunk_size = 0;
   size_t  i;
@@ -160,8 +164,7 @@ bool Request::hasBody() const {
     return true;
   else if (_content_length > 0)
     return true;
-  else
-    return false;
+  return false;
 }
 
 std::string Request::getMethod() const {
@@ -198,26 +201,19 @@ bool Request::auth(std::string const& user_str) const {
 Body        *Request::getBody() {
   return _body;
 }
-void         Request::setBody(Body *body) {
-  _body = body;
-}
 
 Header      *Request::getHeader() {
   return _header;
 }
 
-void  Request::debugOstream(std::ostream& os) const {
-  os << "-----Debug Request-----\n" \
-  << "Method: \"" << getMethod() << "\"\n" \
-  << "Target: \"" << getTarget() << "\"\n" \
-  << "Version: \"" << getVersion() << "\"\n" \
-  << "---------Header--------\n";
-  std::map<std::string, std::string>::const_iterator it;
-  os << _header->toString();
-  os << "-----------------------\n";
+void  Request::addBody(std::string const &s) {
+  _body->addBody(s);
 }
 
-std::ostream& operator<<(std::ostream& os, const Request& request) {
-  request.debugOstream(os);
-  return os;
+bool  Request::isBodyFinished() const {
+  return _body->isFinished();
 }
+
+std::string Request::getBodyRemain() const {
+  return _body->getRemain();
+} 

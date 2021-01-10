@@ -12,15 +12,7 @@
 #include "CgiBody.hpp"
 #include "debug.hpp"
 
-CgiBody::CgiBody(Header **header) : Body() {
-  _is_header_closed = false;
-  _is_body_closed = false;
-  _is_header_sent = false;
-  _header = header;
-  _pos = 0;
-}
-
-CgiBody::CgiBody(const std::string& s, Header **header) : Body(s) {
+CgiBody::CgiBody(Header **header) : Body(0) {
   _is_header_closed = false;
   _is_body_closed = false;
   _is_header_sent = false;
@@ -74,10 +66,9 @@ void CgiBody::parse
 }
 
 
-static void saveMap
+void CgiBody::saveMap
 (Header& header, std::map<std::string, std::string>& parse_map) {
   std::map<std::string, std::string>::iterator it;
-
   it = parse_map.begin();
   while (it != parse_map.end()) {
     header[it->first] = it->second;
@@ -89,23 +80,13 @@ static void saveMap
  * process
  * description: add until header. when found end of header, parse and send it
  */
-
-int CgiBody::recv(int fd) {
-  char*   new_line;
+void CgiBody::addBody(std::string const& s) {
+  size_t  new_line;
   int     status;
-  int     n_read;
   std::map<std::string, std::string>  parse_map;
-
-  /* read from pipe */
-  if ((n_read = read(fd, _read_buf, BUFSIZE)) < 0) {
-    log("[CgiBody::recv]: read failed");
-    return -1;
-  }
-  _read_buf[n_read] = '\0';
   
-  log("[CgiBody::recv] read (%d bytes, total %d)\n", n_read, (int)_raw_body.length());
-  /* body is closed */
-  if (n_read == 0 && !_is_body_closed) {
+  /* when add body is empty, output of CGI is closed */
+  if (s.length() == 0 && !_is_body_closed) {
     _is_body_closed = true;
     parse(status, parse_map);
     log("[CgiBody::recv] make header\n");
@@ -113,39 +94,28 @@ int CgiBody::recv(int fd) {
     saveMap(**_header, parse_map);
     (**_header)["Content-Length"] = std::to_string(_raw_body.length());
     log("[CgiBody::recv] Content-Length = %lu\n", _raw_body.length());
-    return n_read;
   }
 
   /* if header is closed, just add body */
   if (_is_header_closed) {
-    _raw_body += std::string(_read_buf, n_read);
+    _raw_body.append(s);
   } else {
     /* TODO: loigical error - can't properly detect empty new line */
-    if ((new_line = ft_strnstr(_read_buf, "\r\n\r\n", n_read)) == NULL) {
-      _raw_header += std::string(_buf, n_read);
+    if ((new_line = s.find("\r\n\r\n")) == std::string::npos) { /* ?? */
+      _raw_header.append(s);
     } else {
       /* header is closed */
-      *new_line = '\0';
-      _raw_header += _read_buf;
+      _raw_header.append(s.substr(0, new_line));
       _is_header_closed = true;
-      _raw_body += std::string(new_line + 4, n_read - (new_line + 4 - _read_buf));
+      _raw_body.append(s.substr(new_line + 4));
     }
   }
-  return n_read;
 }
 
-int CgiBody::send(int fd) {
-  int n_written = 0;
-  log("[CgiBody::send] n_sent = %d\n", _pos);
-  if (!_is_body_closed)
-    return 0;
+bool CgiBody::isFinished() const {
+  return _is_body_closed;
+}
 
- if (_pos < (size_t)ft_atoi((**_header)["Content-Length"].c_str())) {
-      int size = std::min(BUFSIZE, (int)_raw_body.size());
-      if ((n_written = ::write(fd, _raw_body.c_str() + _pos, size)) < 0) {
-        log("[CgiBody::send]: write failed");
-      }
-      _pos += n_written;
-  }
-  return n_written;
+std::string CgiBody::getRemain() const {
+  return "";
 }

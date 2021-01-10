@@ -11,18 +11,17 @@
 
 class Body {
  protected:
-  static char     *_read_buf;
-  std::string     _buf;
+  int             _content_length;
+  std::string     _body;
 
+  Body();
  public:
-                  Body();
-                  Body(std::string const& s);
-  virtual         ~Body();
-  virtual int     recv(int fd);
-  virtual int     send(int fd);
-  virtual int     getChunkedContentLength() const;
-  virtual bool    isChunkedReceived() const; /* all input is received */
-  virtual bool    isChunkedSent() const; /* all write buffer is flushed */
+                              Body(int content_length);
+  virtual                     ~Body();
+  virtual bool                isFinished() const;
+  virtual std::string         getRemain() const;
+  virtual void                addBody(std::string const& s);
+  std::string const&          toString() const;
 };
 
 #endif  // SRCS_BODY_HPP_
