@@ -53,6 +53,7 @@ Response::~Response() {
     Fd::clearWfd(_file_fd);
     Fd::clearRfd(_file_fd);
     close(_file_fd);
+    _file_fd = -1;
   }
 }
 
@@ -111,9 +112,9 @@ int Response::send(int fd) {
       }
     }
     return 1;
-  } else {
-    int body_fd = (_client.getRequest()->getMethod() == "PUT" && !_is_cgi) ? _file_fd : fd;
+  } else if (_client.getRequest() != NULL) {
     if (_body != NULL) {
+      int body_fd = (_client.getRequest()->getMethod() == "PUT" && !_is_cgi) ? _file_fd : fd;
       int len = std::min((int)_body->toString().length() - _pos, BUFSIZE);
       if ((ret = ::write(body_fd, _body->toString().c_str() + _pos, len)) < 0)
         return ret;

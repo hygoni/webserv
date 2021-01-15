@@ -17,6 +17,7 @@ Client::Client
   socklen_t     addr_len;
   sockaddr_in   client_addr;
 
+  _connection_closed = false;
   id = (++Client::num);
   addr_len = sizeof(client_addr);
   _fd = accept(server.getFd(), (struct sockaddr *)&client_addr, &addr_len);
@@ -133,15 +134,22 @@ return num : new fd, must set to wfds
 return -1 : 
 */
 
-int  Client::recv() {
-  int     n_read;
+int  Client::recv(fd_set const& fds) {
+  int     n_read = 0;
   size_t  header_end;
   
-  if ((n_read = ::recv(_fd, _buf, BUFSIZE - 1, 0)) <= 0) {
-    return n_read;
+  if (Fd::isSet(_fd, fds)) {
+    n_read = ::recv(_fd, _buf, BUFSIZE - 1, 0);
+    if (n_read < 0)
+      return -1;
+    else if (n_read == 0)
+      _connection_closed = true;
+    _raw_request.append(std::string(_buf, n_read));
   }
-  
-  _raw_request.append(std::string(_buf, n_read));
+
+  /* connection closed && no raw request left */
+  if (_connection_closed && _raw_request.length() == 0)
+    return -1;
   // std::cerr << "============ raw_request start ============" << "\n";
   // std::cerr << _raw_request << "\n";
   // std::cerr << "============ raw_request end ============" << "\n";

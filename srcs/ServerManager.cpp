@@ -29,7 +29,8 @@ void  ServerManager::run() {
   struct timeval                  select_timeout;
   fd_set                          all_fds[2], ready_fds[2];
   int                             body_write_fd;
-  
+
+  log("setsize = %d\n", FD_SETSIZE);
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(NULL);
   std::cout.tie(NULL);
@@ -37,6 +38,7 @@ void  ServerManager::run() {
   Fd::rfds = &all_fds[0];
   Fd::wfds = &all_fds[1];
   ft_bzero(&all_fds, sizeof(fd_set) * 2);
+  ft_bzero(&ready_fds, sizeof(fd_set) * 2);
   log("servers initSocket...\n");
   for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {
     int server_fd = s_it->initSocket();
@@ -45,10 +47,9 @@ void  ServerManager::run() {
   }
   log("initSocket done\n");
   while (42) {
-    // usleep(10000);
+    ft_bzero(&ready_fds, sizeof(fd_set) * 2);
     ready_fds[0] = all_fds[0];
     ready_fds[1] = all_fds[1];
-
     if (select(Fd::max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, &select_timeout) < 0) {
       log("max_fd + 1 = %d, strerror(errno) = %s\n", Fd::max_fd + 1, strerror(errno));
       throw "select failed!";
@@ -63,13 +64,12 @@ void  ServerManager::run() {
        /* Request closed -> Create Resonse -> Process Response */
         if ((*c_it)->isTimeout()) {
           (*c_it)->timeout();
-        } else if (Fd::isSet((*c_it)->getFd(), ready_fds[0])) {
-          if ((*c_it)->recv() < 0) {
-            Client *client = *c_it;
-            c_it = clients.erase(c_it);
-            delete client;
-            continue ;
-          }
+        }
+        if ((*c_it)->recv(ready_fds[0]) < 0) {
+          Client *client = *c_it;
+          c_it = clients.erase(c_it);
+          delete client;
+          continue ;
         }
 
         /* response exists and ready to write */

@@ -28,6 +28,7 @@ private:
   Server const&   _server;
   const Location* _location;
   static char     *_buf;
+  bool            _connection_closed;
   void        setLocation();
   void        setCgiPath();
               Client();
@@ -39,7 +40,7 @@ public:
   Client const&   operator=(Client const& client);
               ~Client();
   void        clear();
-  int         recv();
+  int         recv(fd_set const& fds);
   int         send(int fd);
   bool        auth();
   void        timeout();
