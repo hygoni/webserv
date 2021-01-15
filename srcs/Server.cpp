@@ -103,8 +103,12 @@ long     Server::ft_htonl(long num) {
 
 int  Server::initSocket() {
   struct sockaddr_in server_addr;
+  int enable = 1;
+
   if ((_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    throw std::exception();
+    throw "[Server::initSocket] failed whiie gettig socket fd";
+  if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+    throw "[Server::initSocket] failed while optioning socket";
   // if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) < 0)
   //   throw std::exception();
   // why ??
