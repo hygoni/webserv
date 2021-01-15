@@ -92,13 +92,13 @@ void CgiBody::addBody(std::string const& s) {
     log("[CgiBody::recv] make header\n");
     *_header = new Header(status);
     saveMap(**_header, parse_map);
-    (**_header)["Content-Length"] = std::to_string(_raw_body.length());
-    log("[CgiBody::recv] Content-Length = %lu\n", _raw_body.length());
+    (**_header)["Content-Length"] = std::to_string(_body.length());
+    log("[CgiBody::recv] Content-Length = %lu\n", _body.length());
   }
 
   /* if header is closed, just add body */
   if (_is_header_closed) {
-    _raw_body.append(s);
+    _body.append(s);
   } else {
     /* TODO: loigical error - can't properly detect empty new line */
     if ((new_line = s.find("\r\n\r\n")) == std::string::npos) { /* ?? */
@@ -107,7 +107,7 @@ void CgiBody::addBody(std::string const& s) {
       /* header is closed */
       _raw_header.append(s.substr(0, new_line));
       _is_header_closed = true;
-      _raw_body.append(s.substr(new_line + 4));
+      _body.append(s.substr(new_line + 4));
     }
   }
 }

@@ -21,7 +21,6 @@ class CgiBody : public Body {
  protected:
   Header        **_header;
   std::string   _raw_header;
-  std::string   _raw_body;
   bool          _is_header_sent;
   bool          _is_header_closed;
   bool          _is_body_closed;
