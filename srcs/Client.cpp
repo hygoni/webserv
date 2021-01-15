@@ -140,19 +140,20 @@ int  Client::recv() {
     return n_read;
   }
   
+  _raw_request.append(std::string(_buf, n_read));
   // std::cerr << "============ raw_request start ============" << "\n";
   // std::cerr << _raw_request << "\n";
   // std::cerr << "============ raw_request end ============" << "\n";
-  // std::cerr << std::string(_buf, n_read) << "|";
+  // std::cerr << "|" << std::string(_buf, n_read) << "|\n";
 
   if (_request == NULL) {
-    _raw_request.append(std::string(_buf, n_read));
     header_end = _raw_request.find("\r\n\r\n");
     try {
       if (header_end == std::string::npos) {
         if (_raw_request.size() <= MAX_HEADER_SIZE)
-          return (1);
+          return 1;
         log("_raw_request.size(%d) > MAX_HEADER_SIZE, remain size : %d\n", _raw_request.length());
+       // std::cerr << "raw_request = |" << _raw_request << "|\n";
         throw HttpException(413);
       } else {
         if (header_end <= MAX_HEADER_SIZE) {
@@ -172,7 +173,7 @@ int  Client::recv() {
 
           /* authenticate */
           if (_location->getAuthorization().find(':') != std::string::npos && !this->auth()) {
-            return (1);
+            return 1;
           }
 
           /* make request body */
@@ -224,6 +225,7 @@ int  Client::recv() {
     }
     return 1;
   }
+  return 1;
 }
 
 void  Client::setLocation() {

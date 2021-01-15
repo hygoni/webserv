@@ -86,6 +86,7 @@ int Response::recv(fd_set const& rfds, fd_set const& wfds) {
       /* sent all request body */
       if (_pos_cgi == (int)req_body.length()) {
         close(_client.getRequestPipe()[1]);
+        Fd::clearWfd(_client.getRequestPipe()[1]);
         _client.getRequestPipe()[1] = -1;
       }
       return n_write;
@@ -108,10 +109,8 @@ int Response::send(int fd) {
         _pos = 0;
         _is_header_sent = true;
       }
-    } else {
-      /* header isn't generated yet */
-      return 1;
     }
+    return 1;
   } else {
     int body_fd = (_client.getRequest()->getMethod() == "PUT" && !_is_cgi) ? _file_fd : fd;
     if (_body != NULL) {
