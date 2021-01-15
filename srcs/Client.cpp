@@ -69,6 +69,7 @@ Client const& Client::operator=(Client const& client) {
 }
 
 void Client::clear() {
+  log("[Client::clear] \n");
   if (_request != NULL) {
     delete _request;
     _request = NULL;
@@ -179,6 +180,10 @@ int  Client::recv() {
           /* make request body */
           _request->setBody();
           _request->addBody(raw_body);
+          if (_request->getBody()->toString().length() > this->getLocation()->getClientBodySizeLimit()) {
+            log("[Client::recv] bigger than client_body_size_limit\n");
+            throw HttpException(413);
+          }
           if (_request->isBodyFinished()) {
             _response = new Response(*this);
             /* body remained is next header */
@@ -209,11 +214,20 @@ int  Client::recv() {
         delete _response;
       _response = new Response(*this, 500);
       _raw_request.clear();
+      Fd::setWfd(_fd);
       return 1;
     }
   } else if (_response == NULL) {
     /* Caution: raw body can have next header... how to do it? */
     _request->addBody(std::string(_buf, n_read));
+    if (_request->getBody()->toString().length() > this->getLocation()->getClientBodySizeLimit()) {
+      if (_response != NULL)
+        delete _response;
+      _response = new Response(*this, 413);
+      _raw_request.clear();
+      Fd::setWfd(_fd);
+      return 1;
+    }
     /* make response when recv is end */
     if (_request->isBodyFinished()) {
       _response = new Response(*this);
