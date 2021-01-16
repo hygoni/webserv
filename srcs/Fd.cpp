@@ -2,13 +2,16 @@
 #include "debug.hpp"
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
+#include <sys/select.h>
 
 fd_set  *Fd::rfds = NULL;
 fd_set  *Fd::wfds = NULL;
 int     Fd::max_fd = 0;
 
 bool Fd::isSet(int fd, fd_set const & fds) {
-  return fds.fds_bits[fd / 32] & (1 << (fd % 32));
+    return FD_ISSET(fd, &fds);
+//  return fds.fds_bits[fd / 32] & (1 << (fd % 32));
 }
 
 void Fd::displayFdSet(fd_set &fds) {
@@ -26,7 +29,8 @@ void  Fd::set(int fd, fd_set & fds) {
     return;
   displayFdSet(fds);
   fcntl(fd, F_SETFL, O_NONBLOCK);
-  fds.fds_bits[fd / 32] |= (1 << (fd % 32));
+  // fds.fds_bits[fd / 32] |= (1 << (fd % 32));
+  FD_SET(fd, &fds);
   if (fd > max_fd)
     max_fd = fd;
   displayFdSet(fds);
@@ -36,7 +40,8 @@ void  Fd::clear(int fd, fd_set & fds) {
   if (fd < 0) 
     return;
   displayFdSet(fds);
-  fds.fds_bits[fd / 32] &= ~(1 << (fd % 32));
+  FD_CLR(fd, &fds);
+  // fds.fds_bits[fd / 32] &= ~(1 << (fd % 32));
   displayFdSet(fds);
 }
 

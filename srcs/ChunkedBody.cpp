@@ -27,10 +27,11 @@ bool  ChunkedBody::isHex(char c) {
 
 void ChunkedBody::addBody(std::string const& s) {
   _buf.append(s);
-
+  log("[ChunkedBody::addBody]\n");
   while (!isFinished()) {
     int i;
-  
+
+    /* no chunk size */
     if (_chunk_size == -1) {
       int chunk_size = 0;
       for (i = 0; i < _buf.length() && isHex(_buf.at(i)); i++) {
@@ -47,7 +48,10 @@ void ChunkedBody::addBody(std::string const& s) {
       _chunk_size = chunk_size;
       _pos = i;
     }
-    if (_buf.length() >= _pos + 2 + _chunk_size + 2) {
+
+    /* chunk size is enough */
+    if (_buf.length() >= _pos + 2 + _chunk_size + 2 && _chunk_size >= 0) {
+      /* \r\n after chunk body */
       if (_buf.substr(_pos + 2 + _chunk_size, 2).compare("\r\n") != 0) {
         throw "Bad request: size and data mismatch";
       }

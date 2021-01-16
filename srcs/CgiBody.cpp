@@ -29,6 +29,7 @@ void CgiBody::parse
   size_t prev;
   std::vector<std::string> lines;
 
+  log("[ChunkedBody::parse]\n");
   /* if no status in output, we can assume it 200 */
   status = 200;
   /* iterate each line */
@@ -63,6 +64,7 @@ void CgiBody::parse
       parse_map[key] = value;
     }
   }
+  log("[ChunkedBody::parse] end\n");
 }
 
 
@@ -84,10 +86,12 @@ void CgiBody::addBody(std::string const& s) {
   size_t  new_line;
   int     status;
   std::map<std::string, std::string>  parse_map;
-  
+
+  log("[CgiBody::addBody]\n");
   /* when add body is empty, output of CGI is closed */
-  if (s.length() == 0 && !_is_body_closed) {
+  if (_raw_header.length() > 0 && s.length() == 0 && !_is_body_closed) {
     _is_body_closed = true;
+    std::cerr << "raw_header = |" << _raw_header << "|\n";
     parse(status, parse_map);
     log("[CgiBody::recv] make header\n");
     *_header = new Header(status);
@@ -110,6 +114,7 @@ void CgiBody::addBody(std::string const& s) {
       _body.append(s.substr(new_line + 4));
     }
   }
+  log("[CgiBody::addBody] end\n");
 }
 
 bool CgiBody::isFinished() const {

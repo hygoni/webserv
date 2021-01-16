@@ -33,6 +33,7 @@ Client::Client
   _is_cgi_executed = false;
   _is_timeout = false;
   _cgi_path = "";
+  _cgi_file_path = "";
 }
 
 Client::Client(Client const& client) : _server(client._server) {
@@ -50,6 +51,8 @@ Client::Client(Client const& client) : _server(client._server) {
   _cgi_path = client._cgi_path;
   _cgi_file_path = client._cgi_file_path;
   _location = client._location;
+  _is_timeout = client._is_timeout;
+  _created = client._created;
 }
 
 Client const& Client::operator=(Client const& client) {
@@ -66,6 +69,8 @@ Client const& Client::operator=(Client const& client) {
   _cgi_path = client._cgi_path;
   _cgi_file_path = client._cgi_file_path;
   _location = client._location;
+  _is_timeout = client._is_timeout;
+  _created = client._created;
   return *this;
 }
 
@@ -162,13 +167,13 @@ int  Client::recv(fd_set const& fds) {
         if (_raw_request.size() <= MAX_HEADER_SIZE)
           return 1;
         log("_raw_request.size(%d) > MAX_HEADER_SIZE, remain size : %d\n", _raw_request.length());
-       // std::cerr << "raw_request = |" << _raw_request << "|\n";
         throw HttpException(413);
       } else {
         if (header_end <= MAX_HEADER_SIZE) {
           /* make request */
           std::string raw_header = _raw_request.substr(0, header_end + 4);
           std::string raw_body = _raw_request.substr(header_end + 4);
+//          std::cerr << "buffer = |" << _raw_request << "|\n";
           _raw_request.clear();
 
           _request = new Request(raw_header);

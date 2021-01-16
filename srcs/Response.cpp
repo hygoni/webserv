@@ -39,6 +39,8 @@ Response::Response(Client& client, int status) : _client(client) {
   _is_cgi = false;
   _file_fd = -1;
   _pos = 0;
+  _pos_cgi = 0;
+
   // Fd::setWfd(client.getFd());
   setStatus(status);
 }
