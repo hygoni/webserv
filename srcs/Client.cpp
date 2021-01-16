@@ -149,18 +149,15 @@ int  Client::recv(fd_set const& fds) {
       return -1;
     else if (n_read == 0)
       _connection_closed = true;
-    _raw_request.append(std::string(_buf, n_read));
   }
 
-  /* connection closed && no raw request left */
-  if (_connection_closed && _raw_request.length() == 0)
-    return -1;
   // std::cerr << "============ raw_request start ============" << "\n";
   // std::cerr << _raw_request << "\n";
   // std::cerr << "============ raw_request end ============" << "\n";
   // std::cerr << "|" << std::string(_buf, n_read) << "|\n";
 
   if (_request == NULL) {
+    _raw_request.append(std::string(_buf, n_read));
     header_end = _raw_request.find("\r\n\r\n");
     try {
       if (header_end == std::string::npos) {
@@ -233,6 +230,9 @@ int  Client::recv(fd_set const& fds) {
   } else if (_response == NULL) {
     /* Caution: raw body can have next header... how to do it? */
     _request->addBody(std::string(_buf, n_read));
+    /* make response when recv is end */
+    if (_request->isBodyFinished()) {
+
     if (_request->getBody()->toString().length() > this->getLocation()->getClientBodySizeLimit()) {
       if (_response != NULL)
         delete _response;
@@ -241,8 +241,6 @@ int  Client::recv(fd_set const& fds) {
       Fd::setWfd(_fd);
       return 1;
     }
-    /* make response when recv is end */
-    if (_request->isBodyFinished()) {
       _response = new Response(*this);
       /* body remained is next header */
       _raw_request = _request->getBodyRemain();
@@ -251,6 +249,8 @@ int  Client::recv(fd_set const& fds) {
       return 0;
     }
     return 1;
+  } else {
+    _raw_request.append(std::string(_buf, n_read));
   }
   return 1;
 }

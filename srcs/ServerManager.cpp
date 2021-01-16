@@ -65,22 +65,24 @@ void  ServerManager::run() {
         if ((*c_it)->isTimeout()) {
           (*c_it)->timeout();
         }
+
         if ((*c_it)->recv(ready_fds[0]) < 0) {
           Client *client = *c_it;
           c_it = clients.erase(c_it);
           delete client;
           continue ;
         }
-
-        /* response exists and ready to write */
+        
+	/* response exists and ready to write */
         if ((*c_it)->getResponse() != NULL && Fd::isSet((*c_it)->getFd(), ready_fds[1])) {
           (*c_it)->getResponse()->recv(ready_fds[0], ready_fds[1]);
-          if ((*c_it)->getResponse()->send((*c_it)->getFd()) <= 0) {
+          if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {
             (*c_it)->clear();
             c_it = std::next(c_it);
             continue ;
           }
         }
+
         c_it = std::next(c_it);
       }
     }

@@ -125,7 +125,9 @@ int Response::send(int fd) {
       if (!_body->isFinished())
         return 1;
       else if (_pos == (int)_body->toString().length())
-        return 0;
+        return -1;
+    } else {
+        return -1;
     }
   }
   return ret;
