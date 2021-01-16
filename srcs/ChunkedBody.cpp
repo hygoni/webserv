@@ -27,7 +27,6 @@ bool  ChunkedBody::isHex(char c) {
 
 void ChunkedBody::addBody(std::string const& s) {
   _buf.append(s);
-  log("[ChunkedBody::addBody]\n");
   while (!isFinished()) {
     int i;
 
