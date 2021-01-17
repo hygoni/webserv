@@ -17,14 +17,13 @@ Client::Client
   socklen_t     addr_len;
   sockaddr_in   client_addr;
 
-  _connection_closed = false;
   id = (++Client::num);
   addr_len = sizeof(client_addr);
   _fd = accept(server.getFd(), (struct sockaddr *)&client_addr, &addr_len);
   if (_fd < 0)
     throw "[Client::Client] bad file descriptor";
   gettimeofday(&_created, NULL);
-  _raw_request = std::string();
+  _raw_request = "";
   _request = NULL;
   _response = NULL;
   _request_pipe[0] = _request_pipe[1] = -1;
@@ -34,44 +33,7 @@ Client::Client
   _is_timeout = false;
   _cgi_path = "";
   _cgi_file_path = "";
-}
-
-Client::Client(Client const& client) : _server(client._server) {
-  _fd = client._fd;
-  _raw_request = client._raw_request;
-  _request = client._request;
-  _response = client._response;
-  _request_pipe[0] = client._request_pipe[0];
-  _request_pipe[1] = client._request_pipe[1];
-  _response_pipe[0] = client._response_pipe[0];
-  _response_pipe[1] = client._response_pipe[1];
-  _n_sent = client._n_sent;
-  _is_cgi_executed = client._is_cgi_executed;
-  _is_timeout = client._is_timeout;
-  _cgi_path = client._cgi_path;
-  _cgi_file_path = client._cgi_file_path;
-  _location = client._location;
-  _is_timeout = client._is_timeout;
-  _created = client._created;
-}
-
-Client const& Client::operator=(Client const& client) {
-  _fd = client._fd;
-  _raw_request = client._raw_request;
-  _request = client._request;
-  _response = client._response;
-  _request_pipe[0] = client._request_pipe[0];
-  _request_pipe[1] = client._request_pipe[1];
-  _response_pipe[0] = client._response_pipe[0];
-  _response_pipe[1] = client._response_pipe[1];
-  _n_sent = client._n_sent;
-  _is_cgi_executed = client._is_cgi_executed;
-  _cgi_path = client._cgi_path;
-  _cgi_file_path = client._cgi_file_path;
-  _location = client._location;
-  _is_timeout = client._is_timeout;
-  _created = client._created;
-  return *this;
+  _connection_closed = false;
 }
 
 void Client::clear() {
@@ -111,6 +73,7 @@ void Client::clear() {
   _n_sent = 0;
   _location = NULL;
   _is_timeout = false;
+  _connection_closed = false;
   gettimeofday(&_created, NULL);
 }
 
@@ -139,22 +102,21 @@ return num : new fd, must set to wfds
 return -1 : 
 */
 
+bool Client::isConnectionClosed() const {
+ return _connection_closed && _request == NULL && _raw_request.length() == 0;
+}
+
 int  Client::recv(fd_set const& fds) {
   int     n_read = 0;
   size_t  header_end;
   
   if (Fd::isSet(_fd, fds)) {
-    n_read = ::recv(_fd, _buf, BUFSIZE - 1, 0);
+    n_read = read(_fd, _buf, BUFSIZE - 1);
     if (n_read < 0)
       return -1;
     else if (n_read == 0)
       _connection_closed = true;
   }
-
-  // std::cerr << "============ raw_request start ============" << "\n";
-  // std::cerr << _raw_request << "\n";
-  // std::cerr << "============ raw_request end ============" << "\n";
-  // std::cerr << "|" << std::string(_buf, n_read) << "|\n";
 
   if (_request == NULL) {
     _raw_request.append(std::string(_buf, n_read));
