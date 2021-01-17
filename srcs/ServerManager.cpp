@@ -28,7 +28,6 @@ void  ServerManager::run() {
   std::vector<Client*>::iterator  c_it;
   struct timeval                  select_timeout;
   fd_set                          all_fds[2], ready_fds[2];
-  int                             body_write_fd;
 
   log("setsize = %d\n", FD_SETSIZE);
   std::ios_base::sync_with_stdio(false);
@@ -66,7 +65,7 @@ void  ServerManager::run() {
           (*c_it)->timeout();
         }
 
-        if ((*c_it)->recv(ready_fds[0]) < 0) {
+        if ((*c_it)->recv(ready_fds[0]) < 0 || (*c_it)->isConnectionClosed()) {
           Client *client = *c_it;
           c_it = clients.erase(c_it);
           delete client;

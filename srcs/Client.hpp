@@ -36,8 +36,6 @@ public:
   static int      num;
   int             id;
               Client(const Server& server);
-              Client(Client const& client);
-  Client const&   operator=(Client const& client);
               ~Client();
   void        clear();
   int         recv(fd_set const& fds);
@@ -57,6 +55,7 @@ public:
   const std::vector<Location>&  getLocations() const;
   const Location*               getLocation() const;
   const Server&                 getServer() const;
+  bool                          isConnectionClosed() const;
 };
 
 #endif  //  SRCS_CLIENT_HPP_
