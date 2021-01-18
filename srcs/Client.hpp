@@ -33,6 +33,8 @@ private:
   void        setCgiPath();
               Client();
 public:
+  static std::vector<int> _client_fds;
+  static std::vector<int> _pipe_fds;
   static int      num;
   int             id;
               Client(const Server& server);

@@ -125,6 +125,10 @@ void Cgi::run() {
   Fd::setWfd(_client.getRequestPipe()[1]);
   pipe(_client.getResponsePipe());
   Fd::setRfd(_client.getResponsePipe()[0]);
+  Client::_pipe_fds.push_back(_client.getRequestPipe()[0]);
+  Client::_pipe_fds.push_back(_client.getRequestPipe()[1]);
+  Client::_pipe_fds.push_back(_client.getResponsePipe()[0]);
+  Client::_pipe_fds.push_back(_client.getResponsePipe()[1]);
   pid = fork();
   if (pid == 0) {
     log("[Cgi::run] argv[0] = %s, argv[1] = %s, argv[2] = %s\n", argv[0], argv[1], argv[2]);

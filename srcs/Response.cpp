@@ -117,9 +117,10 @@ int Response::send(int fd) {
       /* all body is sent */
       if (!_body->isFinished())
         return 1;
+        /* all body is sent */
       else if (_pos == (int)_body->toString().length())
         return -1;
-    } else {
+    } else { /* response has no body */
         return -1;
     }
   }
