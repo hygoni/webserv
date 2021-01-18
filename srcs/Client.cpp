@@ -49,10 +49,26 @@ void Client::clear() {
     delete _response;
     _response = NULL;
   }
-  Fd::close(_request_pipe[0]);
-  Fd::close(_request_pipe[1]);
-  Fd::close(_response_pipe[0]);
-  Fd::close(_response_pipe[1]);
+  if (_request_pipe[0] != -1) {
+    Fd::clearRfd(_request_pipe[0]);
+    Fd::close(_request_pipe[0]);
+    _request_pipe[0] = -1;
+  }
+  if (_request_pipe[1] != -1) {
+    Fd::clearWfd(_request_pipe[1]);
+    Fd::close(_request_pipe[1]);
+    _request_pipe[1] = -1;
+  }
+  if (_response_pipe[0] != -1) {
+    Fd::clearRfd(_response_pipe[0]);
+    Fd::close(_response_pipe[0]);
+    _response_pipe[0] = -1;
+  }
+  if (_response_pipe[1] != -1) {
+    Fd::clearWfd(_response_pipe[1]);
+    Fd::close(_response_pipe[1]);
+    _response_pipe[1] = -1;
+  }
   Fd::clearWfd(_fd);
   _cgi_path.clear();
   _cgi_file_path.clear();

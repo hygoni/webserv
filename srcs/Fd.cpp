@@ -4,9 +4,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 #include <vector>
 #include "Client.hpp"
-
+#include <stdlib.h> 
 fd_set  *Fd::rfds = NULL;
 fd_set  *Fd::wfds = NULL;
 int     Fd::max_fd = 0;
@@ -26,22 +27,19 @@ void Fd::displayFdSet(fd_set &fds) {
   log("]\n");
 }
 
-void Fd::close(int& fd) {
-  clearRfd(fd);
-  clearWfd(fd);
-
-  std::vector<int>::iterator it = std::find(Client::_client_fds.begin(), Client::_client_fds.end(), fd);
-  if (it != Client::_client_fds.end()) {
-    log("[Fd::close] closing %d, it is in _client_fds\n", fd);
-    Client::_client_fds.erase(it);
+void Fd::close(int fd) {
+  if (fd < 0)
+    return ;
+  struct stat statbuf;
+  fstat(fd, &statbuf);
+  if (S_ISSOCK(statbuf.st_mode)) {
+    log("[Fd::close] called! %d - this is socket fd\n", fd);
+    exit(EXIT_SUCCESS);
   }
-  it = std::find(Client::_pipe_fds.begin(), Client::_pipe_fds.end(), fd);
-  if (it != Client::_pipe_fds.end()) {
-    log("[Fd::close] closing %d, it is in _pipe_fds\n", fd);
-    Client::_pipe_fds.erase(it);
-  }
+  else
+    log("[Fd::close] called! %d - this is regular file fd\n", fd);
   ::close(fd);
-  fd = -1;
+  fflush(stdout);
 }
 
 void  Fd::set(int fd, fd_set & fds) {

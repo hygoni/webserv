@@ -125,33 +125,29 @@ void Cgi::run() {
   Fd::setWfd(_client.getRequestPipe()[1]);
   pipe(_client.getResponsePipe());
   Fd::setRfd(_client.getResponsePipe()[0]);
-  Client::_pipe_fds.push_back(_client.getRequestPipe()[0]);
-  Client::_pipe_fds.push_back(_client.getRequestPipe()[1]);
-  Client::_pipe_fds.push_back(_client.getResponsePipe()[0]);
-  Client::_pipe_fds.push_back(_client.getResponsePipe()[1]);
   pid = fork();
   if (pid == 0) {
     log("[Cgi::run] argv[0] = %s, argv[1] = %s, argv[2] = %s\n", argv[0], argv[1], argv[2]);
     /* redirect body to stdin */
     if (_client.getRequestPipe()[0] == -1) {
-      close(0);
+      Fd::close(0);
     } else {
       dup2(_client.getRequestPipe()[0], 0);
-      close(_client.getRequestPipe()[0]);
-      close(_client.getRequestPipe()[1]);
+      Fd::close(_client.getRequestPipe()[0]);
+      Fd::close(_client.getRequestPipe()[1]);
     }
 
     /* redirect stdout to response */
     dup2(_client.getResponsePipe()[1], 1);
-    close(_client.getResponsePipe()[1]);
-    close(_client.getResponsePipe()[0]);
+    Fd::close(_client.getResponsePipe()[1]);
+    Fd::close(_client.getResponsePipe()[0]);
     if (execve(_cgi_path.c_str(), argv, _env) < 0)
      throw "[Cgi::run]: execve failed";
     free(dup_cgi_path);
     free(dup_file_path);
     exit(EXIT_SUCCESS);
   } else {
-    close(_client.getResponsePipe()[1]);
+    Fd::close(_client.getResponsePipe()[1]);
     free(dup_cgi_path);
     free(dup_file_path);
     //_client.getResponse()->setCgiPid(pid);

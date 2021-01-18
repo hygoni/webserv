@@ -18,6 +18,6 @@ public:
   static void    clearWfd(int fd);
   static void    displayFdSet(fd_set &fds);
   static void    displayBrokenFdSet(fd_set &fds);
-  static void    close(int& fd);
+  static void    close(int fd);
 };
 #endif

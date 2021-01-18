@@ -52,6 +52,11 @@ Response::~Response() {
   if (_body != NULL)
     delete _body;
   Fd::close(_file_fd);
+  if (_file_fd != -1) {
+    Fd::clearRfd(_file_fd);
+    Fd::clearWfd(_file_fd);
+    Fd::close(_file_fd);
+  }
 }
 
 // fd: file fd or 
@@ -83,7 +88,9 @@ int Response::recv(fd_set const& rfds, fd_set const& wfds) {
       _pos_cgi += n_write;
       /* sent all request body */
       if (_pos_cgi == (int)req_body.length()) {
+        Fd::clearWfd(_client.getRequestPipe()[1]);
         Fd::close(_client.getRequestPipe()[1]);
+        _client.getRequestPipe()[1] = -1;
       }
       return n_write;
     }
