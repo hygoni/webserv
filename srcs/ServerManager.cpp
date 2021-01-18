@@ -49,7 +49,7 @@ void  ServerManager::run() {
     ft_bzero(&ready_fds, sizeof(fd_set) * 2);
     ready_fds[0] = all_fds[0];
     ready_fds[1] = all_fds[1];
-    if (select(Fd::max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, &select_timeout) < 0) {
+    if (select(Fd::max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, NULL) < 0) {
       log("max_fd + 1 = %d, strerror(errno) = %s\n", Fd::max_fd + 1, strerror(errno));
       throw "select failed!";
     }
