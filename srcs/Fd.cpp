@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/select.h>
+#include <vector>
+#include "Client.hpp"
 
 fd_set  *Fd::rfds = NULL;
 fd_set  *Fd::wfds = NULL;
@@ -27,7 +29,16 @@ void Fd::displayFdSet(fd_set &fds) {
 void Fd::close(int& fd) {
   clearRfd(fd);
   clearWfd(fd);
-  close(fd);
+
+  std::vector<int>::iterator it = std::find(Client::_client_fds.begin(), Client::_client_fds.end(), fd);
+  if (it != Client::_client_fds.end()) {
+    log("[Fd::close] closing %d, it is in _client_fds\n", fd);
+  }
+  it = std::find(Client::_pipe_fds.begin(), Client::_pipe_fds.end(), fd);
+  if (it != Client::_pipe_fds.end()) {
+    log("[Fd::close] closing %d, it is in _pipe_fds\n", fd);
+  }
+  ::close(fd);
   fd = -1;
 }
 
