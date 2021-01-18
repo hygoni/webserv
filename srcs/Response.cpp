@@ -52,7 +52,6 @@ Response::~Response() {
   if (_body != NULL)
     delete _body;
   Fd::close(_file_fd);
-  }
 }
 
 // fd: file fd or 
