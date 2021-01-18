@@ -33,10 +33,12 @@ void Fd::close(int& fd) {
   std::vector<int>::iterator it = std::find(Client::_client_fds.begin(), Client::_client_fds.end(), fd);
   if (it != Client::_client_fds.end()) {
     log("[Fd::close] closing %d, it is in _client_fds\n", fd);
+    Client::_client_fds.erase(it);
   }
   it = std::find(Client::_pipe_fds.begin(), Client::_pipe_fds.end(), fd);
   if (it != Client::_pipe_fds.end()) {
     log("[Fd::close] closing %d, it is in _pipe_fds\n", fd);
+    Client::_pipe_fds.erase(it);
   }
   ::close(fd);
   fd = -1;
