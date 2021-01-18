@@ -24,6 +24,13 @@ void Fd::displayFdSet(fd_set &fds) {
   log("]\n");
 }
 
+void Fd::close(int& fd) {
+  clearRfd(fd);
+  clearWfd(fd);
+  close(fd);
+  fd = -1;
+}
+
 void  Fd::set(int fd, fd_set & fds) {
   if (fd < 0) 
     return;
