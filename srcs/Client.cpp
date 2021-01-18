@@ -11,6 +11,8 @@
 #define MAX_HEADER_SIZE 8192
 int Client::num = 0;
 char *Client::_buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
+std::vector<int> Client::_client_fds = std::vector<int>();
+std::vector<int> Client::_pipe_fds = std::vector<int>();
 
 Client::Client
 (Server const& server) : _server(server) {
@@ -20,6 +22,7 @@ Client::Client
   id = (++Client::num);
   addr_len = sizeof(client_addr);
   _fd = accept(server.getFd(), (struct sockaddr *)&client_addr, &addr_len);
+  Client::_client_fds.push_back(_fd);
   if (_fd < 0)
     throw "[Client::Client] bad file descriptor";
   gettimeofday(&_created, NULL);
@@ -65,7 +68,7 @@ Client::~Client() {
   log("[Client::~Client] destructor called\n");
   this->clear();
   Fd::clearRfd(_fd);
-  close(_fd);
+  Fd::close(_fd);
 }
 
 // long     Client::ft_ntohl(long num) {
@@ -116,7 +119,7 @@ int  Client::recv(fd_set const& fds) {
           /* make request */
           std::string raw_header = _raw_request.substr(0, header_end + 4);
           std::string raw_body = _raw_request.substr(header_end + 4);
-//          std::cerr << "buffer = |" << _raw_request << "|\n";
+//        std::cerr << "buffer = |" << _raw_request << "|\n";
           _raw_request.clear();
 
           _request = new Request(raw_header);
