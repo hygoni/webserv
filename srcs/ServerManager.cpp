@@ -67,7 +67,7 @@ void  ServerManager::run() {
           (*c_it)->timeout();
         }
 
-        if ((*c_it)->recv(ready_fds[0]) < 0) {
+        if ((*c_it)->recv(ready_fds[0]) < 0 || (*c_it)->isConnectionClosed()) {
           Client *client = *c_it;
           c_it = clients.erase(c_it);
           delete client;

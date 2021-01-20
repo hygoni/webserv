@@ -46,7 +46,7 @@ public:
   void        timeout();
   bool        isTimeout();
   bool        isCgi() const;
-
+  bool        isConnectionClosed() const;
   Request*    getRequest();
   Response*   getResponse();
   int*        getRequestPipe();

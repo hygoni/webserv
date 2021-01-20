@@ -53,6 +53,7 @@ Client::Client(Client const& client) : _server(client._server) {
   _location = client._location;
   _is_timeout = client._is_timeout;
   _created = client._created;
+  _connection_closed = client._connection_closed;
 }
 
 Client const& Client::operator=(Client const& client) {
@@ -71,6 +72,7 @@ Client const& Client::operator=(Client const& client) {
   _location = client._location;
   _is_timeout = client._is_timeout;
   _created = client._created;
+  _connection_closed = client._connection_closed;
   return *this;
 }
 
@@ -108,6 +110,7 @@ void Client::clear() {
   _cgi_path.clear();
   _cgi_file_path.clear();
   _is_cgi_executed = false;
+  _connection_closed = false;
   _n_sent = 0;
   _location = NULL;
   _is_timeout = false;
@@ -138,6 +141,10 @@ return 0 : not closed header
 return num : new fd, must set to wfds
 return -1 : 
 */
+
+bool Client::isConnectionClosed() const {
+  return (_connection_closed && _raw_request.length() == 0 && _request == NULL);
+}
 
 int  Client::recv(fd_set const& fds) {
   int     n_read = 0;
