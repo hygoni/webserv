@@ -35,6 +35,7 @@ void  ServerManager::run() {
   std::cin.tie(NULL);
   std::cout.tie(NULL);
   select_timeout.tv_sec = 3;
+  select_timeout.tv_usec = 0;
   Fd::rfds = &all_fds[0];
   Fd::wfds = &all_fds[1];
   ft_bzero(&all_fds, sizeof(fd_set) * 2);
