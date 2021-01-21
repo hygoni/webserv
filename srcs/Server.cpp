@@ -118,7 +118,7 @@ int  Server::initSocket() {
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   ft_memset(&(server_addr.sin_zero), 0, sizeof(server_addr.sin_zero));
   if (bind(_fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) < 0 ||
-      listen (_fd, 10) < 0)
+      listen (_fd, 100000) < 0)
     throw std::exception();
   return _fd;
 }
