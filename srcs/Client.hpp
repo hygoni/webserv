@@ -6,7 +6,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <sys/time.h>
-#define TIMEOUT_SEC 3000
+#define TIMEOUT_SEC 10
 
 class Response;
 class Server;
@@ -33,8 +33,6 @@ private:
   void        setCgiPath();
               Client();
 public:
-  static std::vector<int> _client_fds;
-  static std::vector<int> _pipe_fds;
   static int      num;
   int             id;
               Client(const Server& server);
@@ -44,9 +42,10 @@ public:
   int         send(int fd);
   bool        auth();
   void        timeout();
+  void        updateTime();
   bool        isTimeout();
   bool        isCgi() const;
-
+  bool        isConnectionClosed() const;
   Request*    getRequest();
   Response*   getResponse();
   int*        getRequestPipe();
@@ -57,7 +56,6 @@ public:
   const std::vector<Location>&  getLocations() const;
   const Location*               getLocation() const;
   const Server&                 getServer() const;
-  bool                          isConnectionClosed() const;
 };
 
 #endif  //  SRCS_CLIENT_HPP_

@@ -4,7 +4,7 @@
 #include "Base64.hpp"
 
 std::string Base64::Encode(std::string const& data) {
-    static constexpr char sEncodingTable[] = {
+    static char sEncodingTable[] = {
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
         'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
         'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
@@ -44,7 +44,7 @@ std::string Base64::Encode(std::string const& data) {
 
 std::string Base64::Decode(const std::string& input) {
     std::string out;
-    static constexpr unsigned char kDecodingTable[] = {
+    static unsigned char kDecodingTable[] = {
         64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
         64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
         64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 62, 64, 64, 64, 63,

@@ -69,11 +69,14 @@ int Response::recv(fd_set const& rfds, fd_set const& wfds) {
               _client.getRequest()->getBody()->toString().length() > _body->toString().length()) {
       _body->addBody(_client.getRequest()->getBody()->toString());
     }
+    _client.updateTime();
+    
   } else if (_is_cgi) {
     if (Fd::isSet(_client.getResponsePipe()[0], rfds)) {
       if ((n_read = read(_client.getResponsePipe()[0], _buf, BUFSIZE)) < 0)
         return n_read;
       _body->addBody(std::string(_buf, n_read));
+      _client.updateTime();
     }
     if (Fd::isSet(_client.getRequestPipe()[1], wfds)) {
       std::string const& req_body = _client.getRequest()->getBody()->toString();
@@ -85,6 +88,7 @@ int Response::recv(fd_set const& rfds, fd_set const& wfds) {
       if (_pos_cgi == (int)req_body.length()) {
         Fd::close(_client.getRequestPipe()[1]);
       }
+      _client.updateTime();
       return n_write;
     }
   }
@@ -95,6 +99,7 @@ int Response::send(int fd) {
   int ret = 0;
   /* write body to _file_fd when PUT response, what about PUT && CGI? */
 
+  _client.updateTime();
   if (_is_header_sent == false) {
     if (_header != NULL) {
       std::string const& header = _header->toString();
@@ -106,7 +111,10 @@ int Response::send(int fd) {
         _is_header_sent = true;
       }
     }
-    return 1;
+    if (_header != NULL && _header->getStatus() / 100 != 2)
+      return -1;
+    else
+      return 1;
   } else if (_client.getRequest() != NULL) {
     if (_body != NULL) {
       int body_fd = (_client.getRequest()->getMethod() == "PUT" && !_is_cgi) ? _file_fd : fd;

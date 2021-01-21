@@ -11,8 +11,6 @@
 #define MAX_HEADER_SIZE 8192
 int Client::num = 0;
 char *Client::_buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
-std::vector<int> Client::_client_fds = std::vector<int>();
-std::vector<int> Client::_pipe_fds = std::vector<int>();
 
 Client::Client
 (Server const& server) : _server(server) {
@@ -22,10 +20,9 @@ Client::Client
   id = (++Client::num);
   addr_len = sizeof(client_addr);
   _fd = accept(server.getFd(), (struct sockaddr *)&client_addr, &addr_len);
-  Client::_client_fds.push_back(_fd);
   if (_fd < 0)
     throw "[Client::Client] bad file descriptor";
-  gettimeofday(&_created, NULL);
+  updateTime();
   _raw_request = "";
   _request = NULL;
   _response = NULL;
@@ -37,6 +34,10 @@ Client::Client
   _cgi_path = "";
   _cgi_file_path = "";
   _connection_closed = false;
+}
+
+void Client::updateTime() {
+  gettimeofday(&_created, NULL);
 }
 
 void Client::clear() {
@@ -57,11 +58,12 @@ void Client::clear() {
   _cgi_path.clear();
   _cgi_file_path.clear();
   _is_cgi_executed = false;
+  _connection_closed = false;
   _n_sent = 0;
   _location = NULL;
   _is_timeout = false;
   _connection_closed = false;
-  gettimeofday(&_created, NULL);
+  updateTime();
 }
 
 Client::~Client() {
@@ -90,7 +92,7 @@ return -1 :
 */
 
 bool Client::isConnectionClosed() const {
- return _connection_closed && _request == NULL && _raw_request.length() == 0;
+  return (_connection_closed && _raw_request.length() == 0 && _request == NULL);
 }
 
 int  Client::recv(fd_set const& fds) {
@@ -103,6 +105,7 @@ int  Client::recv(fd_set const& fds) {
       return -1;
     else if (n_read == 0)
       _connection_closed = true;
+    updateTime();
   }
 
   if (_request == NULL) {
@@ -266,6 +269,7 @@ void  Client::timeout() {
     delete _response;
   }
   _response = new Response(*this, 408);
+  Fd::setWfd(_fd);
 }
 
 int   Client::getFd() const {

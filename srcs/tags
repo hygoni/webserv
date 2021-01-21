@@ -1,0 +1,303 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+BUFSIZE	debug.hpp	16;"	d
+Base64	Base64.hpp	/^class Base64 {$/;"	c
+Body	Body.cpp	/^Body::Body(int content_length) {$/;"	f	class:Body
+Body	Body.hpp	/^class Body {$/;"	c
+Cgi	CGI.cpp	/^Cgi::Cgi(Client& client) : _client(client) {$/;"	f	class:Cgi
+Cgi	CGI.hpp	/^class Cgi {$/;"	c
+CgiBody	CgiBody.cpp	/^CgiBody::CgiBody(Header **header) : Body(0) {$/;"	f	class:CgiBody
+CgiBody	CgiBody.hpp	/^class CgiBody : public Body {$/;"	c
+ChunkedBody	ChunkedBody.cpp	/^ChunkedBody::ChunkedBody() : Body(0) {$/;"	f	class:ChunkedBody
+ChunkedBody	ChunkedBody.hpp	/^class ChunkedBody : public Body {$/;"	c
+Client	Client.cpp	/^Client::Client$/;"	f	class:Client
+Client	Client.cpp	/^Client::Client(Client const& client) : _server(client._server) {$/;"	f	class:Client
+Client	Client.hpp	/^class Client {$/;"	c
+Config	Config.cpp	/^Config::Config(const char* path) {$/;"	f	class:Config
+Config	Config.hpp	/^class Config {$/;"	c
+DEBUG	debug.hpp	4;"	d
+Decode	Base64.cpp	/^std::string Base64::Decode(const std::string& input) {$/;"	f	class:Base64
+Encode	Base64.cpp	/^std::string Base64::Encode(std::string const& data) {$/;"	f	class:Base64
+Fd	Fd.hpp	/^class Fd {$/;"	c
+HTTPEXCEPTION_HPP	HttpException.hpp	2;"	d
+Header	Header.cpp	/^Header::Header() {$/;"	f	class:Header
+Header	Header.cpp	/^Header::Header(int status) {$/;"	f	class:Header
+Header	Header.cpp	/^Header::Header(std::string method, std::string target, std::string version) {$/;"	f	class:Header
+Header	Header.hpp	/^class Header {$/;"	c
+HttpException	HttpException.cpp	/^HttpException::HttpException(int status) {$/;"	f	class:HttpException
+HttpException	HttpException.hpp	/^class HttpException : public std::exception {$/;"	c
+Location	Location.cpp	/^Location::Location(const char *path) {$/;"	f	class:Location
+Location	Location.hpp	/^class Location {$/;"	c
+MAX_HEADER_SIZE	Client.cpp	11;"	d	file:
+Message	Message.cpp	/^Message::Message() {$/;"	f	class:Message
+Message	Message.hpp	/^class Message {$/;"	c
+REQUEST_HPP_	Request.hpp	2;"	d
+Request	Request.cpp	/^Request::Request(std::string http_message) {$/;"	f	class:Request
+Request	Request.hpp	/^class Request {$/;"	c
+Response	Response.cpp	/^Response::Response(Client& client) : _client(client) {  $/;"	f	class:Response
+Response	Response.cpp	/^Response::Response(Client& client, int status) : _client(client) {  $/;"	f	class:Response
+Response	Response.hpp	/^class Response {$/;"	c
+SRCS_BASE64_HPP_	Base64.hpp	2;"	d
+SRCS_BODY_HPP_	Body.hpp	2;"	d
+SRCS_CGI_BUFFER_HPP	CgiBody.hpp	2;"	d
+SRCS_CGI_HPP_	CGI.hpp	2;"	d
+SRCS_CHUNKED_BUFFER_HPP	ChunkedBody.hpp	2;"	d
+SRCS_CLIENT_HPP_	Client.hpp	2;"	d
+SRCS_CONFIG_HPP_	Config.hpp	2;"	d
+SRCS_DEBUG_HPP_	debug.hpp	2;"	d
+SRCS_FD_HPP_	Fd.hpp	2;"	d
+SRCS_HEADER_HPP	Header.hpp	2;"	d
+SRCS_LOCATION_HPP_	Location.hpp	2;"	d
+SRCS_MESSAGE_HPP_	Message.hpp	2;"	d
+SRCS_RESPONSE_HPP_	Response.hpp	2;"	d
+SRCS_SERVER_HPP_	Server.hpp	2;"	d
+SRCS_SERVER_MANAGER_HPP_	ServerManager.hpp	2;"	d
+SRCS_TOKENIZE_HPP_	tokenize.hpp	2;"	d
+Server	Server.cpp	/^Server::Server(const char *path) {$/;"	f	class:Server
+Server	Server.hpp	/^class Server {$/;"	c
+ServerManager	ServerManager.cpp	/^ServerManager::ServerManager(Config& config) : _servers(config.getServers()) {$/;"	f	class:ServerManager
+ServerManager	ServerManager.hpp	/^class ServerManager {$/;"	c
+TIMEOUT_SEC	Client.hpp	9;"	d
+_allowed_method	Location.hpp	/^    std::vector<std::string>            _allowed_method;$/;"	m	class:Location
+_attrs	Location.hpp	/^    std::map<std::string, std::string>  _attrs;$/;"	m	class:Location
+_attrs	Server.hpp	/^  std::map<std::string, std::string>  _attrs;$/;"	m	class:Server
+_authorization	Location.hpp	/^    std::string                         _authorization;$/;"	m	class:Location
+_body	Body.hpp	/^  std::string     _body;$/;"	m	class:Body
+_body	Request.hpp	/^  Body        *_body;$/;"	m	class:Request
+_body	Response.hpp	/^  Body         *_body;$/;"	m	class:Response
+_buf	ChunkedBody.hpp	/^  std::string   _buf;$/;"	m	class:ChunkedBody
+_buf	Client.cpp	/^char *Client::_buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));$/;"	m	class:Client	file:
+_buf	Client.hpp	/^  static char     *_buf;$/;"	m	class:Client
+_buf	Response.cpp	/^char *Response::_buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));$/;"	m	class:Response	file:
+_buf	Response.hpp	/^  static char* _buf;$/;"	m	class:Response
+_cgi_extension	Location.hpp	/^    std::vector<std::string>            _cgi_extension;$/;"	m	class:Location
+_cgi_file_path	CGI.hpp	/^  std::string     _cgi_file_path;$/;"	m	class:Cgi
+_cgi_file_path	Client.hpp	/^  std::string     _cgi_file_path;$/;"	m	class:Client
+_cgi_path	CGI.hpp	/^  std::string     _cgi_path;$/;"	m	class:Cgi
+_cgi_path	Client.hpp	/^  std::string     _cgi_path;$/;"	m	class:Client
+_cgi_path	Location.hpp	/^    std::string                         _cgi_path;$/;"	m	class:Location
+_cgi_path	Request.hpp	/^  std::string _cgi_path;$/;"	m	class:Request
+_cgi_pid	Response.hpp	/^  pid_t        _cgi_pid;$/;"	m	class:Response
+_chunk_size	ChunkedBody.hpp	/^  int           _chunk_size;$/;"	m	class:ChunkedBody
+_chunked	Request.hpp	/^  bool        _chunked;$/;"	m	class:Request
+_client	CGI.hpp	/^  Client&          _client;$/;"	m	class:Cgi
+_client	Response.hpp	/^  Client&      _client;$/;"	m	class:Response
+_client_body_size_limit	Location.hpp	/^    int                                 _client_body_size_limit;$/;"	m	class:Location
+_client_header_size_limit	Location.hpp	/^    int                                 _client_header_size_limit;$/;"	m	class:Location
+_clients	Server.hpp	/^  std::vector<Client*>                 _clients;$/;"	m	class:Server
+_connection_closed	Client.hpp	/^  bool            _connection_closed;$/;"	m	class:Client
+_content_length	Body.hpp	/^  int             _content_length;$/;"	m	class:Body
+_content_length	Request.hpp	/^  size_t      _content_length;$/;"	m	class:Request
+_created	Client.hpp	/^  struct timeval  _created;$/;"	m	class:Client	typeref:struct:Client::timeval
+_default_error_page	Location.hpp	/^    std::string                         _default_error_page;$/;"	m	class:Location
+_directory_listing	Location.hpp	/^    bool                                _directory_listing;$/;"	m	class:Location
+_env	CGI.hpp	/^  char**          _env;$/;"	m	class:Cgi
+_fd	Client.hpp	/^  int             _fd;$/;"	m	class:Client
+_fd	Server.hpp	/^  int                                 _fd;$/;"	m	class:Server
+_file_fd	Response.hpp	/^  int           _file_fd;$/;"	m	class:Response
+_header	CgiBody.hpp	/^  Header        **_header;$/;"	m	class:CgiBody
+_header	Request.hpp	/^  Header      *_header;$/;"	m	class:Request
+_header	Response.hpp	/^  Header       *_header;$/;"	m	class:Response
+_id	Client.hpp	/^  int             _id;$/;"	m	class:Client
+_index	Location.hpp	/^    std::vector<std::string>            _index;$/;"	m	class:Location
+_instance	Config.cpp	/^Config* Config::_instance = nullptr;$/;"	m	class:Config	file:
+_instance	Config.hpp	/^     static Config*             _instance;$/;"	m	class:Config
+_instance	Message.cpp	/^Message* Message::_instance = nullptr;$/;"	m	class:Message	file:
+_instance	Message.hpp	/^   static Message*              _instance;$/;"	m	class:Message
+_is_body_closed	CgiBody.hpp	/^  bool          _is_body_closed;$/;"	m	class:CgiBody
+_is_cgi	Response.hpp	/^  bool         _is_cgi;$/;"	m	class:Response
+_is_cgi_executed	Client.hpp	/^  bool            _is_cgi_executed;$/;"	m	class:Client
+_is_closed	Request.hpp	/^  bool        _is_closed;$/;"	m	class:Request
+_is_header_closed	CgiBody.hpp	/^  bool          _is_header_closed;$/;"	m	class:CgiBody
+_is_header_sent	CgiBody.hpp	/^  bool          _is_header_sent;$/;"	m	class:CgiBody
+_is_header_sent	Response.hpp	/^  bool         _is_header_sent;$/;"	m	class:Response
+_is_timeout	Client.hpp	/^  bool            _is_timeout;$/;"	m	class:Client
+_items	Header.hpp	/^  std::map<std::string, std::string>  _items;$/;"	m	class:Header
+_listen	Server.hpp	/^  int                                 _listen;$/;"	m	class:Server
+_location	Client.hpp	/^  const Location* _location;$/;"	m	class:Client
+_locations	Server.hpp	/^  std::vector<Location>               _locations;$/;"	m	class:Server
+_message	Header.hpp	/^  std::string _message;$/;"	m	class:Header
+_method	Header.hpp	/^  std::string _method;$/;"	m	class:Header
+_msg	Message.hpp	/^   std::map<int, std::string>   _msg;$/;"	m	class:Message
+_n_sent	Client.hpp	/^  int             _n_sent; \/\/ request body sent;$/;"	m	class:Client
+_path	Location.hpp	/^    std::string                         _path;$/;"	m	class:Location
+_pos	CgiBody.hpp	/^  int           _pos;$/;"	m	class:CgiBody
+_pos	ChunkedBody.hpp	/^  int           _pos;$/;"	m	class:ChunkedBody
+_pos	Response.hpp	/^  int          _pos;$/;"	m	class:Response
+_pos_cgi	Response.hpp	/^  int          _pos_cgi;$/;"	m	class:Response
+_raw_header	CgiBody.hpp	/^  std::string   _raw_header;$/;"	m	class:CgiBody
+_raw_request	Client.hpp	/^  std::string     _raw_request;$/;"	m	class:Client
+_request	Client.hpp	/^  Request*        _request;$/;"	m	class:Client
+_request_pipe	Client.hpp	/^  int             _request_pipe[2];$/;"	m	class:Client
+_response	Client.hpp	/^  Response*       _response;$/;"	m	class:Client
+_response_pipe	Client.hpp	/^  int             _response_pipe[2];$/;"	m	class:Client
+_root	Location.hpp	/^    std::string                         _root;$/;"	m	class:Location
+_server	Client.hpp	/^  Server const&   _server;$/;"	m	class:Client
+_server_name	Server.hpp	/^  std::string                         _server_name;$/;"	m	class:Server
+_servers	Config.hpp	/^     std::vector<Server>        _servers;$/;"	m	class:Config
+_servers	ServerManager.hpp	/^  std::vector<Server>&  _servers;$/;"	m	class:ServerManager
+_status	Header.hpp	/^  int         _status;$/;"	m	class:Header
+_status	HttpException.hpp	/^  int _status;$/;"	m	class:HttpException
+_target	Header.hpp	/^  std::string _target;$/;"	m	class:Header
+_text	Config.hpp	/^     std::vector<std::string>   _text;$/;"	m	class:Config
+_text	Location.hpp	/^   std::vector<std::string>             _text;$/;"	m	class:Location
+_text	Server.hpp	/^  std::vector<std::string>            _text;$/;"	m	class:Server
+_version	Header.hpp	/^  std::string _version;$/;"	m	class:Header
+accept	Server.cpp	/^int   Server::accept(fd_set& rfds) {$/;"	f	class:Server
+addBody	Body.cpp	/^void Body::addBody(std::string const& s) {$/;"	f	class:Body
+addBody	CgiBody.cpp	/^void CgiBody::addBody(std::string const& s) {$/;"	f	class:CgiBody
+addBody	ChunkedBody.cpp	/^void ChunkedBody::addBody(std::string const& s) {$/;"	f	class:ChunkedBody
+addBody	Request.cpp	/^void  Request::addBody(std::string const &s) {$/;"	f	class:Request
+addHeader	Request.cpp	/^void    Request::addHeader(std::string header_field) {$/;"	f	class:Request
+addIndex	Location.cpp	/^void Location::addIndex(std::string const& index) {$/;"	f	class:Location
+addLocation	Server.cpp	/^void Server::addLocation(Location location) {$/;"	f	class:Server
+assert_token_size	tokenize.cpp	/^void assert_token_size(int size, int minimum) {$/;"	f
+auth	Client.cpp	/^bool  Client::auth() {$/;"	f	class:Client
+auth	Request.cpp	/^bool Request::auth(std::string const& user_str) const {$/;"	f	class:Request
+checkHeaders	Request.cpp	/^void  Request::checkHeaders() {$/;"	f	class:Request
+checkOverlapHeader	Request.cpp	/^void  Request::checkOverlapHeader(const std::string & name, const std::string & value) const {$/;"	f	class:Request
+clear	Client.cpp	/^void Client::clear() {$/;"	f	class:Client
+clear	Fd.cpp	/^void  Fd::clear(int fd, fd_set & fds) {$/;"	f	class:Fd
+clearRfd	Fd.cpp	/^void    Fd::clearRfd(int fd) {$/;"	f	class:Fd
+clearWfd	Fd.cpp	/^void    Fd::clearWfd(int fd) {$/;"	f	class:Fd
+createInstance	Config.cpp	/^void Config::createInstance(const char* path) {$/;"	f	class:Config
+displayClients	ServerManager.cpp	/^void displayClients(std::vector<Client*> &clients) {$/;"	f
+displayFdSet	Fd.cpp	/^void Fd::displayFdSet(fd_set &fds) {$/;"	f	class:Fd
+erase	Header.cpp	/^size_t              Header::erase(const std::string& key) {$/;"	f	class:Header
+ft_htonl	Server.cpp	/^long     Server::ft_htonl(long num) {$/;"	f	class:Server
+ft_htons	Server.cpp	/^short     Server::ft_htons(short num) {$/;"	f	class:Server
+generate_env	CGI.cpp	/^char **Cgi::generate_env(std::map<std::string, std::string> const &env_map) {$/;"	f	class:Cgi
+getAllowedMethod	Location.cpp	/^std::vector<std::string> const& Location::getAllowedMethod() const {$/;"	f	class:std::Location
+getAuthorization	Location.cpp	/^std::string const& Location::getAuthorization() const {$/;"	f	class:std::Location
+getBegin	Header.cpp	/^std::map<std::string, std::string>::const_iterator  Header::getBegin() const {$/;"	f	class:Header
+getBody	Request.cpp	/^Body        *Request::getBody() {$/;"	f	class:Request
+getBodyRemain	Request.cpp	/^std::string Request::getBodyRemain() const {$/;"	f	class:Request
+getCgiExtension	Location.cpp	/^std::vector<std::string> const& Location::getCgiExtension() const {$/;"	f	class:std::Location
+getCgiFilePath	Client.cpp	/^const std::string&            Client::getCgiFilePath() const {$/;"	f	class:Client
+getCgiPath	Client.cpp	/^const std::string&            Client::getCgiPath() const {$/;"	f	class:Client
+getCgiPath	Location.cpp	/^std::string const& Location::getCgiPath() const {$/;"	f	class:std::Location
+getClientBodySizeLimit	Location.cpp	/^int Location::getClientBodySizeLimit() const {$/;"	f	class:Location
+getClientHeaderSizeLimit	Location.cpp	/^int Location::getClientHeaderSizeLimit() const {$/;"	f	class:Location
+getClients	Server.cpp	/^std::vector<Client*>&  Server::getClients() {$/;"	f	class:Server
+getContentLength	Header.cpp	/^int                 Header::getContentLength() {$/;"	f	class:Header
+getContentLength	Request.cpp	/^size_t Request::getContentLength() const {$/;"	f	class:Request
+getDefaultErrorPage	Location.cpp	/^std::string const& Location::getDefaultErrorPage() const {$/;"	f	class:std::Location
+getDirectoryListing	Location.cpp	/^bool Location::getDirectoryListing() const {$/;"	f	class:Location
+getEnd	Header.cpp	/^std::map<std::string, std::string>::const_iterator  Header::getEnd() const {$/;"	f	class:Header
+getFd	Client.cpp	/^int   Client::getFd() const {$/;"	f	class:Client
+getFd	Server.cpp	/^int Server::getFd() const {$/;"	f	class:Server
+getFileFd	Response.cpp	/^int     Response::getFileFd() const {$/;"	f	class:Response
+getHeader	Request.cpp	/^Header      *Request::getHeader() {$/;"	f	class:Request
+getHeader	Response.cpp	/^Header* Response::getHeader() {$/;"	f	class:Response
+getIndex	Location.cpp	/^std::vector<std::string> const& Location::getIndex() const {$/;"	f	class:std::Location
+getInstance	Config.cpp	/^Config* Config::getInstance() {$/;"	f	class:Config
+getInstance	Message.cpp	/^Message* Message::getInstance() {$/;"	f	class:Message
+getListen	Server.cpp	/^int Server::getListen() const {$/;"	f	class:Server
+getLocation	Client.cpp	/^const Location*               Client::getLocation() const {$/;"	f	class:Client
+getLocations	Client.cpp	/^const std::vector<Location>&  Client::getLocations() const {$/;"	f	class:Client
+getLocations	Server.cpp	/^std::vector<Location> const& Server::getLocations() const {$/;"	f	class:std::Server
+getMessage	Header.cpp	/^const std::string&  Header::getMessage() const {$/;"	f	class:Header
+getMessage	Message.cpp	/^std::string const& Message::getMessage(int status) {$/;"	f	class:std::Message
+getMethod	Header.cpp	/^const std::string&  Header::getMethod() const {$/;"	f	class:Header
+getMethod	Request.cpp	/^std::string Request::getMethod() const {$/;"	f	class:Request
+getPath	Location.cpp	/^std::string const& Location::getPath() const {$/;"	f	class:std::Location
+getRemain	Body.cpp	/^std::string Body::getRemain() const {$/;"	f	class:Body
+getRemain	CgiBody.cpp	/^std::string CgiBody::getRemain() const {$/;"	f	class:CgiBody
+getRemain	ChunkedBody.cpp	/^std::string ChunkedBody::getRemain() const {$/;"	f	class:ChunkedBody
+getRequest	Client.cpp	/^Request *Client::getRequest() {$/;"	f	class:Client
+getRequestPipe	Client.cpp	/^int *Client::getRequestPipe() {$/;"	f	class:Client
+getResponse	Client.cpp	/^Response *Client::getResponse() {$/;"	f	class:Client
+getResponsePipe	Client.cpp	/^int *Client::getResponsePipe() {$/;"	f	class:Client
+getRoot	Location.cpp	/^std::string const& Location::getRoot() const {$/;"	f	class:std::Location
+getServer	Client.cpp	/^const Server&                 Client::getServer() const {$/;"	f	class:Client
+getServerName	Server.cpp	/^std::string const& Server::getServerName() const {$/;"	f	class:std::Server
+getServers	Config.cpp	/^std::vector<Server>& Config::getServers() {$/;"	f	class:Config
+getStatus	Header.cpp	/^int                 Header::getStatus() const {$/;"	f	class:Header
+getStatus	HttpException.cpp	/^int HttpException::getStatus() const {$/;"	f	class:HttpException
+getTarget	Header.cpp	/^const std::string&  Header::getTarget() const {$/;"	f	class:Header
+getTarget	Request.cpp	/^std::string Request::getTarget() const {$/;"	f	class:Request
+getVersion	Header.cpp	/^const std::string&  Header::getVersion() const {$/;"	f	class:Header
+getVersion	Request.cpp	/^std::string Request::getVersion() const {$/;"	f	class:Request
+handler	main.cpp	/^handler()$/;"	f
+hasBody	Request.cpp	/^bool Request::hasBody() const {$/;"	f	class:Request
+id	Client.hpp	/^  int             id;$/;"	m	class:Client
+initHeader	Response.cpp	/^Header* Response::initHeader(int status) const {$/;"	f	class:Response
+initHeaders	Request.cpp	/^void    Request::initHeaders(std::string raw) {$/;"	f	class:Request
+initSocket	Server.cpp	/^int  Server::initSocket() {$/;"	f	class:Server
+initStartLine	Request.cpp	/^void    Request::initStartLine(std::string raw) {$/;"	f	class:Request
+ip_to_string	CGI.cpp	/^std::string ip_to_string(int ip) {$/;"	f
+isBodyFinished	Request.cpp	/^bool  Request::isBodyFinished() const {$/;"	f	class:Request
+isCgi	Client.cpp	/^bool Client::isCgi() const {$/;"	f	class:Client
+isCgi	Location.cpp	/^bool Location::isCgi() const {$/;"	f	class:Location
+isCgi	Response.cpp	/^bool Response::isCgi() const {$/;"	f	class:Response
+isChunked	Request.cpp	/^bool Request::isChunked() const {$/;"	f	class:Request
+isClosed	Request.cpp	/^bool  Request::isClosed() const {$/;"	f	class:Request
+isExist	Header.cpp	/^bool                Header::isExist(const std::string& key) const {$/;"	f	class:Header
+isFinished	Body.cpp	/^bool Body::isFinished() const {$/;"	f	class:Body
+isFinished	CgiBody.cpp	/^bool CgiBody::isFinished() const {$/;"	f	class:CgiBody
+isFinished	ChunkedBody.cpp	/^bool ChunkedBody::isFinished() const {$/;"	f	class:ChunkedBody
+isHex	ChunkedBody.cpp	/^bool  ChunkedBody::isHex(char c) {$/;"	f	class:ChunkedBody
+isSet	Fd.cpp	/^bool Fd::isSet(int fd, fd_set const & fds) {$/;"	f	class:Fd
+isTimeout	Client.cpp	/^bool  Client::isTimeout() {$/;"	f	class:Client
+log	debug.hpp	13;"	d
+log	debug.hpp	9;"	d
+main	main.cpp	/^int main(void) {$/;"	f
+max_fd	Fd.cpp	/^int     Fd::max_fd = 0;$/;"	m	class:Fd	file:
+max_fd	Fd.hpp	/^  static int     max_fd;$/;"	m	class:Fd
+num	Client.cpp	/^int Client::num = 0;$/;"	m	class:Client	file:
+num	Client.hpp	/^  static int      num;$/;"	m	class:Client
+operator =	Client.cpp	/^Client const& Client::operator=(Client const& client) {$/;"	f	class:Client
+operator []	Header.cpp	/^const std::string  Header::operator[](const std::string& key) const {$/;"	f	class:Header
+operator []	Header.cpp	/^std::string&        Header::operator[](const std::string& key) {$/;"	f	class:Header
+parse	CgiBody.cpp	/^void CgiBody::parse$/;"	f	class:CgiBody
+parse	Config.cpp	/^void Config::parse() {$/;"	f	class:Config
+parse	Location.cpp	/^void Location::parse() {$/;"	f	class:Location
+parse	Server.cpp	/^void Server::parse() {$/;"	f	class:Server
+parseChunk	Request.cpp	/^std::string  Request::parseChunk(const std::string & str) {$/;"	f	class:Request
+process	Response.cpp	/^void Response::process$/;"	f	class:Response
+processByMethod	Response.cpp	/^void Response::processByMethod$/;"	f	class:Response
+processCgi	Response.cpp	/^void Response::processCgi$/;"	f	class:Response
+processDirectoryListing	Response.cpp	/^void Response::processDirectoryListing$/;"	f	class:Response
+processGetMethod	Response.cpp	/^void Response::processGetMethod$/;"	f	class:Response
+processHeadMethod	Response.cpp	/^void Response::processHeadMethod$/;"	f	class:Response
+processPostMethod	Response.cpp	/^void Response::processPostMethod() {$/;"	f	class:Response
+processPutMethod	Response.cpp	/^void Response::processPutMethod$/;"	f	class:Response
+recv	Client.cpp	/^int  Client::recv(fd_set const& fds) {$/;"	f	class:Client
+recv	Response.cpp	/^int Response::recv(fd_set const& rfds, fd_set const& wfds) {$/;"	f	class:Response
+rfds	Fd.cpp	/^fd_set  *Fd::rfds = NULL;$/;"	m	class:Fd	file:
+rfds	Fd.hpp	/^  static fd_set  *rfds;$/;"	m	class:Fd
+run	CGI.cpp	/^void Cgi::run() {$/;"	f	class:Cgi
+run	ServerManager.cpp	/^void  ServerManager::run() {$/;"	f	class:ServerManager
+saveMap	CgiBody.cpp	/^void CgiBody::saveMap$/;"	f	class:CgiBody
+send	Response.cpp	/^int Response::send(int fd) {$/;"	f	class:Response
+set	Fd.cpp	/^void  Fd::set(int fd, fd_set & fds) {$/;"	f	class:Fd
+setBody	Request.cpp	/^void  Request::setBody() {$/;"	f	class:Request
+setCgiPath	Client.cpp	/^void Client::setCgiPath() {$/;"	f	class:Client
+setCgiPid	Response.cpp	/^void Response::setCgiPid(pid_t pid) {$/;"	f	class:Response
+setIndex	Location.cpp	/^void Location::setIndex(std::vector<std::string> index) {$/;"	f	class:Location
+setLocation	Client.cpp	/^void  Client::setLocation() {$/;"	f	class:Client
+setRfd	Fd.cpp	/^void  Fd::setRfd(int fd) {$/;"	f	class:Fd
+setStatus	Response.cpp	/^void Response::setStatus(int status) {$/;"	f	class:Response
+setWfd	Fd.cpp	/^void  Fd::setWfd(int fd) {$/;"	f	class:Fd
+timeout	Client.cpp	/^void  Client::timeout() {$/;"	f	class:Client
+toString	Body.cpp	/^std::string const& Body::toString() const {$/;"	f	class:std::Body
+toString	Header.cpp	/^std::string         Header::toString() const {$/;"	f	class:Header
+tokenize	tokenize.cpp	/^void tokenize(const std::string& str, std::vector<std::string>& token) {$/;"	f
+validate	Config.cpp	/^void Config::validate() {$/;"	f	class:Config
+validate	Location.cpp	/^void Location::validate() {$/;"	f	class:Location
+validate	Server.cpp	/^void Server::validate() {$/;"	f	class:Server
+wfds	Fd.cpp	/^fd_set  *Fd::wfds = NULL;$/;"	m	class:Fd	file:
+wfds	Fd.hpp	/^  static fd_set  *wfds;$/;"	m	class:Fd
+~Body	Body.cpp	/^Body::~Body() {$/;"	f	class:Body
+~Cgi	CGI.cpp	/^Cgi::~Cgi() {$/;"	f	class:Cgi
+~CgiBody	CgiBody.cpp	/^CgiBody::~CgiBody() {$/;"	f	class:CgiBody
+~ChunkedBody	ChunkedBody.cpp	/^ChunkedBody::~ChunkedBody() {$/;"	f	class:ChunkedBody
+~Client	Client.cpp	/^Client::~Client() {$/;"	f	class:Client
+~Request	Request.cpp	/^Request::~Request() {$/;"	f	class:Request
+~Response	Response.cpp	/^Response::~Response() {$/;"	f	class:Response
+~Server	Server.cpp	/^Server::~Server() {$/;"	f	class:Server
+~ServerManager	ServerManager.cpp	/^ServerManager::~ServerManager() {$/;"	f	class:ServerManager

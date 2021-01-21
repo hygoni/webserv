@@ -34,6 +34,7 @@ void  ServerManager::run() {
   std::cin.tie(NULL);
   std::cout.tie(NULL);
   select_timeout.tv_sec = 3;
+  select_timeout.tv_usec = 0;
   Fd::rfds = &all_fds[0];
   Fd::wfds = &all_fds[1];
   ft_bzero(&all_fds, sizeof(fd_set) * 2);
@@ -76,12 +77,17 @@ void  ServerManager::run() {
         if ((*c_it)->getResponse() != NULL && Fd::isSet((*c_it)->getFd(), ready_fds[1])) {
           (*c_it)->getResponse()->recv(ready_fds[0], ready_fds[1]);
           if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {
-            (*c_it)->clear();
-            c_it = std::next(c_it);
-            continue ;
+            /* if status is not 200 */
+            if ((*c_it)->getResponse()->getHeader()->getStatus() / 100 != 2) {
+              Client *client = *c_it;
+              c_it = clients.erase(c_it);
+              delete client;
+              continue ;
+            } else {
+              (*c_it)->clear();
+            }
           }
         }
-
         c_it = std::next(c_it);
       }
     }
