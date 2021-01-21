@@ -1,10 +1,14 @@
 #include <string.h>
 #include <iostream>
+#include <signal.h>
 #include <errno.h>
 #include "ServerManager.hpp"
 #include "Response.hpp"
 #include "Fd.hpp"
 #include "debug.hpp"
+#include "signals.hpp"
+
+extern bool g_is_sigpipe;
 
 // request는 closed 됬는데 요청이 계속 들어오면 어떻게 해야하지? recv로 버퍼를 청소해야 하나? 아니면 그냥 냅두나?
 ServerManager::ServerManager(Config& config) : _servers(config.getServers()) {
@@ -29,10 +33,9 @@ void  ServerManager::run() {
   struct timeval                  select_timeout;
   fd_set                          all_fds[2], ready_fds[2];
 
+  signal(SIGPIPE, sigpipe_handler);
+  signal(SIGCHLD, sigchld_handler);
   log("setsize = %d\n", FD_SETSIZE);
-  std::ios_base::sync_with_stdio(false);
-  std::cin.tie(NULL);
-  std::cout.tie(NULL);
   select_timeout.tv_sec = 3;
   select_timeout.tv_usec = 0;
   Fd::rfds = &all_fds[0];
@@ -50,6 +53,7 @@ void  ServerManager::run() {
     ft_bzero(&ready_fds, sizeof(fd_set) * 2);
     ready_fds[0] = all_fds[0];
     ready_fds[1] = all_fds[1];
+    g_is_sigpipe = false;
     if (select(Fd::max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, &select_timeout) < 0) {
       log("max_fd + 1 = %d, strerror(errno) = %s\n", Fd::max_fd + 1, strerror(errno));
       throw "select failed!";

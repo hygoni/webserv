@@ -88,7 +88,6 @@ void CgiBody::addBody(std::string const& s) {
   /* when add body is empty, output of CGI is closed */
   if (_raw_header.length() > 0 && s.length() == 0 && !_is_body_closed) {
     _is_body_closed = true;
-    std::cerr << "raw_header = |" << _raw_header << "|\n";
     parse(status, parse_map);
     log("[CgiBody::recv] make header\n");
     *_header = new Header(status);

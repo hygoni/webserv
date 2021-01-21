@@ -6,12 +6,16 @@
 #include <sys/select.h>
 #include <vector>
 #include "Client.hpp"
+#include "signals.hpp"
 
 fd_set  *Fd::rfds = NULL;
 fd_set  *Fd::wfds = NULL;
 int     Fd::max_fd = 0;
 
 bool Fd::isSet(int fd, fd_set const & fds) {
+  if (g_is_sigpipe)
+    return false;
+  else
     return FD_ISSET(fd, &fds);
 //  return fds.fds_bits[fd / 32] & (1 << (fd % 32));
 }
