@@ -22,13 +22,13 @@ bool Fd::isSet(int fd, fd_set const & fds) {
 }
 
 void Fd::displayFdSet(fd_set &fds) {
-  log("[Fd::displayFdSet] = [");
+  debug_printf("[Fd::displayFdSet] = [");
   for (int i = 3; i <= max_fd; i++) {
     if (isSet(i, fds)) {
-      log("%d, ", i);
+      debug_printf("%d, ", i);
     }
   }
-  log("]\n");
+  debug_printf("]\n");
 }
 
 void Fd::close(int& fd) {
@@ -62,21 +62,21 @@ void  Fd::clear(int fd, fd_set & fds) {
 }
 
 void    Fd::clearRfd(int fd) {
-  log("[Fd::clearRfd] - ");
+  debug_printf("[Fd::clearRfd] - ");
   clear(fd, *rfds);
 }
 
 void    Fd::clearWfd(int fd) {
-  log("[Fd::clearWfd] - ");
+  debug_printf("[Fd::clearWfd] - ");
   clear(fd, *wfds);
 }
 
 void  Fd::setWfd(int fd) {
-  log("[Fd::setWfd] - ");
+  debug_printf("[Fd::setWfd] - ");
   Fd::set(fd, *wfds);
 }
 
 void  Fd::setRfd(int fd) {
-  log("[Fd::setRfd] - ");
+  debug_printf("[Fd::setRfd] - ");
   Fd::set(fd, *rfds);
 }

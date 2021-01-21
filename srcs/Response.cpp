@@ -20,7 +20,7 @@
 char *Response::_buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
 
 Response::Response(Client& client) : _client(client) {  
-  log("[Response::Response(Client&)]\n");
+  debug_printf("[Response::Response(Client&)]\n");
   _header = NULL;
   _body = NULL;
   _is_header_sent = false;
@@ -33,7 +33,7 @@ Response::Response(Client& client) : _client(client) {
 }
 
 Response::Response(Client& client, int status) : _client(client) {  
-  log("[Response::Response(Client&)]\n");
+  debug_printf("[Response::Response(Client&)]\n");
   _header = NULL;
   _body = NULL;
   _is_header_sent = false;
@@ -47,7 +47,7 @@ Response::Response(Client& client, int status) : _client(client) {
 }
 
 Response::~Response() {
-  log("[Response::~Response]\n");
+  debug_printf("[Response::~Response]\n");
   if (_header != NULL)
     delete _header;
   if (_body != NULL)
@@ -167,7 +167,7 @@ Header* Response::initHeader(int status) const {
 }
 
 void Response::setStatus(int status) {
-  log("[Response::Response(int)]");
+  debug_printf("[Response::Response(int)]");
   if (_header != NULL)
     delete _header;
   _header = initHeader(status);
@@ -293,7 +293,7 @@ void Response::processDirectoryListing
     return ;
   }
   setStatus(200);
-  log("[Response::processDListing] %s\n", html.c_str());
+  debug_printf("[Response::processDListing] %s\n", html.c_str());
   (*_header)["Content-Length"] = std::to_string(html.length());
   _body = new Body(html.length());
   _body->addBody(html);

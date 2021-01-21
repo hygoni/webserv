@@ -69,7 +69,7 @@ Cgi::Cgi(Client& client) : _client(client) {
   while (it != header.getEnd()) {
     std::string key = ("HTTP_" + it->first);
     std::transform(key.begin(), key.end(), key.begin(), ::toupper);
-    log("key : %s, value : %s\n", key.c_str(), it->second.c_str());
+    debug_printf("key : %s, value : %s\n", key.c_str(), it->second.c_str());
     env_map[key] = it->second;
     it++;
   }
@@ -81,7 +81,7 @@ Cgi::Cgi(Client& client) : _client(client) {
 }
 
 Cgi::~Cgi() {
-  log("[Cgi::~Cgi]\n");
+  debug_printf("[Cgi::~Cgi]\n");
   if (_env != NULL)
     ft_free_null_terminated_array(reinterpret_cast<void **>(_env));
 }
@@ -127,7 +127,7 @@ void Cgi::run() {
   Fd::setRfd(_client.getResponsePipe()[0]);
   pid = fork();
   if (pid == 0) {
-    log("[Cgi::run] argv[0] = %s, argv[1] = %s, argv[2] = %s\n", argv[0], argv[1], argv[2]);
+    debug_printf("[Cgi::run] argv[0] = %s, argv[1] = %s, argv[2] = %s\n", argv[0], argv[1], argv[2]);
     /* redirect body to stdin */
     if (_client.getRequestPipe()[0] == -1) {
       close(0);

@@ -20,11 +20,11 @@ ServerManager::~ServerManager() {
 void displayClients(std::vector<Client*> &clients) {
   std::vector<Client*>::iterator  c_it;
 
-  log("clients: ");
+  debug_printf("clients: ");
   for (c_it = clients.begin(); c_it != clients.end(); c_it++) {
-    log("%d, ", (*c_it)->id);
+    debug_printf("%d, ", (*c_it)->id);
   }
-  log("\n");
+  debug_printf("\n");
 }
 
 void  ServerManager::run() {
@@ -35,27 +35,27 @@ void  ServerManager::run() {
 
   signal(SIGPIPE, sigpipe_handler);
   signal(SIGCHLD, sigchld_handler);
-  log("setsize = %d\n", FD_SETSIZE);
+  debug_printf("setsize = %d\n", FD_SETSIZE);
   select_timeout.tv_sec = 3;
   select_timeout.tv_usec = 0;
   Fd::rfds = &all_fds[0];
   Fd::wfds = &all_fds[1];
   ft_bzero(&all_fds, sizeof(fd_set) * 2);
   ft_bzero(&ready_fds, sizeof(fd_set) * 2);
-  log("servers initSocket...\n");
+  debug_printf("servers initSocket...\n");
   for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {
     int server_fd = s_it->initSocket();
-    log("server_fd = %d\n", server_fd);
+    debug_printf("server_fd = %d\n", server_fd);
     Fd::set(server_fd, all_fds[0]);
   }
-  log("initSocket done\n");
+  debug_printf("initSocket done\n");
   while (42) {
     ft_bzero(&ready_fds, sizeof(fd_set) * 2);
     ready_fds[0] = all_fds[0];
     ready_fds[1] = all_fds[1];
     g_is_sigpipe = false;
     if (select(Fd::max_fd + 1, &ready_fds[0], &ready_fds[1], NULL, &select_timeout) < 0) {
-      log("max_fd + 1 = %d, strerror(errno) = %s\n", Fd::max_fd + 1, strerror(errno));
+      debug_printf("max_fd + 1 = %d, strerror(errno) = %s\n", Fd::max_fd + 1, strerror(errno));
       throw "select failed!";
     }
     for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {

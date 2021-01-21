@@ -41,7 +41,7 @@ void Client::updateTime() {
 }
 
 void Client::clear() {
-  log("[Client::clear] \n");
+  debug_printf("[Client::clear] \n");
   if (_request != NULL) {
     delete _request;
     _request = NULL;
@@ -67,7 +67,7 @@ void Client::clear() {
 }
 
 Client::~Client() {
-  log("[Client::~Client] destructor called\n");
+  debug_printf("[Client::~Client] destructor called\n");
   this->clear();
   Fd::clearRfd(_fd);
   Fd::close(_fd);
@@ -115,7 +115,7 @@ int  Client::recv(fd_set const& fds) {
       if (header_end == std::string::npos) {
         if (_raw_request.size() <= MAX_HEADER_SIZE)
           return 1;
-        log("_raw_request.size(%d) > MAX_HEADER_SIZE, remain size : %d\n", _raw_request.length());
+        debug_printf("_raw_request.size(%d) > MAX_HEADER_SIZE, remain size : %d\n", _raw_request.length());
         throw HttpException(413);
       } else {
         if (header_end <= MAX_HEADER_SIZE) {
@@ -129,7 +129,7 @@ int  Client::recv(fd_set const& fds) {
           setLocation();
           setCgiPath();
           if ((int)_request->getContentLength() > _location->getClientBodySizeLimit()) {
-            log("[Client::recv] content length is over\n");
+            debug_printf("[Client::recv] content length is over\n");
             throw HttpException(413);
           }
           // std::cerr << _request->getTarget() << "\n" << _request->getHeader()->toString() << "\n";
@@ -143,26 +143,26 @@ int  Client::recv(fd_set const& fds) {
           _request->setBody();
           _request->addBody(raw_body);
           if (_request->getBody()->toString().length() > this->getLocation()->getClientBodySizeLimit()) {
-            log("[Client::recv] bigger than client_body_size_limit\n");
+            debug_printf("[Client::recv] bigger than client_body_size_limit\n");
             throw HttpException(413);
           }
           if (_request->isBodyFinished()) {
             _response = new Response(*this);
             /* body remained is next header */
             _raw_request = _request->getBodyRemain();
-            log("[Client:recv] body remain len: %d\n", _request->getBodyRemain().length());
+            debug_printf("[Client:recv] body remain len: %d\n", _request->getBodyRemain().length());
             Fd::setWfd(_fd);
             return 0;
           }
         } else {
           /* header too long */
-          log("[Client::recv] header too long!! raw_request = |%s|\n", _raw_request.length());
+          debug_printf("[Client::recv] header too long!! raw_request = |%s|\n", _raw_request.length());
           throw HttpException(413);
         }
         return 1;
       }
     } catch (HttpException & err) {
-      log("[Client::recv] HttpException : %d\n", err.getStatus());
+      debug_printf("[Client::recv] HttpException : %d\n", err.getStatus());
       if (_response != NULL)
         delete _response;
       _response = new Response(*this, err.getStatus());
@@ -171,7 +171,7 @@ int  Client::recv(fd_set const& fds) {
       return 1;
     } catch (const char* s) {
       /* Internal Server Error */
-      log("[Client::recv] Internal Error : %s\n", s);
+      debug_printf("[Client::recv] Internal Error : %s\n", s);
       if (_response != NULL)
         delete _response;
       _response = new Response(*this, 500);
@@ -196,7 +196,7 @@ int  Client::recv(fd_set const& fds) {
       _response = new Response(*this);
       /* body remained is next header */
       _raw_request = _request->getBodyRemain();
-      log("[Client::recv] body remain size : %d\n", _request->getBodyRemain().length());
+      debug_printf("[Client::recv] body remain size : %d\n", _request->getBodyRemain().length());
       Fd::setWfd(_fd);
       return 0;
     }
@@ -211,7 +211,7 @@ void  Client::setLocation() {
   for (std::vector<Location>::const_iterator l_it = getLocations().begin();
       l_it != getLocations().end(); l_it = std::next(l_it)) {
     /* matching location found */
-    log("[Client::setLocation] locaation: %s\n", l_it->getPath().c_str());
+    debug_printf("[Client::setLocation] locaation: %s\n", l_it->getPath().c_str());
     if (_request->getTarget().find(l_it->getPath()) == 0) {
       _location = &(*l_it);
       return ;

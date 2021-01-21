@@ -89,11 +89,11 @@ void CgiBody::addBody(std::string const& s) {
   if (_raw_header.length() > 0 && s.length() == 0 && !_is_body_closed) {
     _is_body_closed = true;
     parse(status, parse_map);
-    log("[CgiBody::recv] make header\n");
+    debug_printf("[CgiBody::recv] make header\n");
     *_header = new Header(status);
     saveMap(**_header, parse_map);
     (**_header)["Content-Length"] = std::to_string(_body.length());
-    log("[CgiBody::recv] Content-Length = %lu\n", _body.length());
+    debug_printf("[CgiBody::recv] Content-Length = %lu\n", _body.length());
   }
 
   /* if header is closed, just add body */
