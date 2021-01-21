@@ -115,14 +115,13 @@ int  Client::recv(fd_set const& fds) {
       if (header_end == std::string::npos) {
         if (_raw_request.size() <= MAX_HEADER_SIZE)
           return 1;
-        debug_printf("_raw_request.size(%d) > MAX_HEADER_SIZE, remain size : %d\n", _raw_request.length());
+        debug_printf("_raw_request.size(%lu) > MAX_HEADER_SIZE\n", _raw_request.length());
         throw HttpException(413);
       } else {
         if (header_end <= MAX_HEADER_SIZE) {
           /* make request */
           std::string raw_header = _raw_request.substr(0, header_end + 4);
           std::string raw_body = _raw_request.substr(header_end + 4);
-//        std::cerr << "buffer = |" << _raw_request << "|\n";
           _raw_request.clear();
 
           _request = new Request(raw_header);
@@ -132,7 +131,6 @@ int  Client::recv(fd_set const& fds) {
             debug_printf("[Client::recv] content length is over\n");
             throw HttpException(413);
           }
-          // std::cerr << _request->getTarget() << "\n" << _request->getHeader()->toString() << "\n";
 
           /* authenticate */
           if (_location->getAuthorization().find(':') != std::string::npos && !this->auth()) {
@@ -142,7 +140,7 @@ int  Client::recv(fd_set const& fds) {
           /* make request body */
           _request->setBody();
           _request->addBody(raw_body);
-          if (_request->getBody()->toString().length() > this->getLocation()->getClientBodySizeLimit()) {
+          if ((int)_request->getBody()->toString().length() > this->getLocation()->getClientBodySizeLimit()) {
             debug_printf("[Client::recv] bigger than client_body_size_limit\n");
             throw HttpException(413);
           }
@@ -150,13 +148,13 @@ int  Client::recv(fd_set const& fds) {
             _response = new Response(*this);
             /* body remained is next header */
             _raw_request = _request->getBodyRemain();
-            debug_printf("[Client:recv] body remain len: %d\n", _request->getBodyRemain().length());
+            debug_printf("[Client:recv] body remain len: %lu\n", _request->getBodyRemain().length());
             Fd::setWfd(_fd);
             return 0;
           }
         } else {
           /* header too long */
-          debug_printf("[Client::recv] header too long!! raw_request = |%s|\n", _raw_request.length());
+          debug_printf("[Client::recv] header too long!\n");
           throw HttpException(413);
         }
         return 1;
@@ -185,7 +183,7 @@ int  Client::recv(fd_set const& fds) {
     /* make response when recv is end */
     if (_request->isBodyFinished()) {
 
-    if (_request->getBody()->toString().length() > this->getLocation()->getClientBodySizeLimit()) {
+    if ((int)_request->getBody()->toString().length() > this->getLocation()->getClientBodySizeLimit()) {
       if (_response != NULL)
         delete _response;
       _response = new Response(*this, 413);
@@ -196,7 +194,7 @@ int  Client::recv(fd_set const& fds) {
       _response = new Response(*this);
       /* body remained is next header */
       _raw_request = _request->getBodyRemain();
-      debug_printf("[Client::recv] body remain size : %d\n", _request->getBodyRemain().length());
+      debug_printf("[Client::recv] body remain size : %lu\n", _request->getBodyRemain().length());
       Fd::setWfd(_fd);
       return 0;
     }
