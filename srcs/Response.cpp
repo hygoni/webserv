@@ -15,6 +15,7 @@
 #include "Fd.hpp"
 #include "CgiBody.hpp"
 #include "debug.hpp"
+#include "utils.hpp"
 
 char *Response::_buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
 
@@ -135,9 +136,20 @@ int Response::send(int fd) {
   return ret;
 }
 
+/* default headers are here */
 Header* Response::initHeader(int status) const {
   Header* header = new Header(status);
   (*header)["Content-Length"] = "0";
+
+  /* set date */
+  struct timeval raw;
+  struct tm time_info;
+  char buf[1024];
+  gettimeofday(&raw, NULL);
+  set_tm(raw.tv_sec, &time_info);
+  strftime(buf, 1024, "%a, %d %b %Y %H:%M:%S GMT", &time_info);
+  (*header)["Date"] = buf;
+
   return header;
 }
 
