@@ -11,6 +11,7 @@
 fd_set  *Fd::rfds = NULL;
 fd_set  *Fd::wfds = NULL;
 int     Fd::max_fd = 0;
+extern bool g_is_sigpipe;
 
 bool Fd::isSet(int fd, fd_set const & fds) {
   if (g_is_sigpipe)

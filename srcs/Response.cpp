@@ -150,6 +150,19 @@ Header* Response::initHeader(int status) const {
   strftime(buf, 1024, "%a, %d %b %Y %H:%M:%S GMT", &time_info);
   (*header)["Date"] = buf;
 
+  /* set allow header if status is 405 Method Not Allowed */
+  if (status == 405) {
+    std::string allowed_method;
+    std::vector<std::string> const& allowed = _client.getLocation()->getAllowedMethod();
+    for (size_t i = 0; i < allowed.size(); i++) {
+      allowed_method.append(allowed[i]);
+      if (i + 1 != allowed.size()) {
+        allowed_method.append(", ");
+      }
+    }
+    (*header)["Allowed"] = allowed_method;
+  }
+
   return header;
 }
 
