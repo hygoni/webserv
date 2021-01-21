@@ -163,6 +163,11 @@ Header* Response::initHeader(int status) const {
     (*header)["Allowed"] = allowed_method;
   }
 
+  if (status / 100 != 2 || (*_client.getRequest()->getHeader())["Connection"] == "close") {
+    (*header)["Connection"] = "close";
+  } else {
+    (*header)["Connection"] = "keep-alive";
+  }
   return header;
 }
 
