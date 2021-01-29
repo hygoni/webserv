@@ -6,13 +6,16 @@
 bool g_is_sigpipe = false;
 
 void sigpipe_handler(int sig) {
+  (void)sig;
   g_is_sigpipe = true;
   debug_printf("[SIGNAL %d] recieved SIGPIPE\n", sig);
 }
 
 void sigchld_handler(int sig) {
-  debug_printf("[SIGNAL %d] recieved SIGCHLD\n", sig);
   pid_t pid;
+
+  (void)sig;
+  debug_printf("[SIGNAL %d] recieved SIGCHLD\n", sig);
   while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
     debug_printf("[CHILD] child (%d) exited \n", pid);
   }

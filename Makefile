@@ -1,5 +1,5 @@
 NAME = webserv
-CFLAGS =  -fsanitize=address -g -Wall -Wextra
+CFLAGS =  -fsanitize=address -g -Wall -Wextra -Werror
 SRCS = ${addprefix srcs/, ${shell ls srcs | grep '\.cpp'}}
 OBJS = ${SRCS:.cpp=.o}
 CC = c++
@@ -19,10 +19,10 @@ all: ${NAME}
 
 clean:
 	${RM} ${OBJS}
-	make -C ./libft clean 
+	make -C ./libft clean
 
 fclean: clean
 	${RM} ${NAME}
-	make -C ./libft fclean 
+	make -C ./libft fclean
 
 re: fclean all
