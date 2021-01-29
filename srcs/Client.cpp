@@ -134,6 +134,7 @@ int  Client::recv(const fd_set *fds) {
 
           /* authenticate */
           if (_location->getAuthorization().find(':') != std::string::npos && !this->auth()) {
+            Fd::setWfd(_fd);
             return 1;
           }
 

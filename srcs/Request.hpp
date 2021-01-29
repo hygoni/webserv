@@ -28,7 +28,7 @@ private:
   void  checkClosed();
 public:
   ~Request();
-  Request(std::string raw);
+  Request(std::string const& raw);
   bool        isClosed() const;
   bool        hasBody() const;
   std::string getMethod() const;

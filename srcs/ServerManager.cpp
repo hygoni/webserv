@@ -77,7 +77,7 @@ void  ServerManager::run() {
           continue ;
         }
 
-	/* response exists and ready to write */
+	      /* response exists and ready to write */
         if ((*c_it)->getResponse() != NULL && Fd::isSet((*c_it)->getFd(), &ready_fds[1])) {
           (*c_it)->getResponse()->recv(&ready_fds[0], &ready_fds[1]);
           if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {

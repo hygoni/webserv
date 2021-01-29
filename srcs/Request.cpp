@@ -92,7 +92,7 @@ void  Request::checkOverlapHeader(const std::string & name, const std::string & 
 
   if (_header->isExist("Transfer-Encoding"))
     return ;
-  if (name == "Content-Length" && _header->isExist("Content-Length") 
+  if (name == "Content-Length" && _header->isExist("Content-Length")
       && (*_header)["Content-Length"] != value)
     throw HttpException(400);
 }
@@ -116,7 +116,7 @@ void  Request::checkHeaders() {
   }
 }
 
-Request::Request(std::string http_message) {
+Request::Request(std::string const& http_message) {
   _is_closed = false;
   _chunked = false;
   _body = NULL;
@@ -216,4 +216,4 @@ bool  Request::isBodyFinished() const {
 
 std::string Request::getBodyRemain() const {
   return _body->getRemain();
-} 
+}
