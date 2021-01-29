@@ -3,7 +3,7 @@ allowed_method POST
 path /post_body
 root ./cgi-bin/
 index index.bla index.html index.htm
-cgi_path ./ubuntu_cgi_tester
+cgi_path ./cgi_tester
 cgi_extension .bla .php
 client_body_size_limit 100
 client_header_size_limit 8000
