@@ -1,0 +1,3 @@
+listen 8031
+server_name hello
+location ./config/location_hello

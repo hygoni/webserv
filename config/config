@@ -1,1 +1,2 @@
 server ./config/server
+server ./config/server2

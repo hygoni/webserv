@@ -1,0 +1,8 @@
+default_error_page /
+directory_listing off
+allowed_method GET
+path /
+root ./html
+index hello.html
+cgi_path ./cgi_tester
+cgi_extension .bla
