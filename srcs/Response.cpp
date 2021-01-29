@@ -19,7 +19,7 @@
 
 char *Response::_buf = (char*)malloc(sizeof(char) * (BUFSIZE + 1));
 
-Response::Response(Client& client) : _client(client) {  
+Response::Response(Client& client) : _client(client) {
   debug_printf("[Response::Response(Client&)]\n");
   _header = NULL;
   _body = NULL;
@@ -32,7 +32,7 @@ Response::Response(Client& client) : _client(client) {
   process(client);
 }
 
-Response::Response(Client& client, int status) : _client(client) {  
+Response::Response(Client& client, int status) : _client(client) {
   debug_printf("[Response::Response(Client&)]\n");
   _header = NULL;
   _body = NULL;
@@ -55,8 +55,8 @@ Response::~Response() {
   Fd::close(_file_fd);
 }
 
-// fd: file fd or 
-int Response::recv(fd_set const& rfds, fd_set const& wfds) {
+// fd: file fd or
+int Response::recv(const fd_set *rfds, const fd_set *wfds) {
   int           n_read;
   int           n_write;
 
@@ -71,7 +71,7 @@ int Response::recv(fd_set const& rfds, fd_set const& wfds) {
       _body->addBody(_client.getRequest()->getBody()->toString());
     }
     _client.updateTime();
-    
+
   } else if (_is_cgi) {
     if (Fd::isSet(_client.getResponsePipe()[0], rfds)) {
       if ((n_read = read(_client.getResponsePipe()[0], _buf, BUFSIZE)) < 0)
@@ -370,7 +370,7 @@ void Response::processHeadMethod
 (std::string const& path) {
   struct stat   buf;
   int           ret;
-  
+
   ret = stat(path.c_str(), &buf);
   if (ret < 0) {
     if (errno == EACCES) {

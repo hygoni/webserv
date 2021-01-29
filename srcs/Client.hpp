@@ -38,7 +38,7 @@ public:
               Client(const Server& server);
               ~Client();
   void        clear();
-  int         recv(fd_set const& fds);
+  int         recv(const fd_set *fds);
   int         send(int fd);
   bool        auth();
   void        timeout();

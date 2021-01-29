@@ -46,7 +46,7 @@ void  ServerManager::run() {
   for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {
     int server_fd = s_it->initSocket();
     debug_printf("server_fd = %d\n", server_fd);
-    Fd::set(server_fd, all_fds[0]);
+    Fd::set(server_fd, &all_fds[0]);
   }
   debug_printf("initSocket done\n");
   while (42) {
@@ -59,8 +59,8 @@ void  ServerManager::run() {
       throw "select failed!";
     }
     for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {
-      if (Fd::isSet(s_it->getFd(), ready_fds[0])) {
-        s_it->accept(all_fds[0]);
+      if (Fd::isSet(s_it->getFd(), &ready_fds[0])) {
+        s_it->accept(&all_fds[0]);
         /* not setting read fd? */
       }
       std::vector<Client*> &clients = s_it->getClients();
@@ -70,16 +70,16 @@ void  ServerManager::run() {
           (*c_it)->timeout();
         }
 
-        if ((*c_it)->recv(ready_fds[0]) < 0 || (*c_it)->isConnectionClosed()) {
+        if ((*c_it)->recv(&ready_fds[0]) < 0 || (*c_it)->isConnectionClosed()) {
           Client *client = *c_it;
           c_it = clients.erase(c_it);
           delete client;
           continue ;
         }
-        
+
 	/* response exists and ready to write */
-        if ((*c_it)->getResponse() != NULL && Fd::isSet((*c_it)->getFd(), ready_fds[1])) {
-          (*c_it)->getResponse()->recv(ready_fds[0], ready_fds[1]);
+        if ((*c_it)->getResponse() != NULL && Fd::isSet((*c_it)->getFd(), &ready_fds[1])) {
+          (*c_it)->getResponse()->recv(&ready_fds[0], &ready_fds[1]);
           if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {
             /* if status is not 200 */
             if ((*c_it)->getResponse()->getHeader()->getStatus() / 100 != 2) {

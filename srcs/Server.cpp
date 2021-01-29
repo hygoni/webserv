@@ -35,7 +35,7 @@ void Server::parse() {
   std::vector<std::string> token;
   std::map<std::string, std::string> location_map;
   std::vector<std::string> index;
-  
+
   /* save into map */
   for (size_t i = 0; i < this->_text.size(); i++) {
     tokenize(this->_text[i], token);
@@ -77,28 +77,25 @@ void Server::validate() {
   this->_server_name = this->_attrs["server_name"];
 }
 
-short     Server::ft_htons(short num) {
+unsigned short     Server::ft_htons(unsigned short num) {
   short result = 1;
 
   if (((char *)&result)[0] == 0) {
     return num;
   }
-  for (size_t i = 0; i < sizeof(short); i++) {
-    ((char *)&result)[i] = ((char *)&num)[sizeof(short) - i];
-  }
-  return result;
+	num = num >> 8 | num << 8;
+	return (num);
 }
 
-long     Server::ft_htonl(long num) {
+unsigned long   Server::ft_htonl(unsigned long num) {
   long result = 1;
 
   if (((char *)&result)[0] == 0) {
     return num;
   }
-  for (size_t i = 0; i < sizeof(long); i++) {
-    ((char *)&result)[i] = ((char *)&num)[sizeof(long) - i];
-  }
-  return result;
+  num = (num & 0xff000000) >> 24 | (num & 0x000000ff) << 24 |
+		    (num & 0x00ff0000) >> 8  | (num & 0x0000ff00) << 8;
+  return num;
 }
 
 int  Server::initSocket() {
@@ -114,8 +111,8 @@ int  Server::initSocket() {
   // why ??
   // TODO: htons -> ft_htons, htonl -> ft_htonl
   server_addr.sin_family = AF_INET;
-  server_addr.sin_port = htons(_listen);
-  server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  server_addr.sin_port = ft_htons(_listen);
+  server_addr.sin_addr.s_addr = ft_htonl(INADDR_ANY);
   ft_memset(&(server_addr.sin_zero), 0, sizeof(server_addr.sin_zero));
   if (bind(_fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) < 0 ||
       listen (_fd, 100000) < 0)
@@ -123,7 +120,7 @@ int  Server::initSocket() {
   return _fd;
 }
 
-int   Server::accept(fd_set& rfds) {
+int   Server::accept(fd_set *rfds) {
   Client* client = new Client(*this);
   int client_fd = client->getFd();
   _clients.push_back(client);

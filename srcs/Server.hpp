@@ -27,14 +27,14 @@ private:
   void                                validate();
   void                                addLocation(Location location);
 
-  short                               ft_htons(short num);
-  long                                ft_htonl(long num);
+  unsigned short                      ft_htons(unsigned short num);
+  unsigned long                       ft_htonl(unsigned long num);
 public:
   explicit                            Server(const char *path);
   virtual                             ~Server();
 
   int                                 initSocket();
-  int                                 accept(fd_set& rfds);
+  int                                 accept(fd_set *rfds);
    /* getters */
   std::vector<Location> const&        getLocations() const;
   int                                 getListen() const;

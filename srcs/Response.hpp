@@ -39,7 +39,7 @@ class Response {
         Response(Client& client);
         Response(Client& client, int status);
         ~Response();
-  int   recv(fd_set const& rfds, fd_set const& wfds);
+  int   recv(const fd_set *rfds, const fd_set *wfds);
   int   send(int fd);
   void  setStatus(int status);
   pid_t getCgiPid() const;

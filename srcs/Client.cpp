@@ -88,17 +88,17 @@ Client::~Client() {
 /*
 return 0 : not closed header
 return num : new fd, must set to wfds
-return -1 : 
+return -1 :
 */
 
 bool Client::isConnectionClosed() const {
   return (_connection_closed && _raw_request.length() == 0 && _request == NULL);
 }
 
-int  Client::recv(fd_set const& fds) {
+int  Client::recv(const fd_set *fds) {
   int     n_read = 0;
   size_t  header_end;
-  
+
   if (Fd::isSet(_fd, fds)) {
     n_read = read(_fd, _buf, BUFSIZE - 1);
     if (n_read < 0)
