@@ -6,11 +6,11 @@
 
 #ifdef DEBUG
  #include <cstdio>
- #define log printf
+ #define debug_printf printf
 #endif
 
 #ifndef DEBUG
- #define log(x, ...)
+ #define debug_printf(x, ...)
 #endif
 
 #define BUFSIZE 1048576
