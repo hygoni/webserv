@@ -35,6 +35,8 @@ class Response {
   void  processPostMethod();
   void  processCgi(Client& client);
   void  processDirectoryListing(Client& client, std::string const& path);
+  void  processDefaultErrorPage(int status);
+
  public:
         Response(Client& client);
         Response(Client& client, int status);

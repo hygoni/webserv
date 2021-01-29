@@ -112,7 +112,7 @@ int Response::send(int fd) {
         _is_header_sent = true;
       }
     }
-    if (_header != NULL && _header->getStatus() / 100 != 2)
+    if (_header != NULL && _header->getStatus() / 100 != 2 && _body == NULL)
       return -1;
     else
       return 1;
@@ -270,6 +270,17 @@ void Response::processPutMethod
   }
 }
 
+void Response::processDefaultErrorPage(int status) {
+  std::string html;
+
+  std::string msg = Message::getInstance()->getMessage(status);
+  html = "<h1>" + std::to_string(status) + " " + msg + "</h1>";
+  debug_printf("[Response::processDefaultErrorPage] %s\n", html.c_str());
+  (*_header)["Content-Length"] = std::to_string(html.length());
+  _body = new Body(html.length());
+  _body->addBody(html);
+}
+
 void Response::processDirectoryListing
 (Client& client, std::string const& path) {
   DIR *dir;
@@ -321,6 +332,7 @@ void Response::processGetMethod
       /* Internal Server Error */
       setStatus(500);
     }
+    processDefaultErrorPage(_header->getStatus());
     return ;
   } else if (S_ISDIR(buf.st_mode)) {
     if (location.getDirectoryListing()) {
