@@ -336,7 +336,8 @@ void Response::processGetMethod
     return ;
   } else if (S_ISDIR(buf.st_mode)) {
     if (location.getDirectoryListing()) {
-      return processDirectoryListing(client, path);
+      processDirectoryListing(client, path);
+      return ;
     }
     for (size_t i = 0; i < location.getIndex().size(); i++) {
       ret = stat((path + "/" + location.getIndex()[i]).c_str(), &buf);
@@ -360,6 +361,7 @@ void Response::processGetMethod
       /* Internal Server Error */
       setStatus(500);
     }
+    processDefaultErrorPage(_header->getStatus());
     return ;
   }
   _body = new Body(buf.st_size);
