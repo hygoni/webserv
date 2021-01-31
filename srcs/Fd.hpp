@@ -4,6 +4,11 @@
 # include <stdlib.h>
 # include "debug.hpp"
 
+# ifndef __DARWIN_NFDBITS
+#  define __DARWIN_NBBY   8       /* bits in a byte */
+#  define __DARWIN_NFDBITS  (sizeof(__int32_t) * __DARWIN_NBBY) /* bits per mask */
+# endif
+
 class Fd {
 public:
   static fd_set  *rfds;
