@@ -95,7 +95,7 @@ bool Client::isConnectionClosed() const {
   return (_connection_closed && _raw_request.length() == 0 && _request == NULL);
 }
 
-int  Client::recv(const fd_set *fds) {
+int  Client::recv_sub(const fd_set *fds) {
   int     n_read = 0;
   size_t  header_end;
 
@@ -107,7 +107,7 @@ int  Client::recv(const fd_set *fds) {
       _connection_closed = true;
     updateTime();
   }
-
+  
   if (_request == NULL) {
     _raw_request.append(std::string(_buf, n_read));
     header_end = _raw_request.find("\r\n\r\n");
@@ -204,6 +204,20 @@ int  Client::recv(const fd_set *fds) {
     _raw_request.append(std::string(_buf, n_read));
   }
   return 1;
+}
+
+int  Client::recv(const fd_set *fds) {
+  try {
+    return recv_sub(fds);
+  } catch (std::exception const& e) {
+    debug_printf("[Client::recv] HttpException : 500\n");
+    if (_response != NULL)
+      delete _response;
+    _response = new Response(*this, 500);
+    _raw_request.clear();
+    Fd::setWfd(_fd);
+    return 1;
+  }
 }
 
 void  Client::setLocation() {

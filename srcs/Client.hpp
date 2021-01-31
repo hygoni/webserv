@@ -39,6 +39,7 @@ public:
               ~Client();
   void        clear();
   int         recv(const fd_set *fds);
+  int         recv_sub(const fd_set *fds);
   int         send(int fd);
   bool        auth();
   void        timeout();
