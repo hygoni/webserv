@@ -251,6 +251,7 @@ void Response::processPutMethod
       /* 201 Created */
       setStatus(201);
       _file_fd = open(path.c_str(), O_RDWR | O_CREAT, 0644);
+      (*_header)["Location"] = client.getRequest()->getTarget();
       if (_file_fd < 0)
         throw "[Response::processPutMethod] open failed";
       Fd::setWfd(_file_fd);
