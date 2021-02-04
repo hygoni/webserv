@@ -35,7 +35,7 @@ Cgi::Cgi(Client& client) : _client(client) {
 
   client_len = sizeof(client_addr);
   getsockname(client.getFd(), (struct sockaddr*)&client_addr, &client_len);
-  
+
   /* get query */
   idx = header.getTarget().find('?');
   if (idx != std::string::npos)
@@ -43,7 +43,10 @@ Cgi::Cgi(Client& client) : _client(client) {
   cgi_path = client.getCgiPath();
   cgi_file_path = client.getCgiFilePath();
 
-  // env_map["AUTH_TYPE"] = 
+  if (!header["Authorization"].empty()) {
+    env_map["AUTH_TYPE"] = "Basic";
+    env_map["REMOTE_USER"] = client.getRequest()->getUserName();
+  }
   env_map["CONTENT_LENGTH"] =  header["Content-Length"];
   env_map["CONTENT_TYPE"] = header["Content-Type"];
   env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
@@ -52,17 +55,13 @@ Cgi::Cgi(Client& client) : _client(client) {
   + header.getTarget().substr(client.getLocation()->getPath().length());
   env_map["QUERY_STRING"] = query;
   env_map["REMOTE_ADDR"] = ip_to_string(client_addr.sin_addr.s_addr);
-  // env_map["REMOTE_IDENT"]
-  // env_map["REMOTE_USER"]
   env_map["REQUEST_METHOD"] = header.getMethod();
   env_map["REQUEST_URI"] = header.getTarget();
   env_map["SCRIPT_NAME"] = env_map["PATH_TRANSLATED"];
-  // env_map["SERVER_NAME"] = server.getServerName();
-  // env_map["SERVER_PORT"] = std::to_string(server.getListen());
+  env_map["SERVER_NAME"] = client.getServer().getServerName();
+  env_map["SERVER_PORT"] = std::to_string(client.getServer().getListen());
   env_map["SERVER_PROTOCOL"] = header.getVersion();
-  // env_map["REDIRECT_STATUS"] = "0";
-  // env_map["SERVER_SOFTWARE"] = "webserv/1.0";
-  // env_map["SCRIPT_FILENAME"] = cgi_file_path;
+  env_map["SERVER_SOFTWARE"] = "webserv/1.0";
   env_map["SCRIPT_FILENAME"] = env_map["SCRIPT_NAME"];
 
   std::map<std::string, std::string>::const_iterator it = header.getBegin();
@@ -142,14 +141,19 @@ void Cgi::run() {
     close(_client.getResponsePipe()[1]);
     close(_client.getResponsePipe()[0]);
     if (execve(_cgi_path.c_str(), argv, _env) < 0)
-     throw "[Cgi::run]: execve failed";
+     exit(EXIT_FAILURE);
     free(dup_cgi_path);
     free(dup_file_path);
     exit(EXIT_SUCCESS);
   } else {
+    int status;
     close(_client.getResponsePipe()[1]);
+    debug_printf("[Cgi::run] waiting for %d\n", pid);
+    waitpid(pid, &status, 0);
+    debug_printf("[Cgi::run] waiting done!\n");
+    if (WEXITSTATUS(status) == EXIT_FAILURE)
+      throw HttpException(500);
     free(dup_cgi_path);
     free(dup_file_path);
-    //_client.getResponse()->setCgiPid(pid);
   }
 }

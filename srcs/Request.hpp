@@ -15,6 +15,7 @@ private:
   size_t      _content_length;
   bool        _chunked;
   bool        _is_closed;
+  std::string _user_name;
   std::string _cgi_path;
 
   Request();
@@ -34,6 +35,7 @@ public:
   std::string getMethod() const;
   std::string getTarget() const;
   std::string getVersion() const;
+  std::string getUserName() const;
   size_t      getContentLength() const;
   bool        isChunked() const;
   void        addBody(std::string const &s);
@@ -42,7 +44,7 @@ public:
   Header*     getHeader();
   Body*       getBody();
   void        setBody();
-  bool        auth(std::string const& user_str) const;
+  bool        auth(std::string const& user_str);
 };
 
 #endif

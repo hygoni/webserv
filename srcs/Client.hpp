@@ -49,6 +49,7 @@ public:
   bool        isConnectionClosed() const;
   Request*    getRequest();
   Response*   getResponse();
+  void        setResponse(Response *response);
   int*        getRequestPipe();
   int*        getResponsePipe();
   int         getFd() const;

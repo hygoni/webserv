@@ -99,6 +99,7 @@ void  Request::checkOverlapHeader(const std::string & name, const std::string & 
 
 void  Request::checkHeaders() {
   size_t  i;
+  size_t  past;
 
   if (!_header->isExist("Host"))
     throw HttpException(400);
@@ -109,7 +110,11 @@ void  Request::checkHeaders() {
     _chunked = true;
   } else if (_header->isExist("Content-Length")) {
     for (i = 0; i < (*_header)["Content-Length"].length() && ft_isdigit((*_header)["Content-Length"].at(i)); i++) {
+      past = _content_length;
       _content_length = _content_length * 10 + (*_header)["Content-Length"].at(i) - '0';
+      if (past > _content_length) {
+        throw HttpException(400);
+      }
     }
     if (i == 0 || i != (*_header)["Content-Length"].length())
       throw HttpException(400);
@@ -179,6 +184,10 @@ std::string Request::getVersion() const {
   return _header->getVersion();
 }
 
+std::string Request::getUserName() const {
+  return _user_name;
+}
+
 size_t Request::getContentLength() const {
   return _content_length;
 }
@@ -187,7 +196,7 @@ bool Request::isChunked() const {
   return _chunked;
 }
 
-bool Request::auth(std::string const& user_str) const {
+bool Request::auth(std::string const& user_str) {
   std::string token;
   size_t      idx;
 
@@ -195,7 +204,11 @@ bool Request::auth(std::string const& user_str) const {
   if (idx == std::string::npos && idx != 0)
     return false;
   token = (*_header)["Authorization"].substr(idx + 6);
-  return user_str == Base64::Decode(token);
+  if (user_str != Base64::Decode(token))
+    return false;
+  idx = user_str.find(':');
+  _user_name = user_str.substr(idx);
+  return true;
 }
 
 Body        *Request::getBody() {

@@ -107,7 +107,7 @@ int  Client::recv_sub(const fd_set *fds) {
       _connection_closed = true;
     updateTime();
   }
-  
+
   if (_request == NULL) {
     _raw_request.append(std::string(_buf, n_read));
     header_end = _raw_request.find("\r\n\r\n");
@@ -327,4 +327,10 @@ const Location*               Client::getLocation() const {
 
 const Server&                 Client::getServer() const {
   return _server;
+}
+
+void                          Client::setResponse(Response* response) {
+  if (_response == NULL)
+    delete _response;
+  _response = response;
 }

@@ -34,7 +34,7 @@ void  ServerManager::run() {
   fd_set                          all_fds[2], ready_fds[2];
 
   signal(SIGPIPE, sigpipe_handler);
-  signal(SIGCHLD, sigchld_handler);
+  // signal(SIGCHLD, sigchld_handler);
   debug_printf("setsize = %d\n", FD_SETSIZE);
   select_timeout.tv_sec = 3;
   select_timeout.tv_usec = 0;
@@ -65,34 +65,40 @@ void  ServerManager::run() {
       }
       std::vector<Client*> &clients = s_it->getClients();
       for (c_it = clients.begin(); c_it != clients.end();) {
-       /* Request closed -> Create Resonse -> Process Response */
-        if ((*c_it)->isTimeout()) {
-          (*c_it)->timeout();
-        }
+        try {
+          /* Request closed -> Create Resonse -> Process Response */
+          if ((*c_it)->isTimeout()) {
+            (*c_it)->timeout();
+          }
 
-        if ((*c_it)->recv(&ready_fds[0]) < 0 || (*c_it)->isConnectionClosed()) {
-          Client *client = *c_it;
-          c_it = clients.erase(c_it);
-          delete client;
-          continue ;
-        }
+          if ((*c_it)->recv(&ready_fds[0]) < 0 || (*c_it)->isConnectionClosed()) {
+            Client *client = *c_it;
+            c_it = clients.erase(c_it);
+            delete client;
+            continue ;
+          }
 
-	      /* response exists and ready to write */
-        if ((*c_it)->getResponse() != NULL && Fd::isSet((*c_it)->getFd(), &ready_fds[1])) {
-          (*c_it)->getResponse()->recv(&ready_fds[0], &ready_fds[1]);
-          if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {
-            /* if status is not 200 */
-            if ((*c_it)->getResponse()->getHeader()->getStatus() / 100 != 2) {
-              Client *client = *c_it;
-              c_it = clients.erase(c_it);
-              delete client;
-              continue ;
-            } else {
-              (*c_it)->clear();
+          /* response exists and ready to write */
+          if ((*c_it)->getResponse() != NULL && Fd::isSet((*c_it)->getFd(), &ready_fds[1])) {
+            (*c_it)->getResponse()->recv(&ready_fds[0], &ready_fds[1]);
+            if ((*c_it)->getResponse()->send((*c_it)->getFd()) < 0) {
+              /* if status is not 200 */
+              if ((*c_it)->getResponse()->getHeader()->getStatus() / 100 != 2) {
+                Client *client = *c_it;
+                c_it = clients.erase(c_it);
+                delete client;
+                continue ;
+              } else {
+                (*c_it)->clear();
+              }
             }
           }
+          c_it = std::next(c_it);
+        } catch (const std::exception& e) {
+          debug_printf("[ServerManager::run] Internal Error : 500");
+          (*c_it)->setResponse(new Response(**c_it, 500));
+          Fd::setWfd((*c_it)->getFd());
         }
-        c_it = std::next(c_it);
       }
     }
   }
