@@ -92,6 +92,8 @@ return -1 :
 */
 
 bool Client::isConnectionClosed() const {
+  debug_printf("[Client::isConnectionClosed] IsSet Rfd : %d, Wfd : %d\n", Fd::isSet(_fd, Fd::rfds), Fd::isSet(_fd, Fd::wfds));
+  debug_printf("[Client::isConnectionClosed] closed : %d, raw_request.length = %lu, _request = %p\n", _connection_closed, _raw_request.length(), _request);
   return (_connection_closed && _raw_request.length() == 0 && _request == NULL);
 }
 
@@ -101,11 +103,14 @@ int  Client::recv_sub(const fd_set *fds) {
 
   if (Fd::isSet(_fd, fds)) {
     n_read = read(_fd, _buf, BUFSIZE - 1);
+    debug_printf("[Client::recv_sub] client %d, n_read = %d\n", _fd, n_read);
     if (n_read < 0)
       return -1;
     else if (n_read == 0)
       _connection_closed = true;
     updateTime();
+  } else {
+    debug_printf("[Client::recv_sub] client %d, isSet false\n", _fd);
   }
 
   if (_request == NULL) {

@@ -21,7 +21,7 @@ bool Fd::isSet(int fd, const fd_set *fds) {
   if (g_is_sigpipe || fd < 0)
     return false;
   else
-    return fds->fds_bits[fd / MY_NFDBITS] & (1U << (fd % MY_NFDBITS));
+    return (fds->fds_bits[fd / MY_NFDBITS] & (MY_FD_MASK)(1UL << (fd % MY_NFDBITS)));
 }
 
 void Fd::displayFdSet(const fd_set *fds) {
@@ -48,7 +48,7 @@ void  Fd::set(int fd, fd_set *fds) {
     return;
   displayFdSet(fds);
   fcntl(fd, F_SETFL, O_NONBLOCK);
-  fds->fds_bits[fd / MY_NFDBITS] |= (1U << (fd % MY_NFDBITS));
+  fds->fds_bits[fd / MY_NFDBITS] |= (MY_FD_MASK)(1UL << (fd % MY_NFDBITS));
   if (fd > max_fd)
     max_fd = fd;
   displayFdSet(fds);
@@ -58,7 +58,7 @@ void  Fd::clear(int fd, fd_set *fds) {
   if (fd < 0)
     return;
   displayFdSet(fds);
-  fds->fds_bits[fd / MY_NFDBITS] &= ~(1U << (fd % MY_NFDBITS));
+  fds->fds_bits[fd / MY_NFDBITS] &= ~(MY_FD_MASK)(1UL << (fd % MY_NFDBITS));
   displayFdSet(fds);
 }
 

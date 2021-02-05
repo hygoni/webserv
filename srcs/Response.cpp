@@ -91,6 +91,7 @@ int Response::recv(const fd_set *rfds, const fd_set *wfds) {
       /* sent all request body */
       if (_pos_cgi == (int)req_body.length()) {
         Fd::close(_client.getRequestPipe()[1]);
+        _client.getRequestPipe()[1] = -1;
       }
       _client.updateTime();
       return n_write;

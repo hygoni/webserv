@@ -4,13 +4,16 @@
 # include <stdlib.h>
 # include "debug.hpp"
 
-# ifndef __DARWIN_NFDBITS
-#  define __DARWIN_NBBY   8       /* bits in a byte */
-#  define __DARWIN_NFDBITS  (sizeof(__int32_t) * __DARWIN_NBBY) /* bits per mask */
+# ifdef __APPLE__
+#  define MY_FD_MASK    int32_t
+# elif __linux__
+#  define MY_FD_MASK    long int
+# else
+#  define MY_FD_MASK    int32_t
 # endif
 
-# define MY_NBBY       8
-# define MY_NFDBITS    ((unsigned)(sizeof(uint32_t) * MY_NBBY))
+# define MY_NBBY        8
+# define MY_NFDBITS     (MY_NBBY * sizeof(MY_FD_MASK))
 
 class Fd {
 public:

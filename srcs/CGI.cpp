@@ -146,7 +146,7 @@ void Cgi::run() {
     exit(EXIT_SUCCESS);
   } else {
     _pid = pid;
-    close(_client.getResponsePipe()[1]);
+    Fd::close(_client.getResponsePipe()[1]);
     free(dup_cgi_path);
     free(dup_file_path);
     if (isCgiError())

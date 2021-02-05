@@ -103,6 +103,7 @@ void  ServerManager::run() {
           (*c_it)->setResponse(new Response(**c_it, 500));
           Fd::setWfd((*c_it)->getFd());
         }
+        fflush(stdout);
         c_it = std::next(c_it);
       }
     }
