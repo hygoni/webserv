@@ -330,7 +330,7 @@ const Server&                 Client::getServer() const {
 }
 
 void                          Client::setResponse(Response* response) {
-  if (_response == NULL)
+  if (_response != NULL)
     delete _response;
   _response = response;
 }
