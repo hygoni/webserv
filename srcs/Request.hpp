@@ -6,6 +6,7 @@
 #include "ChunkedBody.hpp"
 #include "HttpException.hpp"
 #include "Base64.hpp"
+#include "debug.hpp"
 /* Copyright 2020 hyeyoo, hyekim */
 
 class Request {
@@ -17,6 +18,7 @@ private:
   bool        _is_closed;
   std::string _user_name;
   std::string _cgi_path;
+  std::string _query;
 
   Request();
   void  initStartLine(std::string raw);
@@ -36,6 +38,7 @@ public:
   std::string getTarget() const;
   std::string getVersion() const;
   std::string getUserName() const;
+  std::string getQuery() const;
   size_t      getContentLength() const;
   bool        isChunked() const;
   void        addBody(std::string const &s);

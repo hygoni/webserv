@@ -17,6 +17,7 @@ Request::~Request() {
 void    Request::initStartLine(std::string raw) {
   size_t  start = 0;
   size_t  space_count = 0;
+  size_t  idx = 0;
   std::string method;
   std::string target;
   std::string version;
@@ -31,6 +32,12 @@ void    Request::initStartLine(std::string raw) {
         version = raw.substr(i + 1);
         if (target.length() > 8000)
           throw HttpException(414);
+        idx = target.rfind('?');
+        if (idx != std::string::npos) {
+          _query = target.substr(idx + 1);
+          target = target.substr(0, idx);
+          debug_printf("query : |%s|, target : |%s|\n", _query.c_str(), target.c_str());
+        }
         if (version != "HTTP/1.1")
           throw HttpException(400);
         _header = new Header(method, target, version);
@@ -188,6 +195,10 @@ std::string Request::getUserName() const {
   return _user_name;
 }
 
+std::string Request::getQuery() const {
+  return _query;
+}
+
 size_t Request::getContentLength() const {
   return _content_length;
 }
@@ -207,7 +218,7 @@ bool Request::auth(std::string const& user_str) {
   if (user_str != Base64::Decode(token))
     return false;
   idx = user_str.find(':');
-  _user_name = user_str.substr(idx);
+  _user_name = user_str.substr(0, idx);
   return true;
 }
 
