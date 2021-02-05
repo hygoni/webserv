@@ -9,7 +9,9 @@
 #include "Body.hpp"
 #include "Header.hpp"
 #include "debug.hpp"
+#include "CGI.hpp"
 
+class Cgi;
 class Response {
  private:
   static char* _buf;
@@ -22,6 +24,7 @@ class Response {
   int          _pos_cgi;
   int          _pos;
   Client&      _client;
+  Cgi          *_cgi;
 
   Header*   initHeader(int status) const;
 
@@ -49,6 +52,7 @@ class Response {
   bool  isCgi() const;
   Header* getHeader();
   int     getFileFd() const;
+  Cgi     *getCgi();
 };
 
 #endif  // SRCS_RESPONSE_HPP_

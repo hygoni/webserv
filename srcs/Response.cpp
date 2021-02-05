@@ -28,6 +28,7 @@ Response::Response(Client& client) : _client(client) {
   _file_fd = -1;
   _pos = 0;
   _pos_cgi = 0;
+  _cgi = NULL;
   // Fd::setWfd(client.getFd());
   process(client);
 }
@@ -41,7 +42,7 @@ Response::Response(Client& client, int status) : _client(client) {
   _file_fd = -1;
   _pos = 0;
   _pos_cgi = 0;
-
+  _cgi = NULL;
   // Fd::setWfd(client.getFd());
   setStatus(status);
 }
@@ -52,6 +53,8 @@ Response::~Response() {
     delete _header;
   if (_body != NULL)
     delete _body;
+  if (_cgi != NULL)
+    delete _cgi;
   Fd::close(_file_fd);
 }
 
@@ -180,8 +183,8 @@ void Response::setStatus(int status) {
 
 void Response::processCgi
 (Client& client) {
-  Cgi cgi(client);
-  cgi.run();
+  _cgi = new Cgi(client);
+  _cgi->run();
 }
 
 void Response::process
@@ -418,4 +421,8 @@ Header* Response::getHeader() {
 
 int     Response::getFileFd() const {
   return _file_fd;
+}
+
+Cgi     *Response::getCgi() {
+  return _cgi;
 }

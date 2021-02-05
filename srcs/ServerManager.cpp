@@ -34,7 +34,6 @@ void  ServerManager::run() {
   fd_set                          all_fds[2], ready_fds[2];
 
   signal(SIGPIPE, sigpipe_handler);
-  // signal(SIGCHLD, sigchld_handler);
   debug_printf("setsize = %d\n", FD_SETSIZE);
   select_timeout.tv_sec = 3;
   select_timeout.tv_usec = 0;
@@ -78,6 +77,14 @@ void  ServerManager::run() {
             continue ;
           }
 
+          if ((*c_it)->getResponse() && (*c_it)->getResponse()->getCgi()) {
+            debug_printf("[ServerManager::run] is cgi error?\n");
+            if ((*c_it)->getResponse()->getCgi()->isCgiError()) {
+              debug_printf("[ServerManager::run] throw 500!\n");
+              throw HttpException(500);
+            }
+          }
+
           /* response exists and ready to write */
           if ((*c_it)->getResponse() != NULL && Fd::isSet((*c_it)->getFd(), &ready_fds[1])) {
             (*c_it)->getResponse()->recv(&ready_fds[0], &ready_fds[1]);
@@ -93,12 +100,12 @@ void  ServerManager::run() {
               }
             }
           }
-          c_it = std::next(c_it);
         } catch (const std::exception& e) {
           debug_printf("[ServerManager::run] Internal Error : 500");
           (*c_it)->setResponse(new Response(**c_it, 500));
           Fd::setWfd((*c_it)->getFd());
         }
+        c_it = std::next(c_it);
       }
     }
   }

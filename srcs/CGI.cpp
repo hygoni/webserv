@@ -33,6 +33,7 @@ Cgi::Cgi(Client& client) : _client(client) {
   std::string                         cgi_file_path = "/";
   std::string                         query;
 
+  _pid = -1;
   client_len = sizeof(client_addr);
   getsockname(client.getFd(), (struct sockaddr*)&client_addr, &client_len);
 
@@ -68,9 +69,11 @@ Cgi::Cgi(Client& client) : _client(client) {
   while (it != header.getEnd()) {
     std::string key = ("HTTP_" + it->first);
     std::transform(key.begin(), key.end(), key.begin(), ::toupper);
-    debug_printf("key : %s, value : %s\n", key.c_str(), it->second.c_str());
     env_map[key] = it->second;
     it++;
+  }
+  for (it = env_map.begin(); it != env_map.end(); it++) {
+    debug_printf("key : %s, value : %s\n", it->first.c_str(), it->second.c_str());
   }
 
   if ((_env = generate_env(env_map)) == NULL)
@@ -83,6 +86,8 @@ Cgi::~Cgi() {
   debug_printf("[Cgi::~Cgi]\n");
   if (_env != NULL)
     ft_free_null_terminated_array(reinterpret_cast<void **>(_env));
+  /* prevent zombie process */
+  waitpid(_pid, NULL, WNOHANG);
 }
 
 char **Cgi::generate_env(std::map<std::string, std::string> const &env_map) {
@@ -146,14 +151,26 @@ void Cgi::run() {
     free(dup_file_path);
     exit(EXIT_SUCCESS);
   } else {
-    int status;
+    _pid = pid;
     close(_client.getResponsePipe()[1]);
-    debug_printf("[Cgi::run] waiting for %d\n", pid);
-    waitpid(pid, &status, 0);
-    debug_printf("[Cgi::run] waiting done!\n");
-    if (WEXITSTATUS(status) == EXIT_FAILURE)
-      throw HttpException(500);
     free(dup_cgi_path);
     free(dup_file_path);
+    if (isCgiError())
+      throw HttpException(500);
+  }
+}
+
+bool Cgi::isCgiError() const {
+  int status;
+  debug_printf("[Cgi::isCgiError] run\n");
+  if (_pid < 0)
+    return false;
+  else {
+    int ret = waitpid(_pid, &status, WNOHANG);
+    bool is_error = WEXITSTATUS(status) == EXIT_FAILURE;
+    if (ret < 0)
+      debug_printf("[Cgi::isCgiError] strerror(errno) = %s\n", strerror(errno));
+    debug_printf("[Cgi::isCgiError] return %d, is_error = %d\n", ret, is_error);
+    return (ret > 0 && is_error);
   }
 }

@@ -5,6 +5,7 @@
 
 #include <map>
 #include <sys/wait.h>
+#include <sys/types.h>
 #include <string>
 #include "Response.hpp"
 
@@ -14,11 +15,14 @@ private:
   Client&          _client;
   std::string     _cgi_path;
   std::string     _cgi_file_path;
+  pid_t           _pid;
+
   Cgi();
   char**  generate_env(std::map<std::string, std::string> const& env_map);
 public:
   Cgi(Client& client);
   ~Cgi();
+  bool  isCgiError() const;
 
   void  run();
 };
