@@ -9,6 +9,9 @@
 #  define __DARWIN_NFDBITS  (sizeof(__int32_t) * __DARWIN_NBBY) /* bits per mask */
 # endif
 
+# define MY_NBBY       8
+# define MY_NFDBITS    ((unsigned)(sizeof(uint32_t) * MY_NBBY))
+
 class Fd {
 public:
   static fd_set  *rfds;
