@@ -78,9 +78,7 @@ void  ServerManager::run() {
           }
 
           if ((*c_it)->getResponse() && (*c_it)->getResponse()->getCgi()) {
-            debug_printf("[ServerManager::run] is cgi error?\n");
             if ((*c_it)->getResponse()->getCgi()->isCgiError()) {
-              debug_printf("[ServerManager::run] throw 500!\n");
               throw HttpException(500);
             }
           }

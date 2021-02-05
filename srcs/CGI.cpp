@@ -14,10 +14,10 @@ std::string ip_to_string(int ip) {
   std::string ip_string;
 
   while (ip > 0) {
-    ip_string = std::to_string(ip % 256) + ip_string;
+    ip_string = ip_string + std::to_string(ip % 256);
     ip /= 256;
     if (ip != 0) {
-      ip_string = "." + ip_string;
+      ip_string = ip_string + ".";
     }
   }
   return ip_string;
@@ -25,22 +25,16 @@ std::string ip_to_string(int ip) {
 
 Cgi::Cgi(Client& client) : _client(client) {
   std::map<std::string, std::string>  env_map;
-  size_t                              idx;
   struct sockaddr_in                  client_addr;
   socklen_t                           client_len;
   Header&                             header = *(client.getRequest()->getHeader());
   std::string                         cgi_path;
   std::string                         cgi_file_path = "/";
-  std::string                         query;
 
   _pid = -1;
   client_len = sizeof(client_addr);
   getsockname(client.getFd(), (struct sockaddr*)&client_addr, &client_len);
 
-  /* get query */
-  idx = header.getTarget().find('?');
-  if (idx != std::string::npos)
-    query = header.getTarget().substr(idx + 1);
   cgi_path = client.getCgiPath();
   cgi_file_path = client.getCgiFilePath();
 
@@ -54,7 +48,7 @@ Cgi::Cgi(Client& client) : _client(client) {
   env_map["PATH_INFO"] = header.getTarget();
   env_map["PATH_TRANSLATED"] = client.getLocation()->getRoot() + "/"
   + header.getTarget().substr(client.getLocation()->getPath().length());
-  env_map["QUERY_STRING"] = query;
+  env_map["QUERY_STRING"] = client.getRequest()->getQuery();
   env_map["REMOTE_ADDR"] = ip_to_string(client_addr.sin_addr.s_addr);
   env_map["REQUEST_METHOD"] = header.getMethod();
   env_map["REQUEST_URI"] = header.getTarget();
@@ -162,15 +156,12 @@ void Cgi::run() {
 
 bool Cgi::isCgiError() const {
   int status;
-  debug_printf("[Cgi::isCgiError] run\n");
+
   if (_pid < 0)
     return false;
   else {
     int ret = waitpid(_pid, &status, WNOHANG);
     bool is_error = WEXITSTATUS(status) == EXIT_FAILURE;
-    if (ret < 0)
-      debug_printf("[Cgi::isCgiError] strerror(errno) = %s\n", strerror(errno));
-    debug_printf("[Cgi::isCgiError] return %d, is_error = %d\n", ret, is_error);
     return (ret > 0 && is_error);
   }
 }
