@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <signal.h>
 #include <sys/wait.h>
 #include "signals.hpp"
 #include "debug.hpp"
@@ -19,4 +20,14 @@ void sigchld_handler(int sig) {
   while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
     debug_printf("[CHILD] child (%d) exited \n", pid);
   }
+}
+
+void exit_handler(int sig) {
+  (void)sig;
+  debug_printf("[SIGNAL %d] recieved\n", sig);
+  /* kill all of child - it'll be freed by init process */
+  
+  signal(SIGQUIT, SIG_IGN);
+  kill(-1, SIGQUIT);
+  exit(EXIT_FAILURE);
 }

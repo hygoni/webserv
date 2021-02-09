@@ -34,6 +34,8 @@ void  ServerManager::run() {
   fd_set                          all_fds[2], ready_fds[2];
 
   signal(SIGPIPE, sigpipe_handler);
+  signal(SIGINT, exit_handler);
+  signal(SIGQUIT, exit_handler);
   debug_printf("setsize = %d\n", FD_SETSIZE);
   select_timeout.tv_sec = 3;
   select_timeout.tv_usec = 0;
