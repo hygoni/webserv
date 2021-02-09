@@ -15,7 +15,7 @@ SRCS = $(shell ls . | grep '\.cpp')
 OBJS = $(SRCS:.cpp=.o)
 
 CC = clang++
-CFLAGS = -Wall -Wextra -Werror --std=c++98
+CFLAGS = -g -Wall -Wextra -Werror --std=c++98
 RM = rm -f
 
 %.o : %.cpp libft.h

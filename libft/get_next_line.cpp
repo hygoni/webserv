@@ -41,7 +41,7 @@ static int	parse_next_line(char **line, t_buf *list)
 static int	read_next_line(int fd, char **line, t_buf *list)
 {
 	char	*new_line;
-	int		n_read;
+	int		n_read = 1;
 	char	*tmp;
 	char	*to_free;
 

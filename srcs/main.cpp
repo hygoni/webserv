@@ -13,12 +13,12 @@ int main(void) {
   try {
     ServerManager server_manager(*config);
     server_manager.run();
-  } catch (const char* msg) {
+  } catch (char* msg) {
+    std::cout << strerror(errno) << std::endl;
     std::cout << msg << std::endl;
-    std::cout << strerror(errno) << std::endl;
   } catch (std::exception const& e) {
-    std::cout << e.what() << std::endl;
     std::cout << strerror(errno) << std::endl;
+    std::cout << e.what() << std::endl;
   }
   return (0);
 }
