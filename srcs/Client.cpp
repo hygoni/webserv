@@ -227,7 +227,7 @@ int  Client::recv(const fd_set *fds) {
 
 void  Client::setLocation() {
   for (std::vector<Location>::const_iterator l_it = getLocations().begin();
-      l_it != getLocations().end(); l_it = std::next(l_it)) {
+      l_it != getLocations().end(); l_it = l_it++) {
     /* matching location found */
     debug_printf("[Client::setLocation] locaation: %s\n", l_it->getPath().c_str());
     if (_request->getTarget().find(l_it->getPath()) == 0) {
@@ -247,7 +247,7 @@ void Client::setCgiPath() {
     const std::string target_extension = _request->getTarget().substr(idx);
     /* set cgi path */
     for (std::vector<std::string>::const_iterator s_it = _location->getCgiExtension().begin();
-          s_it != _location->getCgiExtension().end(); s_it = std::next(s_it)) {
+          s_it != _location->getCgiExtension().end(); s_it = s_it++) {
       if (*s_it == target_extension) {
         _cgi_path = _location->getCgiPath();
       }

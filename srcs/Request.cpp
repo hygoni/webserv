@@ -55,7 +55,7 @@ void    Request::addHeader(std::string header_field) {
   if (sep_i == std::string::npos)
     throw HttpException(400);
   field_name = header_field.substr(0, sep_i);
-  if (field_name.length() < 1 || field_name.front() == ' ' || field_name.back() == ' ')
+  if (field_name.length() < 1 || field_name[0] == ' ' || field_name[field_name.length() - 1] == ' ')
     throw HttpException(400);
   field_value = std::string("");
   if (sep_i != header_field.length() - 1) {
@@ -157,7 +157,7 @@ std::string  Request::parseChunk(const std::string & str) {
   }
   if (i == 0 || str.length() - i != chunk_size + 4
       || (str.at(i) != '\r' && str.at(i + 1) != '\n')
-      || (str.at(str.length() - 2) != '\r' && str.back() != '\n')) {
+      || (str.at(str.length() - 2) != '\r' && str[str.length() - 1] != '\n')) {
     throw HttpException(400);
   }
   if (chunk_size == 0) {

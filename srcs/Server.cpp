@@ -73,7 +73,7 @@ void Server::validate() {
       this->_attrs.find("server_name") == this->_attrs.end()) {
     throw std::exception();
   }
-  this->_listen = stoi(this->_attrs["listen"]); /* caution: parse error */
+  this->_listen = ft_atoi(this->_attrs["listen"].c_str()); /* caution: parse error */
   this->_server_name = this->_attrs["server_name"];
 }
 

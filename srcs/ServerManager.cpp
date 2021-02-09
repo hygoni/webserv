@@ -42,7 +42,7 @@ void  ServerManager::run() {
   ft_bzero(&all_fds, sizeof(fd_set) * 2);
   ft_bzero(&ready_fds, sizeof(fd_set) * 2);
   debug_printf("servers initSocket...\n");
-  for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {
+  for (s_it = _servers.begin(); s_it != _servers.end(); s_it++) {
     int server_fd = s_it->initSocket();
     debug_printf("server_fd = %d\n", server_fd);
     Fd::set(server_fd, &all_fds[0]);
@@ -57,7 +57,7 @@ void  ServerManager::run() {
       debug_printf("max_fd + 1 = %d, strerror(errno) = %s\n", Fd::max_fd + 1, strerror(errno));
       throw "select failed!";
     }
-    for (s_it = _servers.begin(); s_it != _servers.end(); s_it = std::next(s_it)) {
+    for (s_it = _servers.begin(); s_it != _servers.end(); s_it++) {
       if (Fd::isSet(s_it->getFd(), &ready_fds[0])) {
         s_it->accept(&all_fds[0]);
         /* not setting read fd? */
@@ -103,8 +103,8 @@ void  ServerManager::run() {
           (*c_it)->setResponse(new Response(**c_it, 500));
           Fd::setWfd((*c_it)->getFd());
         }
-        fflush(stdout);
-        c_it = std::next(c_it);
+        // fflush(stdout);
+        c_it++;
       }
     }
   }

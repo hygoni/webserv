@@ -2,7 +2,7 @@
 
 #include "Message.hpp"
 
-Message* Message::_instance = nullptr;
+Message* Message::_instance = NULL;
 
 Message::Message() {
   this->_msg[100] = "Continue";
@@ -51,7 +51,7 @@ Message::Message() {
 }
 
 Message* Message::getInstance() {
-  if (Message::_instance == nullptr)
+  if (Message::_instance == NULL)
     Message::_instance = new Message();
   return Message::_instance;
 }

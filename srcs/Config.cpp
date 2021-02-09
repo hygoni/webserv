@@ -6,7 +6,7 @@
 #include "tokenize.hpp"
 #include "libft.h"
 
-Config* Config::_instance = nullptr;
+Config* Config::_instance = NULL;
 
 Config::Config(const char* path) {
   int ret;
@@ -28,12 +28,12 @@ Config::Config(const char* path) {
 }
 
 void Config::createInstance(const char* path) {
-    if (Config::_instance == nullptr)
+    if (Config::_instance == NULL)
         Config::_instance = new Config(path);
 }
 
 Config* Config::getInstance() {
-    if (Config::_instance == nullptr)
+    if (Config::_instance == NULL)
         throw std::exception();
     return Config::_instance;
 }

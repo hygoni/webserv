@@ -1,5 +1,6 @@
 /* Copyright 2020 hyeyoo */
 
+#include <stdint.h>
 #include <string>
 #include "Base64.hpp"
 

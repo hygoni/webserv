@@ -1,5 +1,12 @@
 #include "utils.hpp"
 
+std::string to_string(int n) {
+  char *str = ft_itoa(n);
+  std::string converted = std::string(str);
+  free(str);
+  return converted;
+}
+
 int set_tm(long long t, struct tm *tm)
 {
 	long long days, secs;

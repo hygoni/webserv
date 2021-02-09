@@ -9,12 +9,13 @@
 #include "Client.hpp"
 #include "Fd.hpp"
 #include "debug.hpp"
+#include "utils.hpp"
 
 std::string ip_to_string(int ip) {
   std::string ip_string;
 
   while (ip > 0) {
-    ip_string = ip_string + std::to_string(ip % 256);
+    ip_string = ip_string + to_string(ip % 256);
     ip /= 256;
     if (ip != 0) {
       ip_string = ip_string + ".";
@@ -54,7 +55,7 @@ Cgi::Cgi(Client& client) : _client(client) {
   env_map["REQUEST_URI"] = header.getTarget();
   env_map["SCRIPT_NAME"] = env_map["PATH_TRANSLATED"];
   env_map["SERVER_NAME"] = client.getServer().getServerName();
-  env_map["SERVER_PORT"] = std::to_string(client.getServer().getListen());
+  env_map["SERVER_PORT"] = to_string(client.getServer().getListen());
   env_map["SERVER_PROTOCOL"] = header.getVersion();
   env_map["SERVER_SOFTWARE"] = "webserv/1.0";
   env_map["SCRIPT_FILENAME"] = env_map["SCRIPT_NAME"];
@@ -96,8 +97,8 @@ char **Cgi::generate_env(std::map<std::string, std::string> const &env_map) {
   }
 
   i = 0;
-  it = env_map.cbegin();
-  while (it != env_map.cend()) {
+  it = env_map.begin();
+  while (it != env_map.end()) {
     std::string line;
     line += it->first;
     line += "=";

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <algorithm>
+#include <errno.h>
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Config.hpp"
@@ -279,9 +280,9 @@ void Response::processDefaultErrorPage(int status) {
   std::string html;
 
   std::string msg = Message::getInstance()->getMessage(status);
-  html = "<h1>" + std::to_string(status) + " " + msg + "</h1>";
+  html = "<h1>" + to_string(status) + " " + msg + "</h1>";
   debug_printf("[Response::processDefaultErrorPage] %s\n", html.c_str());
-  (*_header)["Content-Length"] = std::to_string(html.length());
+  (*_header)["Content-Length"] = to_string(html.length());
   _body = new Body(html.length());
   _body->addBody(html);
 }
@@ -315,7 +316,7 @@ void Response::processDirectoryListing
   }
   setStatus(200);
   debug_printf("[Response::processDListing] %s\n", html.c_str());
-  (*_header)["Content-Length"] = std::to_string(html.length());
+  (*_header)["Content-Length"] = to_string(html.length());
   _body = new Body(html.length());
   _body->addBody(html);
 }
@@ -371,7 +372,7 @@ void Response::processGetMethod
   }
   _body = new Body(buf.st_size);
   setStatus(200);
-  (*_header)["Content-Length"] = std::to_string(buf.st_size);
+  (*_header)["Content-Length"] = to_string(buf.st_size);
   _file_fd = open(path.c_str(), O_RDONLY);
   if (_file_fd < 0) {
     throw "[Response::processGetMethod] File Exception";

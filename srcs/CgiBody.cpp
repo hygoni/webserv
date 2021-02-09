@@ -11,6 +11,7 @@
 #include "Header.hpp"
 #include "CgiBody.hpp"
 #include "debug.hpp"
+#include "utils.hpp"
 
 CgiBody::CgiBody(Header **header) : Body(0) {
   _is_header_closed = false;
@@ -92,7 +93,7 @@ void CgiBody::addBody(std::string const& s) {
     debug_printf("[CgiBody::recv] make header\n");
     *_header = new Header(status);
     saveMap(**_header, parse_map);
-    (**_header)["Content-Length"] = std::to_string(_body.length());
+    (**_header)["Content-Length"] = to_string(_body.length());
     debug_printf("[CgiBody::recv] Content-Length = %lu\n", _body.length());
   }
 
