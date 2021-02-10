@@ -28,6 +28,6 @@ void exit_handler(int sig) {
   /* kill all of child - it'll be freed by init process */
   
   signal(SIGQUIT, SIG_IGN);
-  kill(-1, SIGQUIT);
+  kill(0, SIGQUIT);
   exit(EXIT_FAILURE);
 }
