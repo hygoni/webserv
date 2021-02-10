@@ -225,7 +225,7 @@ void Response::process
       if (ret < 0)
         path = path_backup;
   }
-  
+
   client.setCgiPath(path);
   if (client.isCgi()) {
     _is_cgi = true;
@@ -297,8 +297,20 @@ void Response::processPutMethod
 }
 
 void Response::processDefaultErrorPage(int status) {
-  std::string html;
+  std::string   html;
+  struct stat   buf;
+  std::string   default_error_page;
 
+  default_error_page = _client.getLocation()->getRoot() + "/" + _client.getLocation()->getDefaultErrorPage();
+  if (_client.getLocation()->getDefaultErrorPage().length() &&
+      stat(default_error_page.c_str(), &buf) >= 0 && 
+      (_file_fd = open(default_error_page.c_str(), O_RDONLY)) > 0) {
+      _body = new Body(buf.st_size);
+      (*_header)["Content-Length"] = to_string(buf.st_size);
+      Fd::setRfd(_file_fd);
+      return ;
+  }
+  /* when no default error page is provided */
   std::string msg = Message::getInstance()->getMessage(status);
   html = "<h1>" + to_string(status) + " " + msg + "</h1>";
   debug_printf("[Response::processDefaultErrorPage] %s\n", html.c_str());
