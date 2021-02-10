@@ -90,7 +90,7 @@ int  Client::recv_sub(const fd_set *fds) {
       _connection_closed = true;
     updateTime();
   } else {
-    debug_printf("[Client::recv_sub] client %d, isSet false\n", _fd);
+    // debug_printf("[Client::recv_sub] client %d, isSet false\n", _fd);
   }
 
   if (_request == NULL) {

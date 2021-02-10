@@ -43,7 +43,10 @@ Cgi::Cgi(Client& client) : _client(client) {
     env_map["AUTH_TYPE"] = "Basic";
     env_map["REMOTE_USER"] = client.getRequest()->getUserName();
   }
-  env_map["CONTENT_LENGTH"] =  header["Content-Length"];
+  if (!header.isExist("Content-Length"))
+    env_map["CONTENT_LENGTH"] = "0";
+  else
+    env_map["CONTENT_LENGTH"] =  header["Content-Length"];
   env_map["CONTENT_TYPE"] = header["Content-Type"];
   env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
   env_map["PATH_INFO"] = header.getTarget();
@@ -59,6 +62,7 @@ Cgi::Cgi(Client& client) : _client(client) {
   env_map["SERVER_PROTOCOL"] = header.getVersion();
   env_map["SERVER_SOFTWARE"] = "webserv/1.0";
   env_map["SCRIPT_FILENAME"] = env_map["SCRIPT_NAME"];
+  env_map["REDIRECT_STATUS"] = "0";
 
   std::map<std::string, std::string>::const_iterator it = header.getBegin();
   while (it != header.getEnd()) {
