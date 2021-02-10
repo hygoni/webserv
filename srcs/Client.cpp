@@ -221,8 +221,8 @@ void  Client::setLocation() {
 void Client::setCgiPath() {
   size_t idx;
 
-  if (_request->getMethod() != "POST")
-    return ;
+  // if (_request->getMethod() != "POST")
+  //   return ;
   if ((idx = _request->getTarget().rfind('.')) != std::string::npos) {
     const std::string target_extension = _request->getTarget().substr(idx);
     /* set cgi path */
