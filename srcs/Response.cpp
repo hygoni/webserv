@@ -30,8 +30,11 @@ Response::Response(Client& client) : _client(client) {
   _pos = 0;
   _pos_cgi = 0;
   _cgi = NULL;
-  // Fd::setWfd(client.getFd());
+
   process(client);
+  if (_header->getStatus() / 100 != 2 && _client.getRequest()->getMethod() != "HEAD") {
+    processDefaultErrorPage(_header->getStatus());
+  }
 }
 
 Response::Response(Client& client, int status) : _client(client) {
@@ -44,7 +47,7 @@ Response::Response(Client& client, int status) : _client(client) {
   _pos = 0;
   _pos_cgi = 0;
   _cgi = NULL;
-  // Fd::setWfd(client.getFd());
+
   setStatus(status);
 }
 
@@ -145,6 +148,7 @@ int Response::send(int fd) {
 Header* Response::initHeader(int status) const {
   Header* header = new Header(status);
   (*header)["Content-Length"] = "0";
+  (*header)["Server"] = "Hyes' server";
 
   /* set date */
   struct timeval raw;
@@ -372,7 +376,6 @@ void Response::processGetMethod
       /* Internal Server Error */
       setStatus(500);
     }
-    processDefaultErrorPage(_header->getStatus());
     return ;
   }
   _body = new Body(buf.st_size);
