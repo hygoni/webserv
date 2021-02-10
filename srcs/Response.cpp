@@ -207,23 +207,24 @@ void Response::process
   std::string path_backup = path;
   ret = stat(path.c_str(), &buf);
   if (S_ISDIR(buf.st_mode)) {
+    /* try index files */
+    for (size_t i = 0; i < location.getIndex().size(); i++) {
+      ret = stat((path + "/" + location.getIndex()[i]).c_str(), &buf);
+      if (ret < 0 && errno == ENOENT)
+        continue;
+      else {
+        path = path + "/" + location.getIndex()[i];
+        break;
+      }
+    }
+    if (S_ISDIR(buf.st_mode)) {
       if (location.getDirectoryListing()) {
         processDirectoryListing(client, path);
         return ;
       }
-      /* try index files */
-      for (size_t i = 0; i < location.getIndex().size(); i++) {
-        ret = stat((path + "/" + location.getIndex()[i]).c_str(), &buf);
-        if (ret < 0 && errno == ENOENT)
-          continue;
-        else {
-          path = path + "/" + location.getIndex()[i];
-          break;
-        }
-      }
-      /* if all failed, set to backup */
-      if (ret < 0)
-        path = path_backup;
+      setStatus(404);
+      return ;
+    }
   }
 
   client.setCgiPath(path);

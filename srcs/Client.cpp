@@ -219,7 +219,6 @@ void  Client::setLocation() {
 
 void Client::setCgiPath(std::string path) {
   size_t idx;
-
   if ((idx = path.rfind('.')) != std::string::npos) {
     const std::string target_extension = path.substr(idx);
     /* set cgi path */
