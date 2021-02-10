@@ -303,7 +303,8 @@ void Response::processDefaultErrorPage(int status) {
 
   default_error_page = _client.getLocation()->getRoot() + "/" + _client.getLocation()->getDefaultErrorPage();
   if (_client.getLocation()->getDefaultErrorPage().length() &&
-      stat(default_error_page.c_str(), &buf) >= 0 && 
+      stat(default_error_page.c_str(), &buf) >= 0 &&
+      !S_ISDIR(buf.st_mode) && /* error page shouldn't be directory */ 
       (_file_fd = open(default_error_page.c_str(), O_RDONLY)) > 0) {
       _body = new Body(buf.st_size);
       (*_header)["Content-Length"] = to_string(buf.st_size);
