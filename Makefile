@@ -1,5 +1,5 @@
 NAME = webserv
-CFLAGS = --std=c++98 -fsanitize=address -g -Wall -Wextra -Werror
+CFLAGS = --std=c++98 -Wall -Wextra -Werror
 SRCS = ${addprefix srcs/, ${shell ls srcs | grep '\.cpp'}}
 OBJS = ${SRCS:.cpp=.o}
 CC = clang++
