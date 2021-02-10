@@ -32,7 +32,8 @@ Response::Response(Client& client) : _client(client) {
   _cgi = NULL;
 
   process(client);
-  if (_header->getStatus() / 100 != 2 && _client.getRequest()->getMethod() != "HEAD") {
+  if (!_client.isCgi() && _header->getStatus() / 100 != 2 &&
+      _client.getRequest()->getMethod() != "HEAD") {
     processDefaultErrorPage(_header->getStatus());
   }
 }
@@ -49,6 +50,10 @@ Response::Response(Client& client, int status) : _client(client) {
   _cgi = NULL;
 
   setStatus(status);
+  if (_header->getStatus() / 100 != 2 &&
+      _client.getRequest()->getMethod() != "HEAD") {
+    processDefaultErrorPage(_header->getStatus());
+  }
 }
 
 Response::~Response() {
