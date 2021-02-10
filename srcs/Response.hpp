@@ -31,12 +31,12 @@ class Response {
   /* process request methods */
   void  process(Client& client);
   void  processByMethod(Client& client, Location const& location, std::string const& path);
-  void  processGetMethod(Client& client, Location const& location, std::string path);
+  void  processGetMethod(std::string path);
   void  processHeadMethod(std::string const& path);
   void  processPutMethod(Client& client, Location const& location);
   void  processDeleteMethod(Client& client, Location const& location);
   void  processPostMethod();
-  void  processCgi(Client& client);
+  void  processCgi(Client& client, std::string& path);
   void  processDirectoryListing(Client& client, std::string const& path);
   void  processDefaultErrorPage(int status);
 

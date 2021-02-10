@@ -111,7 +111,6 @@ int  Client::recv_sub(const fd_set *fds) {
 
           _request = new Request(raw_header);
           setLocation();
-          setCgiPath();
           if ((int)_request->getContentLength() > _location->getClientBodySizeLimit()) {
             debug_printf("[Client::recv] content length is over\n");
             throw HttpException(413);
@@ -218,13 +217,11 @@ void  Client::setLocation() {
   return throw HttpException(404);
 }
 
-void Client::setCgiPath() {
+void Client::setCgiPath(std::string path) {
   size_t idx;
 
-  // if (_request->getMethod() != "POST")
-  //   return ;
-  if ((idx = _request->getTarget().rfind('.')) != std::string::npos) {
-    const std::string target_extension = _request->getTarget().substr(idx);
+  if ((idx = path.rfind('.')) != std::string::npos) {
+    const std::string target_extension = path.substr(idx);
     /* set cgi path */
     for (std::vector<std::string>::const_iterator s_it = _location->getCgiExtension().begin();
           s_it != _location->getCgiExtension().end(); s_it++) {
@@ -237,7 +234,7 @@ void Client::setCgiPath() {
   char buf[4096];
   if (getcwd(buf, 4096) == NULL)
     throw "[Client::setCgiPath] getcwd failed";
-  _cgi_file_path = std::string(buf) + "/" + (_location->getRoot() + _request->getTarget().substr(_location->getPath().length()));
+  _cgi_file_path = std::string(buf) + "/" + path;
 }
 
 bool  Client::auth() {

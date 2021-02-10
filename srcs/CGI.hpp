@@ -20,7 +20,7 @@ private:
   Cgi();
   char**  generate_env(std::map<std::string, std::string> const& env_map);
 public:
-  Cgi(Client& client);
+  Cgi(Client& client, std::string& path);
   ~Cgi();
   bool  isCgiError() const;
 

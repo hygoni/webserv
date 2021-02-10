@@ -184,8 +184,8 @@ void Response::setStatus(int status) {
 }
 
 void Response::processCgi
-(Client& client) {
-  _cgi = new Cgi(client);
+(Client& client, std::string& path) {
+  _cgi = new Cgi(client, path);
   _cgi->run();
 }
 
@@ -193,17 +193,46 @@ void Response::process
 (Client& client) {
   Location const& location = *client.getLocation();
   std::vector<std::string> allowed = location.getAllowedMethod();
+  struct stat   buf;
+  int           ret;
+  std::string path = location.getRoot() + "/" + client.getRequest()->getTarget().substr(location.getPath().length());
+  
   /* Method Not Allowed */
   if (std::find(allowed.begin(), allowed.end(), client.getRequest()->getMethod())
       == allowed.end() && allowed.size() > 0) {
     setStatus(405);
-  } else if (client.isCgi()) {
+    return;
+  }
+  
+  std::string path_backup = path;
+  ret = stat(path.c_str(), &buf);
+  if (S_ISDIR(buf.st_mode)) {
+      if (location.getDirectoryListing()) {
+        processDirectoryListing(client, path);
+        return ;
+      }
+      /* try index files */
+      for (size_t i = 0; i < location.getIndex().size(); i++) {
+        ret = stat((path + "/" + location.getIndex()[i]).c_str(), &buf);
+        if (ret < 0 && errno == ENOENT)
+          continue;
+        else {
+          path = path + "/" + location.getIndex()[i];
+          break;
+        }
+      }
+      /* if all failed, set to backup */
+      if (ret < 0)
+        path = path_backup;
+  }
+  
+  client.setCgiPath(path);
+  if (client.isCgi()) {
     _is_cgi = true;
     /* process CGI */
     _body = new CgiBody(&_header);
-    processCgi(client);
+    processCgi(client, path);
   } else {
-    std::string path = location.getRoot() + "/" + client.getRequest()->getTarget().substr(location.getPath().length());
     processByMethod(client, location, path);
   }
 }
@@ -216,11 +245,11 @@ void Response::processByMethod
 (Client& client, Location const& location, std::string const& path) {
   Header& header = *(client.getRequest()->getHeader());
   if (header.getMethod().compare("GET") == 0) {
-    processGetMethod(client, location, path);
+    processGetMethod(path);
   } else if (header.getMethod().compare("HEAD") == 0) {
     processHeadMethod(path);
   } else if (header.getMethod().compare("POST") == 0) {
-    processGetMethod(client, location, path);
+    processGetMethod(path);
   } else if (header.getMethod().compare("PUT") == 0) {
     processPutMethod(client, location);
   } else if (header.getMethod().compare("DELETE") == 0) {
@@ -313,40 +342,11 @@ void Response::processDirectoryListing
 }
 
 void Response::processGetMethod
-(Client& client, Location const& location, std::string path) {
+(std::string path) {
   struct stat   buf;
   int           ret;
 
   ret = stat(path.c_str(), &buf);
-  if (ret < 0) {
-    if (errno == EACCES) {
-      /* Forbidden */
-      setStatus(403);
-    } else if (errno == ENOENT) {
-      /* Not Found */
-      setStatus(404);
-    } else {
-      /* Internal Server Error */
-      setStatus(500);
-    }
-    processDefaultErrorPage(_header->getStatus());
-    return ;
-  } else if (S_ISDIR(buf.st_mode)) {
-    if (location.getDirectoryListing()) {
-      processDirectoryListing(client, path);
-      return ;
-    }
-    for (size_t i = 0; i < location.getIndex().size(); i++) {
-      ret = stat((path + "/" + location.getIndex()[i]).c_str(), &buf);
-      if (ret < 0 && errno == ENOENT)
-        continue;
-      else {
-        path = path + "/" + location.getIndex()[i];
-        break;
-      }
-    }
-  }
-
   if (ret < 0) {
     if (errno == EACCES) {
       /* Forbidden */

@@ -24,7 +24,7 @@ std::string ip_to_string(int ip) {
   return ip_string;
 }
 
-Cgi::Cgi(Client& client) : _client(client) {
+Cgi::Cgi(Client& client, std::string& path) : _client(client) {
   std::map<std::string, std::string>  env_map;
   struct sockaddr_in                  client_addr;
   socklen_t                           client_len;
@@ -38,7 +38,8 @@ Cgi::Cgi(Client& client) : _client(client) {
 
   cgi_path = client.getCgiPath();
   cgi_file_path = client.getCgiFilePath();
-
+  //path = location.getRoot() + "/" + client.getRequest()->getTarget().substr(location.getPath().length());
+  
   if (!header["Authorization"].empty()) {
     env_map["AUTH_TYPE"] = "Basic";
     env_map["REMOTE_USER"] = client.getRequest()->getUserName();
@@ -50,8 +51,7 @@ Cgi::Cgi(Client& client) : _client(client) {
   env_map["CONTENT_TYPE"] = header["Content-Type"];
   env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
   env_map["PATH_INFO"] = header.getTarget();
-  env_map["PATH_TRANSLATED"] = client.getLocation()->getRoot() + "/"
-  + header.getTarget().substr(client.getLocation()->getPath().length());
+  env_map["PATH_TRANSLATED"] = path; 
   env_map["QUERY_STRING"] = client.getRequest()->getQuery();
   env_map["REMOTE_ADDR"] = ip_to_string(client_addr.sin_addr.s_addr);
   env_map["REQUEST_METHOD"] = header.getMethod();

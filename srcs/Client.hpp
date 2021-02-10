@@ -30,7 +30,6 @@ private:
   static char     *_buf;
   bool            _connection_closed;
   void        setLocation();
-  void        setCgiPath();
               Client();
 public:
   static int      num;
@@ -47,6 +46,7 @@ public:
   bool        isTimeout();
   bool        isCgi() const;
   bool        isConnectionClosed() const;
+  void        setCgiPath(std::string path);
   Request*    getRequest();
   Response*   getResponse();
   void        setResponse(Response *response);
