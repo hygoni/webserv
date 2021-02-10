@@ -6,7 +6,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <sys/time.h>
-#define TIMEOUT_SEC 3000
+#define TIMEOUT_SEC 30
 
 class Response;
 class Server;
