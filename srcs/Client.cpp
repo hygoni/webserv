@@ -73,27 +73,7 @@ Client::~Client() {
   Fd::close(_fd);
 }
 
-// long     Client::ft_ntohl(long num) {
-//   long result = 1;
-
-//   if (((char *)&result)[0] == 0) {
-//     return num;
-//   }
-//   for (size_t i = 0; i < sizeof(long); i++) {
-//     ((char *)&result)[i] = ((char *)&num)[sizeof(long) - i];
-//   }
-//   return result;
-// }
-
-/*
-return 0 : not closed header
-return num : new fd, must set to wfds
-return -1 :
-*/
-
 bool Client::isConnectionClosed() const {
-  // debug_printf("[Client::isConnectionClosed] IsSet Rfd : %d, Wfd : %d\n", Fd::isSet(_fd, Fd::rfds), Fd::isSet(_fd, Fd::wfds));
-  // debug_printf("[Client::isConnectionClosed] closed : %d, raw_request.length = %lu, _request = %p\n", _connection_closed, _raw_request.length(), _request);
   return (_connection_closed && _raw_request.length() == 0 && _request == NULL);
 }
 

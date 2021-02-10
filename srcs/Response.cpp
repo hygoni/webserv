@@ -165,7 +165,7 @@ Header* Response::initHeader(int status) const {
         allowed_method.append(", ");
       }
     }
-    (*header)["Allowed"] = allowed_method;
+    (*header)["Allow"] = allowed_method;
   }
 
   if (status / 100 != 2 || (*_client.getRequest()->getHeader())["Connection"] == "close") {
@@ -203,15 +203,6 @@ void Response::process
     _body = new CgiBody(&_header);
     processCgi(client);
   } else {
-    /* process non-CGI */
-    /* TODO: when body exists in non-CGI response
-    const Header* header = client.getRequest()->getHeader();
-    if ((*_header)["Content-Length"].length() || (*_header)["Transfer-Encoding"].length()) {
-      _body = new Body(false);
-      pipe(client.getResponsePipe());
-      Fd::setRfd(client.getResponsePipe()[0]);
-    }
-    */
     std::string path = location.getRoot() + "/" + client.getRequest()->getTarget().substr(location.getPath().length());
     processByMethod(client, location, path);
   }

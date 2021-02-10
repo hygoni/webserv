@@ -1,11 +1,5 @@
 #include "Request.hpp"
 #include "libft.h"
-// HTTP-message   = start-line
-//                           *( header-field CRLF )
-//                           CRLF
-//                           [ message-body ]
-// start-line = method SP request-target SP HTTP-version CRLF
-// header-field = field-name ":" OWS field-value OWS
 
 Request::~Request() {
   if (_header != NULL)
